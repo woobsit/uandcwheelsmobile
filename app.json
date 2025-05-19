@@ -24,6 +24,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "updates": {
+  "enabled": true,
+  "fallbackToCacheTimeout": 3000
+}
   }
 }
