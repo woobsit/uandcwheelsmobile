@@ -20,14 +20,25 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.woobsit.uandcwheelsmobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "updates": {
-  "enabled": true,
-  "fallbackToCacheTimeout": 3000
-}
+      "enabled": true,
+      "fallbackToCacheTimeout": 3000,
+      "url": "https://u.expo.dev/96b4174e-1eec-4a83-9910-aa7399fde278"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "96b4174e-1eec-4a83-9910-aa7399fde278"
+      }
+    },
+    "owner": "woobsit",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
