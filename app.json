@@ -1,5 +1,8 @@
 {
   "expo": {
+    "packagerOpts": {
+      "assetExts": ["json"]
+    },
     "name": "uandcwheelsmobile",
     "slug": "uandcwheelsmobile",
     "version": "1.0.0",
