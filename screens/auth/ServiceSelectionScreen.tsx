@@ -9,18 +9,14 @@ export default function ServiceSelectionScreen() {
   return (
     <View style={styles.container}>
       {/* Logo */}
-      <Image 
-        source={require('../../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
 
       {/* Instruction Text */}
       <Text style={styles.title}>Please select a service</Text>
 
       {/* Service Buttons */}
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.serviceButton, styles.logisticsButton]}
           onPress={() => navigation.navigate('LogisticsHome')}
         >
@@ -28,7 +24,7 @@ export default function ServiceSelectionScreen() {
           <Text style={styles.buttonSubtext}>Ship packages & goods</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.serviceButton, styles.transportButton]}
           onPress={() => navigation.navigate('TransportHome')}
         >

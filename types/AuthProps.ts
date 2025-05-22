@@ -6,10 +6,9 @@ type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-ServiceSelection: undefined;
-LogisticsHome:undefined;
-TransportHome:undefined;
-
+  ServiceSelection: undefined;
+  LogisticsHome: undefined;
+  TransportHome: undefined;
 };
 
 export type WelcomeScreenProps = {

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   Image,
-  Switch
+  Switch,
 } from 'react-native';
 import type { LoginScreenProps } from '../../types/AuthProps';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +20,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   const handleLogin = () => {
     console.log('Login attempted with:', { email, password, rememberMe });
+    navigation.navigate('ServiceSelection'); // New screen after registration
+
     // Add your authentication logic here
   };
 
@@ -35,7 +37,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       >
         <View style={styles.content}>
           <View style={styles.logoContainer}>
-            <Image 
+            <Image
               source={require('../../assets/logo.png')}
               style={styles.logo}
               resizeMode="contain"
@@ -43,7 +45,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
 
           <Text style={styles.title}>Welcome Back</Text>
-          
+
           <TextInput
             style={styles.input}
             placeholder="Email Address"
@@ -52,7 +54,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             value={email}
             onChangeText={setEmail}
           />
-          
+
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -72,12 +74,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               />
               <Text style={styles.rememberText}>Remember me</Text>
             </View>
-            
+
             <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
-          
+
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
