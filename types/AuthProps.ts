@@ -1,6 +1,6 @@
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
 
-type RootStackParamList = {
+export type RootStackParamList = {
   Welcome: undefined;
   Home: undefined;
   Login: undefined;
@@ -9,6 +9,12 @@ type RootStackParamList = {
   ServiceSelection: undefined;
   LogisticsHome: undefined;
   TransportHome: undefined;
+   NewShipment: undefined;
+  TrackPackage: undefined;
+  ShipmentDetails: { id: string };
+  UserProfile: undefined;
+   Notifications: undefined;
+    Settings: undefined;
 };
 
 export type WelcomeScreenProps = {
@@ -29,4 +35,8 @@ export type ForgotPasswordScreenProps = {
 
 export type ServiceSelectionScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'ServiceSelection'>;
+};
+
+export type LogisticsHomeScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'LogisticsHome'>;
 };
