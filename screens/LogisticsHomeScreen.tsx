@@ -1,10 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,  StatusBar, // Add this import
- } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image, // Add this import
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { LogisticsHomeScreenProps } from '../types/AuthProps';
+import { DrawerActions } from '@react-navigation/native';
 
 export default function LogisticsHomeScreen() {
   const navigation = useNavigation<LogisticsHomeScreenProps['navigation']>();
@@ -17,19 +24,19 @@ export default function LogisticsHomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-         {/* Top Navigation Bar */}
+      {/* Top Navigation Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => navigation.toggleDrawer()} // Or open menu
+          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} // Or open menu
         >
           <MaterialIcons name="menu" size={24} color="#333" />
         </TouchableOpacity>
-        
+
         <Text style={styles.screenTitle}>Logistics Dashboard</Text>
-        
+
         <View style={styles.iconsRight}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={() => navigation.navigate('Notifications')}
           >
@@ -38,8 +45,8 @@ export default function LogisticsHomeScreen() {
               <Text style={styles.badgeText}>3</Text>
             </View>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.iconButton, { marginLeft: 15 }]}
             onPress={() => navigation.navigate('Settings')}
           >
@@ -47,7 +54,7 @@ export default function LogisticsHomeScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      
+
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>

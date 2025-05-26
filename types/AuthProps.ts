@@ -1,4 +1,20 @@
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { DrawerNavigationProp } from '@react-navigation/drawer'; // Add this import
+
+
+export type LogisticsDrawerParamList = {
+  LogisticsHome: undefined;
+  Shipments: undefined;
+  Drivers: undefined;
+  Vehicles: undefined;
+  Settings: undefined;
+  UserProfile: undefined;
+  Notifications: undefined;
+  NewShipment: undefined;
+  TrackPackage: undefined;
+  ShipmentDetails: { id: string };
+  // Add other screens here
+};
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -7,14 +23,8 @@ export type RootStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
   ServiceSelection: undefined;
-  LogisticsHome: undefined;
   TransportHome: undefined;
-   NewShipment: undefined;
-  TrackPackage: undefined;
-  ShipmentDetails: { id: string };
-  UserProfile: undefined;
-   Notifications: undefined;
-    Settings: undefined;
+  LogisticsHome: undefined;
 };
 
 export type WelcomeScreenProps = {
@@ -38,5 +48,5 @@ export type ServiceSelectionScreenProps = {
 };
 
 export type LogisticsHomeScreenProps = {
-  navigation: StackNavigationProp<RootStackParamList, 'LogisticsHome'>;
+  navigation: DrawerNavigationProp<LogisticsDrawerParamList, 'LogisticsHome'>;
 };
