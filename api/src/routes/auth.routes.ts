@@ -1,33 +1,25 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { Request, Response } from 'express';
+import { registerValidators, loginValidators } from '../middlewares/input-validators';
 import { AuthService } from '../auth/services/auth.service';
 import { validateRequest } from '../middlewares/validate-request';
 
 const router = Router();
 
 router.post('/register', 
-  [
-    body('email').isEmail().withMessage('Email must be valid'),
-    body('password')
-      .trim()
-      .isLength({ min: 6, max: 20 })
-      .withMessage('Password must be between 6 and 20 characters')
-  ],
+  registerValidators,
   validateRequest,
-  async (req, res) => {
-    const { email, password } = req.body;
-    const user = await AuthService.register(email, password);
+  async (req : Request, res: Response,) => {
+    const {name, email, password } = req.body;
+    const user = await AuthService.register(name, email, password);
     res.status(201).send(user);
   }
 );
 
 router.post('/login',
-  [
-    body('email').isEmail().withMessage('Email must be valid'),
-    body('password').trim().notEmpty().withMessage('Password is required')
-  ],
+loginValidators,
   validateRequest,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const { token, user } = await AuthService.login(email, password);
     res.send({ token, user });

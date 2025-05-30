@@ -1,10 +1,10 @@
 import bcrypt from 'bcryptjs';
 import { User } from '../interfaces/user.interface';
 import { generateToken } from '../utils/auth.utils';
-import db from '../../models'; // Your Sequelize models
+import db from './../../models'; // Your Sequelize models
 
 export class AuthService {
-  static async register(email: string, password: string): Promise<User> {
+  static async register(name: string, email: string, password: string): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, 12);
     return db.User.create({ email, password: hashedPassword });
   }

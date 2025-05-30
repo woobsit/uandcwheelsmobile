@@ -1,6 +1,5 @@
 import { Strategy, ExtractJwt } from 'passport-jwt';
-import { User } from '../../types/user';
-import db from '../../models'; // Your Sequelize models
+import db from './../../models'; // Your Sequelize models
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

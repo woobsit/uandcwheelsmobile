@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use(passport.initialize());
 
 // Routes
-app.use('/api/auth', authRouter);
+app.use('/api/v1/auth', authRouter);
 
 
 // Database
