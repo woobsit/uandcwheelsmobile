@@ -9,7 +9,8 @@ class User extends Model {
   declare email_verified_at: Date | null;
   declare password: string;
   declare remember_token: string | null;
-  declare create_at:Date;
+  declare verification_token: string | null;
+  declare created_at:Date;
   declare updated_at: Date;
 
   static async comparePassword(candidatePassword: string, hashedPassword: string) {
@@ -39,6 +40,10 @@ class User extends Model {
         type: DataTypes.STRING,
         allowNull: false
       },
+       verification_token: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
       remember_token:{type: DataTypes.STRING,
         allowNull: true,
       },

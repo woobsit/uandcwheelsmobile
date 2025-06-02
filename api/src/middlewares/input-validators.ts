@@ -17,12 +17,8 @@ export const registerValidators = [
   // Password validation
   body('password')
     .notEmpty().withMessage('Password is required')
-    .isLength({ min: 8, max: 20 }).withMessage('Password must be between 8-20 characters'),
+    .isLength({ min: 6, max: 20 }).withMessage('Password must be between 8-20 characters'),
    
-
-  // Optional fields (if you're accepting these in registration)
-  body('email_verified_at').optional().isISO8601().toDate(),
-  body('remember_token').optional().isString()
 ];
 
 export const loginValidators = [
