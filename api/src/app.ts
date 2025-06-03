@@ -6,6 +6,8 @@ import passport from './config/passport';
 import morganMiddleware from './config/morgan';
 import { authRouter } from './routes/auth.routes';
 import logger from './config/logger';
+import CronService from './services/cron.service';
+
 
 const app = express();
 
@@ -50,7 +52,10 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // Database
 dbInstance.sync()
-  .then(() => logger.info('Database synced successfully'))
+  .then(() => {
+    logger.info('Database synced successfully');
+ CronService.init(); // Initialize cron jobs
+  })
   .catch((error: Error) => {
     logger.error('Database sync failed', { error: error.message });
     // Don't exit if you want the app to run without DB (e.g., for read-only mode)

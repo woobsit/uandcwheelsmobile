@@ -10,6 +10,7 @@ class User extends Model {
   declare password: string;
   declare remember_token: string | null;
   declare verification_token: string | null;
+  declare verification_token_expires: Date | null;
   declare created_at:Date;
   declare updated_at: Date;
 
@@ -46,6 +47,11 @@ class User extends Model {
     },
       remember_token:{type: DataTypes.STRING,
         allowNull: true,
+      },
+      verification_token_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Expiration time for verification token (24 hours after registration)'
       },
       created_at:{type: DataTypes.DATE,
         allowNull: false,

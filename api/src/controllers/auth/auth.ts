@@ -21,18 +21,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const verificationToken = uuidv4();
-    
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
     const user = await db.User.create({
       name,
       email,
       password: hashedPassword,
       email_verified_at: null,
-      verification_token: verificationToken
+      verification_token: verificationToken,
+      verification_token_expires: verificationExpires
     });
 
-    await EmailService.sendVerificationEmail(email, name, verificationToken);
-
-    logger.info(`New user registered: ${email}`, { userId: user.id });
+    await EmailService.sendVerificationEmail(email, name, verificationToken, verification_token_expires);
 
     res.status(201).json({
       success: true,
@@ -133,9 +133,20 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+      // Check if token has expired
+    if (user.verification_token_expires && new Date() > user.verification_token_expires) {
+      await user.destroy(); // Optional: Clean up expired registration
+      res.status(410).json({ // 410 Gone
+        success: false,
+        message: 'Verification link has expired. Please register again.'
+      });
+      return;
+    }
+
     await user.update({
       email_verified_at: new Date(),
-      verification_token: null
+      verification_token: null,
+      verification_token_expires: null
     });
 
     res.json({

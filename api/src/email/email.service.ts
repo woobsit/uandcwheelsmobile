@@ -14,7 +14,7 @@ class EmailService {
     }
   });
 
-  static async sendVerificationEmail(email: string, name: string, token: string) {
+  static async sendVerificationEmail(email: string, name: string, token: string, token_expires: string ) {
     const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
     
     const templatePath = path.join(__dirname, './templates/verification-email.hbs');
