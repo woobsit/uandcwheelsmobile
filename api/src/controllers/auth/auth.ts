@@ -1,23 +1,22 @@
-// src/controllers/auth.controller.ts
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../../models';
 import EmailService from '../../email/email.service';
-import { generateToken } from '../../utils/auth.utils';
+import { generateToken } from '../../auth/utils/auth.utils';
 import logger from '../../config/logger';
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user exists (normal flow, not an error)
     const existingUser = await db.User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(409).json({
+      res.status(409).json({
         success: false,
         message: 'Email already registered'
       });
+      return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -35,62 +34,64 @@ export const register = async (req: Request, res: Response) => {
 
     logger.info(`New user registered: ${email}`, { userId: user.id });
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: 'Registration successful. Please check your email to verify your account.',
       data: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        hashed: hashedPassword
       }
     });
   } catch (error) {
     logger.error('Registration failed', { 
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Internal server error during registration'
     });
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, remember_token = false } = req.body;
     const user = await db.User.findOne({ where: { email } });
     
     if (!user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
+      return;
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
+      return;
     }
 
     if (!user.email_verified_at) {
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         message: 'Email not verified. Please check your inbox.'
       });
+      return;
     }
 
+ const tokenExpiration = remember_token ? '30d' : '1d'; 
     const payload = { id: user.id, email: user.email };
-    const token = generateToken(payload);
+    const token = generateToken(payload, tokenExpiration);
 
-    // Omit sensitive fields
     const { password: _, verification_token, ...userData } = user.get({ plain: true });
     
-    logger.info(`User logged in: ${email}`, { userId: user.id });
-
-    return res.json({
+    res.json({
       success: true,
       message: 'Login successful',
       data: { 
@@ -103,31 +104,33 @@ export const login = async (req: Request, res: Response) => {
       email: req.body.email,
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Internal server error during login'
     });
   }
 };
 
-export const verifyEmail = async (req: Request, res: Response) => {
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.query;
     
     if (!token || typeof token !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Verification token is required'
       });
+      return;
     }
 
     const user = await db.User.findOne({ where: { verification_token: token } });
     
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Invalid verification token'
       });
+      return;
     }
 
     await user.update({
@@ -135,9 +138,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
       verification_token: null
     });
 
-    logger.info(`Email verified for user: ${user.email}`, { userId: user.id });
-
-    return res.json({
+    res.json({
       success: true,
       message: 'Email verified successfully. You can now log in.'
     });
@@ -146,7 +147,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
       token: req.query.token,
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Internal server error during email verification'
     });

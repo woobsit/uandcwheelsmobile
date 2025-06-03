@@ -37,7 +37,7 @@ class User extends Model {
         allowNull: true,
       },
        password: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(60),
         allowNull: false
       },
        verification_token: {

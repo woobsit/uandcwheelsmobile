@@ -6,18 +6,18 @@ import handlebars from 'handlebars';
 
 class EmailService {
   private static transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'Gmail',
+    host: process.env.EMAIL_SERVICE_HOST!,
+    port: parseInt(process.env.EMAIL_PORT!),
     auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD
+      user: process.env.EMAIL_USERNAME!,
+      pass: process.env.EMAIL_PASSWORD!
     }
   });
 
   static async sendVerificationEmail(email: string, name: string, token: string) {
     const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
     
-    // Read email template
-    const templatePath = path.join(__dirname, '../templates/verification-email.hbs');
+    const templatePath = path.join(__dirname, './templates/verification-email.hbs');
     const templateSource = fs.readFileSync(templatePath, 'utf8');
     const template = handlebars.compile(templateSource);
     

@@ -1,8 +1,11 @@
 export interface User {
   id: number;
+  name: string;
   email: string;
   password: string;
-  role?: 'user' | 'admin';
+  remember_token: string;
+  email_verified_at?: Date;
+  verification_token: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

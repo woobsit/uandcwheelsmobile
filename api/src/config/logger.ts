@@ -20,7 +20,7 @@ const logger = winston.createLogger({
       format: combine(colorize(), logFormat)
     }),
     new DailyRotateFile({
-      filename: 'config/logs/application-%DATE%.log',
+      filename: 'src/config/logs/application-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
@@ -28,7 +28,7 @@ const logger = winston.createLogger({
     }),
     new DailyRotateFile({
       level: 'error',
-      filename: 'config/logs/error-%DATE%.log',
+      filename: 'src/config/logs/error-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',

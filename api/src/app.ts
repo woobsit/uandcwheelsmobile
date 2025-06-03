@@ -5,9 +5,7 @@ import dbInstance from './config/database';
 import passport from './config/passport';
 import morganMiddleware from './config/morgan';
 import { authRouter } from './routes/auth.routes';
-import { errorHandler } from './middlewares/error-handler';
-
-
+import logger from './config/logger';
 
 const app = express();
 
@@ -15,17 +13,48 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(passport.initialize());
-app.use(errorHandler);
+app.use(morganMiddleware);
 
 // Routes
 app.use('/api/v1/auth', authRouter);
 
-// Request logging
-app.use(morganMiddleware);
+
+// Global error catcher for unhandled rejections
+process.on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {
+  logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason.message || reason}`);
+  // Optionally exit the process
+  // process.exit(1);
+});
+
+// Global error catcher for uncaught exceptions
+process.on('uncaughtException', (error: Error) => {
+  logger.error(`Uncaught Exception: ${error.message}`, { stack: error.stack });
+  // Optionally exit the process
+  // process.exit(1);
+});
+
+// Final fallback error handler (for any errors that slip through)
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  logger.error('Unhandled error', { 
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method
+  });
+
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error'
+  });
+});
 
 // Database
 dbInstance.sync()
-  .then(() => console.log('Database synced'))
-  .catch((error: Error) => console.error('Database sync failed:', error));
+  .then(() => logger.info('Database synced successfully'))
+  .catch((error: Error) => {
+    logger.error('Database sync failed', { error: error.message });
+    // Don't exit if you want the app to run without DB (e.g., for read-only mode)
+    // process.exit(1);
+  });
 
 export default app;

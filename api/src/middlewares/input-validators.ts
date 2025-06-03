@@ -17,8 +17,16 @@ export const registerValidators = [
   // Password validation
   body('password')
     .notEmpty().withMessage('Password is required')
-    .isLength({ min: 6, max: 20 }).withMessage('Password must be between 8-20 characters'),
+    .isLength({ min: 6, max: 20 }).withMessage('Password must be between 6-20 characters'),
    
+    body('confirmPassword')
+    .notEmpty().withMessage('Confirm Password is required')
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    })
 ];
 
 export const loginValidators = [
@@ -32,4 +40,9 @@ export const loginValidators = [
   // Password validation
   body('password')
     .notEmpty().withMessage('Password is required'),  
+
+     body('rememberMe')
+    .optional()
+    .isBoolean().withMessage('Remember me must be a boolean')
+    .toBoolean() // Convert string 'true'/'false' to boolean
 ];
