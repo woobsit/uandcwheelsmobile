@@ -1,19 +1,22 @@
 import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
 import dbInstance from './config/database';
 import passport from './config/passport';
 import morganMiddleware from './config/morgan';
 import { authRouter } from './routes/auth.routes';
 import logger from './config/logger';
 import CronService from './services/cron.service';
+import { securityMiddlewares } from './middlewares/security';
+import { globalRateLimiter } from './middlewares/rateLimiter';
+import { createServer } from 'http';
 
 
 const app = express();
+const server = createServer(app);
 
 // Middleware
-app.use(cors());
-app.use(bodyParser.json());
+app.use(globalRateLimiter); // Apply globally
+app.use(securityMiddlewares);
+
 app.use(passport.initialize());
 app.use(morganMiddleware);
 
@@ -53,8 +56,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 // Database
 dbInstance.sync()
   .then(() => {
-    logger.info('Database synced successfully');
- CronService.init(); // Initialize cron jobs
+    CronService.init(); // Initialize cron jobs
+    logger.info('Database synced successfully', CronService.getSchedules());
   })
   .catch((error: Error) => {
     logger.error('Database sync failed', { error: error.message });
@@ -62,4 +65,4 @@ dbInstance.sync()
     // process.exit(1);
   });
 
-export default app;
+export { app, server };  // Explicitly export both

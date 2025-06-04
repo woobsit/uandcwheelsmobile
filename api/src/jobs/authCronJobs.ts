@@ -23,3 +23,23 @@ export const cleanExpiredRegistrations = async () => {
     throw error;
   }
 };
+
+export const cleanExpiredPasswordResetTokens = async () => {
+  try {
+    const result = await db.PasswordResetToken.destroy({
+      where: {
+        created_at: {
+          [Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000) // Older than 24 hours
+        }
+      }
+    });
+    
+    logger.info(`Cleaned up ${result} expired password reset table`);
+    return result;
+  } catch (error) {
+    logger.error('Failed to clean expired password reset table', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    throw error;
+  }
+};

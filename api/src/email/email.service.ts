@@ -14,7 +14,7 @@ class EmailService {
     }
   });
 
-  static async sendVerificationEmail(email: string, name: string, token: string, token_expires: string ) {
+  static async sendVerificationEmail(email: string, name: string, token: string, expiresAt: Date ) {
     const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
     
     const templatePath = path.join(__dirname, './templates/verification-email.hbs');
@@ -24,7 +24,8 @@ class EmailService {
     const html = template({
       name,
       verificationUrl,
-      supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com'
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com',
+       expirationTime: expiresAt.toLocaleString(),
     });
 
     await this.transporter.sendMail({
@@ -34,6 +35,34 @@ class EmailService {
       html
     });
   }
+
+  // src/email/email.service.ts
+static async sendPasswordResetEmail(
+  email: string,
+  name: string,
+  token: string,
+  expiresAt: Date
+) {
+  const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+  
+  const templatePath = path.join(__dirname, './templates/password-reset-email.hbs');
+  const templateSource = fs.readFileSync(templatePath, 'utf8');
+  const template = handlebars.compile(templateSource);
+  
+  const html = template({
+    name,
+    resetUrl,
+    expirationTime: expiresAt.toLocaleString(),
+    supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com'
+  });
+
+  await this.transporter.sendMail({
+    from: `"${process.env.EMAIL_FROM_NAME || 'App Team'}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+    to: email,
+    subject: 'Password Reset Request',
+    html
+  });
+}
 }
 
 export default EmailService;

@@ -10,10 +10,14 @@
 <body>
     <div class="container">
         <h2>Hello {{name}},</h2>
-        <p>Thank you for registering with us. Please verify your email within 24 hours by clicking this link 
-        This link will expire at {{expirationTime}}.</p>
+        <p>Thank you for registering with us. Please verify your email address to complete your registration.</p>
         <p>
             <a href="{{verificationUrl}}" class="button">Verify Email Address</a>
+        </p>
+
+         <p class="expiry-notice">
+            This verification link will expire on:<br>
+            {{expirationTime}}
         </p>
         <p>If the button doesn't work, copy and paste this link into your browser:</p>
         <p><a href="{{verificationUrl}}">{{verificationUrl}}</a></p>

@@ -46,3 +46,34 @@ export const loginValidators = [
     .isBoolean().withMessage('Remember me must be a boolean')
     .toBoolean() // Convert string 'true'/'false' to boolean
 ];
+
+// src/middlewares/input-validators.ts
+export const forgotPasswordValidators = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Email must be valid')
+    .normalizeEmail()
+];
+
+export const verifyEmailValidators = [
+  body('token')
+    .notEmpty().withMessage('Token is required')];
+
+export const resetPasswordValidators = [
+  body('token')
+    .notEmpty().withMessage('Token is required'),
+    
+  body('password')
+    .notEmpty().withMessage('Password is required')
+    .isLength({ min: 6, max: 20 }).withMessage('Password must be between 6-20 characters'),
+    
+  body('confirmPassword')
+    .notEmpty().withMessage('Confirm Password is required')
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    })
+];
