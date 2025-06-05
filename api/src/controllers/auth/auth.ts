@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../../models';
 import EmailService from '../../email/email.service';
 import PasswordResetToken from '../../models/passwordResetToken.model';
-import { generateToken } from '../../auth/utils/auth.utils';
+import { generateToken } from '../../middlewares/auth/verify';
 import logger from '../../config/logger';
 import { Op } from 'sequelize';
 

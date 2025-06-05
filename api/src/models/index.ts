@@ -1,5 +1,5 @@
 import { Sequelize } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../config/config';
 import User from './user.model';
 import PasswordResetToken from './passwordResetToken.model';
 

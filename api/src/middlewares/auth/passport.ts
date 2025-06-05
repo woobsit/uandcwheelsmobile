@@ -1,5 +1,5 @@
 import passport from 'passport';
-import { jwtStrategy } from './../utils/auth/jwt.strategy';
+import { jwtStrategy } from './jwt.strategy';
 
 passport.use(jwtStrategy);
 

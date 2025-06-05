@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { UserPayload } from '../interfaces/user.interface';
+import { UserPayload } from '../../types/user.interface';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -9,4 +9,5 @@ export const generateToken = (payload: UserPayload, tokenExpiration: string): st
 
 export const verifyToken = (token: string): UserPayload => {
   return jwt.verify(token, JWT_SECRET) as UserPayload;
-}; 
+};
+

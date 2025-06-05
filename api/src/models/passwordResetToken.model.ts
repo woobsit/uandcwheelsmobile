@@ -1,6 +1,6 @@
 // src/models/passwordResetToken.model.ts
 import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../config/config';
 
 class PasswordResetToken extends Model {
   declare email: string;

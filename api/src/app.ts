@@ -1,6 +1,6 @@
 import express from 'express';
-import dbInstance from './config/database';
-import passport from './config/passport';
+import dbInstance from './config/config';
+import passport from './middlewares/auth/passport';
 import morganMiddleware from './config/morgan';
 import { authRouter } from './routes/auth.routes';
 import logger from './config/logger';
