@@ -1,4 +1,3 @@
-// jest.config.js
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -7,9 +6,14 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json'
-    }
-  }
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true // Helps with type issues
+    }]
+  },
+  globalSetup: '<rootDir>/src/test/setup.ts',
+  globalTeardown: '<rootDir>/src/test/teardown.ts',
+  detectOpenHandles: true,
+  forceExit: true
 };

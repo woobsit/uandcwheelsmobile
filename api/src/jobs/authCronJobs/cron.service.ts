@@ -1,6 +1,6 @@
 // src/services/cron.service.ts
 import cron from 'node-cron';
-import { cleanExpiredRegistrations, cleanExpiredPasswordResetTokens } from '../jobs/authCronJobs';
+import { cleanExpiredRegistrations, cleanExpiredPasswordResetTokens } from '../jobs/cleanExpiredRegistrations';
 import logger from '../config/logger';
 
 class CronService {
