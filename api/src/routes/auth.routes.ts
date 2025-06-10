@@ -20,7 +20,7 @@ loginValidators,
   login
 );
 
-router.post('/verifyEmail',
+router.post('/verify-email',
 verifyEmailValidators,
   validateRequest,
   verifyEmail

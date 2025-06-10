@@ -11,9 +11,8 @@
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "migration:create": "npx sequelize-cli migration:generate --name",
-    "test": "cross-env NODE_ENV=test jest --config jest.config.js",
-  "test:watch": "cross-env NODE_ENV=test jest --watch --config jest.config.js",
-  "test:coverage": "cross-env NODE_ENV=test jest --coverage --detectOpenHandles --forceExit"
+   "test": "jest",
+  "test:watch": "jest --watch"
   },
   "author": "",
   "license": "ISC",

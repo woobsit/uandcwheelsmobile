@@ -1,19 +1,15 @@
+// jest.config.js
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/__tests__/**/*.test.ts'],
+  // Corrected path for setup.ts:
+  // It's in the 'test' directory, relative to your project root.
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
-  },
-  transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-      isolatedModules: true // Helps with type issues
-    }]
-  },
-  globalSetup: '<rootDir>/src/test/setup.ts',
-  globalTeardown: '<rootDir>/src/test/teardown.ts',
-  detectOpenHandles: true,
-  forceExit: true
+  testMatch: [
+    // Corrected path for your test files:
+    // They are inside 'test/__tests__'.
+    '<rootDir>/src/test/__tests__/**/*.test.ts'
+  ],
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  testTimeout: 10000,
 };

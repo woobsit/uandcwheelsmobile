@@ -1,6 +1,6 @@
 // src/jobs/cleanExpiredRegistrations.ts
-import db from '../models';
-import logger from '../config/logger';
+import db from '../../models';
+import logger from '../../config/logger';
 import { Op } from 'sequelize';
 
 export const cleanExpiredRegistrations = async () => {
