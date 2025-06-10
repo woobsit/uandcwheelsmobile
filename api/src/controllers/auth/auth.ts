@@ -273,4 +273,12 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       message: 'Failed to reset password'
     });
   }
+}
+  // New Logout Endpoint
+export const logout = async (req: Request, res: Response): Promise<void> => {
+    res.status(200).json({
+        success: true,
+        message: 'Logged out successfully'
+    });
+
 };

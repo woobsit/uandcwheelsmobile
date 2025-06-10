@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { registerValidators, loginValidators, verifyEmailValidators, forgotPasswordValidators, resetPasswordValidators } from '../middlewares/input-validators';
 import { validateRequest } from '../middlewares/validate-request';
-import { register, login, verifyEmail, forgotPassword, resetPassword } from '../controllers/auth/auth';
+import { register, login, verifyEmail, forgotPassword, resetPassword, logout } from '../controllers/auth/auth';
 import { authLimiter  } from './../middlewares/rateLimiter';
 
 
@@ -20,7 +20,7 @@ loginValidators,
   login
 );
 
-router.post('/verify-email',
+router.get('/verify-email',
 verifyEmailValidators,
   validateRequest,
   verifyEmail
@@ -33,10 +33,13 @@ router.post('/forgot-password',
 );
 
 router.post('/reset-password',
-    authLimiter,
+  authLimiter,
   resetPasswordValidators,
   validateRequest,
   resetPassword
 );
+
+router.post('/logout', logout); 
+
 
 export { router as authRouter };
