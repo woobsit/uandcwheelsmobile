@@ -29,3 +29,18 @@ export interface DbConfig extends Options {
     charset: string;
   };
 }
+
+export declare namespace Express {
+  interface User {
+    id: number;
+    email: string;
+    // Add other user properties as needed
+  }
+}
+
+export interface IUserProfile {
+  phone?: string;
+  address?: string;
+  birth_date?: Date | string;
+  preferred_payment_method?: 'credit_card' | 'paypal' | 'bank_transfer' | 'cash';
+}

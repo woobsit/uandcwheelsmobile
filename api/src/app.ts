@@ -7,6 +7,8 @@ import CronService from './jobs/authCronJobs/cron.service';
 import { securityMiddlewares } from './middlewares/security';
 import { globalRateLimiter } from './middlewares/rateLimiter';
 import { createServer } from 'http';
+import userRouter from './routes/user.routes';
+
 
 const app = express();
 const server = createServer(app);
@@ -24,6 +26,11 @@ app.use(morganMiddleware);
 // It's good practice to place the routes after all general middlewares
 import { authRouter } from './routes/auth.routes';
 app.use('/api/v1/auth', authRouter);
+
+
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter); // Add this line
+
 
 // Global error catcher for unhandled rejections
 process.on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {

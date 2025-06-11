@@ -1,26 +1,47 @@
-2025-06-11 11:54:38 error: Database sync failed
-2025-06-11 11:54:59 info: f0f373a2-c11e-40f9-9e01-ff6af8b586e1
-2025-06-11 11:54:59 info: [object Object]
-2025-06-11 11:55:19 info: Test database connection closed
-2025-06-11 12:03:47 error: Database sync failed
-2025-06-11 12:04:24 info: Test database connection closed
-2025-06-11 13:48:19 error: Database sync failed
-2025-06-11 13:48:56 info: Test database connection closed
-2025-06-11 14:33:14 error: Database sync failed
-2025-06-11 14:33:22 error: Registration failed
-2025-06-11 14:33:26 error: Registration failed
-2025-06-11 14:33:31 error: Registration failed
-2025-06-11 14:33:36 error: Registration failed
-2025-06-11 14:33:39 error: Forgot password failed
-2025-06-11 14:33:43 error: Registration failed
-2025-06-11 14:33:46 error: Forgot password failed
-2025-06-11 14:33:49 info: Test database connection closed
-2025-06-11 14:42:39 error: Database sync failed
-2025-06-11 14:42:44 error: Registration failed
-2025-06-11 14:42:49 error: Registration failed
-2025-06-11 14:42:53 error: Registration failed
-2025-06-11 14:42:58 error: Registration failed
-2025-06-11 14:43:00 error: Forgot password failed
-2025-06-11 14:43:04 error: Registration failed
-2025-06-11 14:43:06 error: Forgot password failed
-2025-06-11 14:43:09 info: Test database connection closed
+2025-06-11 16:14:17 error: Database sync failed
+2025-06-11 16:14:22 error: Registration failed
+2025-06-11 16:14:26 error: Registration failed
+2025-06-11 16:14:31 error: Registration failed
+2025-06-11 16:14:35 error: Registration failed
+2025-06-11 16:14:38 error: Forgot password failed
+2025-06-11 16:14:42 error: Registration failed
+2025-06-11 16:14:45 error: Forgot password failed
+2025-06-11 16:14:47 info: Test database connection closed
+2025-06-11 16:15:31 info: Server running on port 5000
+2025-06-11 16:15:31 info: Cron jobs initialized
+2025-06-11 16:15:31 info: Database synced successfully
+2025-06-11 16:54:46 info: Server running on port 5000
+2025-06-11 16:54:46 info: Cron jobs initialized
+2025-06-11 16:54:46 info: Database synced successfully
+2025-06-11 16:55:32 info: Server running on port 5000
+2025-06-11 16:55:32 info: Cron jobs initialized
+2025-06-11 16:55:32 info: Database synced successfully
+2025-06-11 16:56:47 info: Server running on port 5000
+2025-06-11 16:56:48 info: Cron jobs initialized
+2025-06-11 16:56:48 info: Database synced successfully
+2025-06-11 16:57:11 info: Server running on port 5000
+2025-06-11 16:57:11 info: Cron jobs initialized
+2025-06-11 16:57:11 info: Database synced successfully
+2025-06-11 17:00:00 info: Running expired password reset tokens cleanup
+2025-06-11 17:00:00 info: Cleaned up 0 expired password reset table
+2025-06-11 17:05:26 info: Server running on port 5000
+2025-06-11 17:05:26 info: Cron jobs initialized
+2025-06-11 17:05:27 info: Database synced successfully
+2025-06-11 17:10:11 info: Server running on port 5000
+2025-06-11 17:10:11 info: Cron jobs initialized
+2025-06-11 17:10:11 info: Database synced successfully
+2025-06-11 17:10:23 info: Server running on port 5000
+2025-06-11 17:10:23 info: Cron jobs initialized
+2025-06-11 17:10:24 info: Database synced successfully
+2025-06-11 17:11:25 info: Server running on port 5000
+2025-06-11 17:11:25 info: Cron jobs initialized
+2025-06-11 17:11:25 info: Database synced successfully
+2025-06-11 17:12:16 info: Server running on port 5000
+2025-06-11 17:12:16 info: Cron jobs initialized
+2025-06-11 17:12:16 info: Database synced successfully
+2025-06-11 17:13:56 info: Server running on port 5000
+2025-06-11 17:13:56 info: Cron jobs initialized
+2025-06-11 17:13:56 info: Database synced successfully
+2025-06-11 17:14:18 info: Server running on port 5000
+2025-06-11 17:14:18 info: Cron jobs initialized
+2025-06-11 17:14:18 info: Database synced successfully
