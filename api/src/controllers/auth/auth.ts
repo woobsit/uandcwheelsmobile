@@ -118,7 +118,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.query;
-    
     if (!token || typeof token !== 'string') {
       res.status(400).json({
         success: false,
@@ -153,7 +152,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       verification_token_expires: null
     });
 
-    res.json({
+   res.status(200).json({
       success: true,
       message: 'Email verified successfully. You can now log in.'
     });
@@ -176,7 +175,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     if (!user) {
       // Security: Don't reveal if email exists
-      res.json({
+      res.status(200).json({
         success: true,
         message: 'If an account exists, you will receive a password reset link'
       });
@@ -201,7 +200,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       expiresAt
     );
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: 'Password reset link sent to your email'
     });
@@ -260,7 +259,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       where: { email: tokenRecord.email } 
     });
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: 'Password updated successfully'
     });

@@ -1,4 +1,4 @@
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 
 export const registerValidators = [
   // Name validation
@@ -57,9 +57,10 @@ export const forgotPasswordValidators = [
 ];
 
 export const verifyEmailValidators = [
-  body('token')
-    .notEmpty().withMessage('Token is required')];
-
+  query('token') 
+    .notEmpty().withMessage('Verification token is required')
+    .isString().withMessage('Verification token must be a string') // Add type check
+];
 export const resetPasswordValidators = [
   body('token')
     .notEmpty().withMessage('Token is required'),

@@ -1,7 +1,7 @@
 // src/__mocks__/email/email.service.ts
 const EmailService = {
   sendVerificationEmail: jest.fn(async (email: string, name: string, token: string, expires: Date) => {
-    console.log(`Mock EmailService: Verification email sent to ${email} with token ${token}`);
+    console.log(`Mock EmailService: Verification email sent to ${email}, ${name} with token ${token} and expires on ${expires}`);
     // You can store these calls in a mock property for later assertions if needed
     // EmailService.sendVerificationEmail.mock.calls.push({ email, name, token, expires });
   }),

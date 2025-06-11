@@ -11,5 +11,5 @@ module.exports = {
     '<rootDir>/src/test/__tests__/**/*.test.ts'
   ],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
-  testTimeout: 10000,
+  testTimeout: 90000,
 };

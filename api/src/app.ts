@@ -58,6 +58,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 dbInstance.sync()
   .then(() => {
+
     CronService.init(); // Initialize cron jobs
     logger.info('Database synced successfully', CronService.getSchedules());
   })

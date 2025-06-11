@@ -5,6 +5,7 @@ import dbInstance from '../../config/config';
 import User from '../../models/user.model'; // Import User model directly
 import PasswordResetToken from '../../models/passwordResetToken.model'; // Import PasswordResetToken model directly
 import EmailService from '../../email/email.service'; // Import the service to spy on it (will be mocked automatically)
+import logger from '../../config/logger';
 
 // Use a describe block to group related tests and manage setup/teardown for this group
 describe('Auth API Endpoints', () => {
@@ -189,7 +190,6 @@ describe('Auth API Endpoints', () => {
         if (userToVerify) {
             await userToVerify.update({ email_verified_at: new Date(), verification_token: null });
         }
-
 
         const response = await request(app)
             .post('/api/v1/auth/forgot-password')
