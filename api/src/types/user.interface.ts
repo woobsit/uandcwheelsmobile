@@ -36,6 +36,10 @@ export declare namespace Express {
     email: string;
     // Add other user properties as needed
   }
+
+  interface Request {
+    user?: User;
+  }
 }
 
 export interface IUserProfile {

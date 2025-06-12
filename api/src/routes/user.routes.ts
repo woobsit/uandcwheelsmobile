@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import passport from 'passport';
-import UserController from '../controllers/user.controller';
-import { updateProfileValidations } from '../validations/user.validations';
+import {getCurrentUser, updateProfile} from '../controllers/user';
+import { updateProfileValidations } from '../middlewares/input-validators';
 
 const router = Router();
 

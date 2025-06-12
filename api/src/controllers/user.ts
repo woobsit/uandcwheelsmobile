@@ -4,7 +4,7 @@ import logger from '../config/logger';
 import { validationResult } from 'express-validator';
 
 
- export const getCurrentUser = async (req: Request, res: Response) => {
+ export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
     try {
       // req.user is set by passport.js authentication middleware
       const user = await db.User.findByPk(req.user.id, {
@@ -12,13 +12,14 @@ import { validationResult } from 'express-validator';
       });
 
       if (!user) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'User not found',
         });
+         return;
       }
 
-      return res.json({
+     res.json({
         success: true,
         data: user,
       });
@@ -34,13 +35,14 @@ import { validationResult } from 'express-validator';
   /**
    * Update user profile
    */
- export const updateProfile = async (req: Request, res: Response) => {
+ export const updateProfile = async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         errors: errors.array(),
       });
+       return;
     }
 
     try {
@@ -48,10 +50,11 @@ import { validationResult } from 'express-validator';
 
       const user = await db.User.findByPk(req.user.id);
       if (!user) {
-        return res.status(404).json({
+         res.status(404).json({
           success: false,
           message: 'User not found',
         });
+        return;
       }
 
       // Only update allowed fields
@@ -64,7 +67,7 @@ import { validationResult } from 'express-validator';
 
       await user.update(updatedFields);
 
-      return res.json({
+      res.json({
         success: true,
         data: {
           id: user.id,
@@ -76,7 +79,7 @@ import { validationResult } from 'express-validator';
       });
     } catch (error) {
       logger.error('Failed to update user profile', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Internal server error',
       });

@@ -1,4 +1,5 @@
 import { body, query } from 'express-validator';
+import { RequestHandler } from 'express';
 
 export const registerValidators = [
   // Name validation
@@ -79,23 +80,20 @@ export const resetPasswordValidators = [
     })
 ];
 
-export const updateProfileValidations = [
+export const updateProfileValidations: RequestHandler = [
   body('phone')
-    .optional()
     .isString()
-    .withMessage('Phone must be a string')
+    .withMessage('Phone must be a number')
     .isLength({ min: 11, max: 11 })
-    .withMessage('Phone must be between 10-15 characters'),
+    .withMessage('Phone must be 11 characters'),
   
   body('address')
-    .optional()
     .isString()
     .withMessage('Address must be a string')
     .isLength({ max: 255 })
     .withMessage('Address too long'),
     
   body('birth_date')
-    .optional()
     .isISO8601()
     .withMessage('Invalid date format. Use YYYY-MM-DD'),
     
