@@ -1,0 +1,43 @@
+<!-- src/services/templates/booking-confirmation.hbs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .details { margin: 20px 0; }
+        .ticket { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .footer { margin-top: 20px; font-size: 0.9em; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">Booking Confirmation</h1>
+        
+        <p>Dear {{name}},</p>
+        <p>Thank you for booking with {{companyName}}. Here are your trip details:</p>
+        
+        <div class="ticket">
+            <h3>Trip Information</h3>
+            <p><strong>Booking Reference:</strong> {{booking.reference}}</p>
+            <p><strong>Departure:</strong> {{trip.departure_location}} at {{formatTime trip.departure_time}}</p>
+            <p><strong>Arrival:</strong> {{trip.arrival_location}} (Estimated: {{formatTime trip.estimated_arrival}})</p>
+            <p><strong>Bus:</strong> {{bus.brand}} ({{bus.plate_number}})</p>
+            <p><strong>Seats:</strong> {{join booking.seats}}</p>
+            <p><strong>Total Paid:</strong> {{formatCurrency booking.total_amount}}</p>
+        </div>
+
+        <div class="details">
+            <h3>Important Information</h3>
+            <p>Please arrive at least 30 minutes before departure.</p>
+            <p>Present this email or your booking reference at the terminal.</p>
+        </div>
+
+        <div class="footer">
+            <p>Need help? Contact us at {{supportEmail}}</p>
+            <p>Safe travels!</p>
+            <p>The {{companyName}} Team</p>
+        </div>
+    </div>
+</body>
+</html>

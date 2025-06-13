@@ -63,6 +63,64 @@ static async sendPasswordResetEmail(
     html
   });
 }
+
+static async sendBookingConfirmation(
+    email: string,
+    name: string,
+    bookingDetails: {
+      reference: string;
+      seats: number[];
+      total_amount: number;
+      trip: {
+        departure_location: string;
+        arrival_location: string;
+        departure_time: Date;
+        estimated_arrival: Date;
+      };
+      bus: {
+        brand: string;
+        plate_number: string;
+      };
+    }
+  ) {
+    const templatePath = path.join(__dirname, './templates/booking-confirmation.hbs');
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    
+    // Register Handlebars helpers
+    handlebars.registerHelper('formatTime', (date: Date) => {
+      return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    });
+
+    handlebars.registerHelper('formatCurrency', (amount: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount);
+    });
+
+    handlebars.registerHelper('join', (array: any[]) => {
+      return array.join(', ');
+    });
+
+    const template = handlebars.compile(templateSource);
+    
+    const html = template({
+      name,
+      companyName: process.env.COMPANY_NAME || 'Our Bus Service',
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com',
+      booking: bookingDetails,
+      trip: bookingDetails.trip,
+      bus: bookingDetails.bus
+    });
+
+    await this.transporter.sendMail({
+      from: `"${process.env.EMAIL_FROM_NAME || 'Booking Service'}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+      to: email,
+      subject: `Your Booking Confirmation #${bookingDetails.reference}`,
+      html
+    });
+  }
+
 }
 
 export default EmailService;

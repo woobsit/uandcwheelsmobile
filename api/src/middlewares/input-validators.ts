@@ -1,5 +1,4 @@
 import { body, query } from 'express-validator';
-import { RequestHandler } from 'express';
 
 export const registerValidators = [
   // Name validation
@@ -80,7 +79,7 @@ export const resetPasswordValidators = [
     })
 ];
 
-export const updateProfileValidations: RequestHandler = [
+export const updateProfileValidations = [
   body('phone')
     .isString()
     .withMessage('Phone must be a number')
@@ -103,4 +102,17 @@ export const updateProfileValidations: RequestHandler = [
     .withMessage('Payment method must be a string')
     .isIn(['credit_card', 'paypal', 'bank_transfer', 'cash'])
     .withMessage('Invalid payment method'),
+];
+
+export const searchTripsValidations = [
+  query('from').notEmpty().isString(),
+  query('to').notEmpty().isString(),
+  query('date').isISO8601().toDate()
+];
+
+export const createBookingValidations = [
+  body('trip_id').isInt().toInt(),
+  body('seats').isArray({ min: 1 }),
+  body('seats.*').isInt({ min: 1, max: 50 }), // Assuming 50 seats per bus
+  body('payment_method').isIn(['credit_card', 'mobile_money', 'bank_transfer'])
 ];
