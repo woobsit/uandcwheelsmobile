@@ -1,0 +1,19 @@
+const { Sequelize } = require( 'sequelize');
+const sequelize = require( '../config/config');
+const User = require( './user.model');
+const PasswordResetToken = require( './passwordResetToken.model');
+const Bus = require( './bus.model');
+const Trip = require( './trip.model');
+
+// No need to call initialize here since it's done in user.model.ts
+
+const db = {
+  sequelize,  // The Sequelize instance
+  Sequelize,  // Sequelize class
+  User,        // Your User model
+  PasswordResetToken,
+  Bus,
+  Trip
+};
+
+module.exports = db;
