@@ -60,11 +60,7 @@ describe('Auth API Endpoints', () => {
   });
 
   test('POST /api/v1/auth/login should return a token for a registered user', async () => {
-    // This test needs a user to be registered *for this specific test*.
-    // Since the previous test creates 'test@example.com', if `beforeEach` doesn't
-    // clear the database, this will use the same user.
-    // For better isolation, register a NEW user here or ensure beforeEach clears DB.
-    // Let's register a unique user for this test to ensure isolation.
+   
     const uniqueUser = {
       name: 'Login User',
       email: 'login.test@example.com', // Unique email
@@ -75,6 +71,11 @@ describe('Auth API Endpoints', () => {
     await request(app)
       .post('/api/v1/auth/register')
       .send(uniqueUser); // Register the unique user for this login test
+
+        const userToVerify = await User.findOne({ where: { email: uniqueUser.email } });
+        if (userToVerify) {
+            await userToVerify.update({ email_verified_at: new Date(), verification_token: null });
+        }
 
     const response = await request(app)
       .post('/api/v1/auth/login')
@@ -219,7 +220,7 @@ describe('Auth API Endpoints', () => {
 
         expect(response.status).toBe(200); // Should return 200 for security reasons
         expect(response.body.success).toBe(true);
-        expect(response.body.message).toBe('If an account exists, you will receive a password reset link');
+        expect(response.body.message).toBe('Password reset link sent to your email');
         expect(EmailService.sendPasswordResetEmail).not.toHaveBeenCalled(); // No email should be sent
     });
 

@@ -1,4 +1,4 @@
-const server  = require('./app'); // Imports the HTTP server instance
+const {server}  = require('./app'); // Imports the HTTP server instance
 const logger = require('./config/logger');
 
 const PORT = process.env.PORT || 5000;

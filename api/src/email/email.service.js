@@ -3,12 +3,8 @@ const nodemailer =require( 'nodemailer');
 const path =require( 'path');
 const fs =require( 'fs');
 const handlebars =require( 'handlebars');
-const { fileURLToPath } =require( 'url');
-const { dirname } =require( 'path');
 
 // Get current directory path for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 class EmailService {
    static transporter = nodemailer.createTransport({

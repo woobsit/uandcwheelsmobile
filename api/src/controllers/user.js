@@ -84,4 +84,4 @@ const { validationResult } = require( 'express-validator');
     }
   }
 
-  module.export = {getCurrentUser, updateProfile}
+  module.exports = {getCurrentUser, updateProfile}

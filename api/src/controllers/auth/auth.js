@@ -1,58 +1,56 @@
 const bcrypt = require( 'bcryptjs');
-const { uuid } = require( 'uuid');
+const uuid  = require('uuid');
 const db = require( '../../models/index');
 const EmailService = require( '../../email/email.service');
 const PasswordResetToken = require( '../../models/passwordResetToken.model');
 const { generateToken } = require( '../../middlewares/auth/verify');
 const logger = require( '../../config/logger');
 const { Op } = require( 'sequelize');
+const dbInstance = require('../../config/config');
 
-const uuidv4 = uuid.v4;
 
 const register = async (req, res) => {
   try {
+    
     const { name, email, password } = req.body;
 
     const existingUser = await db.User.findOne({ where: { email } });
     if (existingUser) {
-      res.status(409).json({
+     return res.status(409).json({
         success: false,
         message: 'Email already registered'
       });
-      return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const verificationToken = uuidv4();
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+     const verificationToken = uuid.v4();
+     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
-    const user = await db.User.create({
-      name,
-      email,
-      password: hashedPassword,
-      email_verified_at: null,
-      verification_token: verificationToken,
-      verification_token_expires: verificationExpires
-    });
+     const user = await db.User.create({
+       name,
+       email,
+       password,
+       email_verified_at: null,
+       verification_token: verificationToken,
+       verification_token_expires: verificationExpires
+     });
 
    
-    await EmailService.sendVerificationEmail(email, name, verificationToken, verificationExpires);
+     //await EmailService.sendVerificationEmail(email, name, verificationToken, verificationExpires);
 
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        hashed: hashedPassword
-      }
-    });
+    return res.status(201).json({
+       success: true,
+       message: 'Registration successful. Please check your email to verify your account.',
+       data: {
+         id: user.id,
+         name: user.name,
+         email: user.email,
+       }
+     });
   } catch (error) {
     logger.error('Registration failed', { 
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    res.status(500).json({
+   return res.status(500).json({
       success: false,
       message: 'Internal server error during registration'
     });
@@ -65,28 +63,26 @@ const register = async (req, res) => {
     const user = await db.User.findOne({ where: { email } });
     
     if (!user) {
-      res.status(401).json({
+    return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
       });
-      return;
+      return
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({
+     return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
       });
-      return;
     }
 
     if (!user.email_verified_at) {
-      res.status(403).json({
+     return res.status(403).json({
         success: false,
         message: 'Email not verified. Please check your inbox.'
       });
-      return;
     }
 
  const tokenExpiration = remember_token ? '30d' : '1d'; 
@@ -108,7 +104,7 @@ const register = async (req, res) => {
       email: req.body.email,
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    res.status(500).json({
+   return res.status(500).json({
       success: false,
       message: 'Internal server error during login'
     });
@@ -119,27 +115,26 @@ const register = async (req, res) => {
   try {
     const { token } = req.query;
     if (!token || typeof token !== 'string') {
-      res.status(400).json({
+     return res.status(400).json({
         success: false,
         message: 'Verification token is required'
       });
-      return;
     }
 
     const user = await db.User.findOne({ where: { verification_token: token } });
     
     if (!user) {
-      res.status(404).json({
+     return res.status(404).json({
         success: false,
         message: 'Invalid verification token'
       });
-      return;
+      
     }
 
       // Check if token has expired
     if (user.verification_token_expires && new Date() > user.verification_token_expires) {
       await user.destroy(); // Optional: Clean up expired registration
-      res.status(410).json({ // 410 Gone
+     return res.status(410).json({ // 410 Gone
         success: false,
         message: 'Verification link has expired. Please register again.'
       });
@@ -152,7 +147,7 @@ const register = async (req, res) => {
       verification_token_expires: null
     });
 
-   res.status(200).json({
+  return res.status(200).json({
       success: true,
       message: 'Email verified successfully. You can now log in.'
     });
@@ -161,7 +156,7 @@ const register = async (req, res) => {
       token: req.query.token,
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    res.status(500).json({
+   return res.status(500).json({
       success: false,
       message: 'Internal server error during email verification'
     });
@@ -177,13 +172,13 @@ const register = async (req, res) => {
       // Security: Don't reveal if email exists
       res.status(200).json({
         success: true,
-        message: 'If an account exists, you will receive a password reset link'
+        message: 'Password reset link sent to your email'
       });
       return;
     }
 
     // Generate token and store in separate table
-    const token = uuidv4();
+    const token = uuid.v4();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
     
     // Upsert token (update or create)
