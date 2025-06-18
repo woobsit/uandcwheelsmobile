@@ -1,0 +1,55 @@
+2025-06-18 11:17:02 info: Cron jobs initialized
+2025-06-18 11:17:02 info: Database synced successfully
+2025-06-18 11:17:13 info: Test database connection closed
+2025-06-18 11:18:14 error: Database sync failed
+2025-06-18 11:18:23 info: Test database connection closed
+2025-06-18 11:18:26 error: Database sync failed
+2025-06-18 11:18:30 info: Test database connection closed
+2025-06-18 11:42:55 info: Server running on port 5000
+2025-06-18 11:42:56 info: Cron jobs initialized
+2025-06-18 11:42:56 info: Database synced successfully
+2025-06-18 11:59:47 info: Server running on port 5000
+2025-06-18 11:59:47 info: Cron jobs initialized
+2025-06-18 11:59:47 info: Database synced successfully
+2025-06-18 12:00:00 info: Running expired password reset tokens cleanup
+2025-06-18 12:00:00 info: Cleaned up 0 expired password reset table
+2025-06-18 12:00:04 error: Database sync failed
+2025-06-18 12:00:45 info: Test database connection closed
+2025-06-18 12:00:50 error: Database sync failed
+2025-06-18 12:00:54 info: Test database connection closed
+2025-06-18 12:01:08 info: Server running on port 5000
+2025-06-18 12:01:08 info: Cron jobs initialized
+2025-06-18 12:01:08 info: Database synced successfully
+2025-06-18 13:00:00 info: Running expired password reset tokens cleanup
+2025-06-18 13:00:00 info: Cleaned up 0 expired password reset table
+2025-06-18 14:41:39 info: Server running on port 5000
+2025-06-18 14:41:39 info: Cron jobs initialized
+2025-06-18 14:41:39 info: Database synced successfully
+2025-06-18 15:00:00 info: Running expired password reset tokens cleanup
+2025-06-18 15:00:00 info: Cleaned up 0 expired password reset table
+2025-06-18 16:00:00 info: Running expired password reset tokens cleanup
+2025-06-18 16:00:00 info: Cleaned up 0 expired password reset table
+2025-06-18 16:14:25 info: Server running on port 5000
+2025-06-18 16:14:26 info: Cron jobs initialized
+2025-06-18 16:14:26 info: Database synced successfully
+2025-06-18 17:00:00 info: Running expired password reset tokens cleanup
+2025-06-18 17:00:00 info: Cleaned up 0 expired password reset table
+2025-06-18 17:04:25 info: Server running on port 5000
+2025-06-18 17:04:26 info: Cron jobs initialized
+2025-06-18 17:04:26 info: Database synced successfully
+2025-06-18 17:04:28 error: Password reset failed
+2025-06-18 17:04:43 info: Server running on port 5000
+2025-06-18 17:04:43 info: Cron jobs initialized
+2025-06-18 17:04:43 info: Database synced successfully
+2025-06-18 17:09:42 info: Server running on port 5000
+2025-06-18 17:09:42 info: Cron jobs initialized
+2025-06-18 17:09:42 info: Database synced successfully
+2025-06-18 17:09:55 info: Server running on port 5000
+2025-06-18 17:09:56 info: Cron jobs initialized
+2025-06-18 17:09:56 info: Database synced successfully
+2025-06-18 17:09:58 info: Server running on port 5000
+2025-06-18 17:09:59 info: Cron jobs initialized
+2025-06-18 17:09:59 info: Database synced successfully
+2025-06-18 17:18:31 info: Server running on port 5000
+2025-06-18 17:18:31 info: Cron jobs initialized
+2025-06-18 17:18:31 info: Database synced successfully

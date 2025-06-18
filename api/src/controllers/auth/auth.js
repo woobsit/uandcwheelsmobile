@@ -170,11 +170,11 @@ const register = async (req, res) => {
 
     if (!user) {
       // Security: Don't reveal if email exists
-      res.status(200).json({
+    return res.status(200).json({
         success: true,
         message: 'Password reset link sent to your email'
       });
-      return;
+      
     }
 
     // Generate token and store in separate table
@@ -188,14 +188,14 @@ const register = async (req, res) => {
       created_at: new Date()
     });
 
-    await EmailService.sendPasswordResetEmail(
-      user.email,
-      user.name,
-      token,
-      expiresAt
-    );
+    // await EmailService.sendPasswordResetEmail(
+    //   user.email,
+    //   user.name,
+    //   token,
+    //   expiresAt
+    // );
 
-    res.status(200).json({
+   return res.status(200).json({
       success: true,
       message: 'Password reset link sent to your email'
     });
@@ -203,7 +203,7 @@ const register = async (req, res) => {
     logger.error('Forgot password failed', { 
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    res.status(500).json({
+   return res.status(500).json({
       success: false,
       message: 'Failed to process password reset request'
     });
@@ -225,11 +225,11 @@ const register = async (req, res) => {
     });
 
     if (!tokenRecord) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Invalid or expired reset token'
       });
-      return;
+     
     }
 
     // Find associated user
@@ -238,7 +238,7 @@ const register = async (req, res) => {
     });
 
     if (!user) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'User not found'
       });
@@ -254,7 +254,7 @@ const register = async (req, res) => {
       where: { email: tokenRecord.email } 
     });
 
-    res.status(200).json({
+   return res.status(200).json({
       success: true,
       message: 'Password updated successfully'
     });
@@ -262,7 +262,7 @@ const register = async (req, res) => {
     logger.error('Password reset failed', { 
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
-    res.status(500).json({
+   return res.status(500).json({
       success: false,
       message: 'Failed to reset password'
     });
@@ -270,7 +270,7 @@ const register = async (req, res) => {
 }
   // New Logout Endpoint
  const logout = async (req, res) => {
-    res.status(200).json({
+   return res.status(200).json({
         success: true,
         message: 'Logged out successfully'
     });

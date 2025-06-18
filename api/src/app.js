@@ -29,7 +29,6 @@ app.use(morganMiddleware);
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter); // Add this line
-
 app.use('/api/v1/bookings', bookingRouter);
 
 

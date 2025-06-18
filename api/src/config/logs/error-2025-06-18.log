@@ -1,0 +1,30 @@
+2025-06-18 10:55:18 error: Database sync failed
+2025-06-18 10:55:24 error: [object SequelizeInstance:user]
+2025-06-18 10:55:24 error: null
+2025-06-18 10:55:24 error: null
+2025-06-18 10:55:28 error: Forgot password failed
+2025-06-18 10:55:31 error: Forgot password failed
+2025-06-18 10:55:38 error: Database sync failed
+2025-06-18 10:56:49 error: Database sync failed
+2025-06-18 10:56:54 error: cae39d09-0587-4bdf-af8c-26b07f47e1b3
+2025-06-18 10:56:54 error: invalid-token
+2025-06-18 10:56:54 error: null
+2025-06-18 10:56:59 error: Forgot password failed
+2025-06-18 10:57:02 error: Forgot password failed
+2025-06-18 10:57:09 error: Database sync failed
+2025-06-18 10:57:29 error: Database sync failed
+2025-06-18 10:57:33 error: 264c02f7-fe37-4169-9156-cf73742afe3c
+2025-06-18 10:57:34 error: invalid-token
+2025-06-18 10:57:34 error: null
+2025-06-18 10:57:38 error: Forgot password failed
+2025-06-18 10:57:41 error: Forgot password failed
+2025-06-18 10:57:47 error: Database sync failed
+2025-06-18 11:01:51 error: Database sync failed
+2025-06-18 11:02:00 error: Forgot password failed
+2025-06-18 11:02:03 error: Forgot password failed
+2025-06-18 11:02:08 error: Database sync failed
+2025-06-18 11:18:14 error: Database sync failed
+2025-06-18 11:18:26 error: Database sync failed
+2025-06-18 12:00:04 error: Database sync failed
+2025-06-18 12:00:50 error: Database sync failed
+2025-06-18 17:04:28 error: Password reset failed
