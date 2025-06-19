@@ -10,19 +10,20 @@ const { validationResult } = require( 'express-validator');
       });
 
       if (!user) {
-        res.status(404).json({
+       return res.status(404).json({
           success: false,
           message: 'User not found',
         });
-         return;
       }
 
-     res.json({
+    return res.json({
         success: true,
         data: user,
       });
     } catch (error) {
-      logger.error('Failed to fetch user profile', error);
+      logger.error('Failed to fetch user profile', { 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
       return res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -34,25 +35,16 @@ const { validationResult } = require( 'express-validator');
    * Update user profile
    */
   const updateProfile = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({
-        success: false,
-        errors: errors.array(),
-      });
-       return;
-    }
-
     try {
       const { phone, address, birth_date, preferred_payment_method } = req.body;
 
       const user = await db.User.findByPk(req.user.id);
       if (!user) {
-         res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'User not found',
         });
-        return;
+        
       }
 
       // Only update allowed fields
@@ -65,7 +57,7 @@ const { validationResult } = require( 'express-validator');
 
       await user.update(updatedFields);
 
-      res.json({
+     return res.json({
         success: true,
         data: {
           id: user.id,
@@ -76,8 +68,11 @@ const { validationResult } = require( 'express-validator');
         },
       });
     } catch (error) {
-      logger.error('Failed to update user profile', error);
-      res.status(500).json({
+      logger.error('Failed to fetch user profile', { 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+
+     return res.status(500).json({
         success: false,
         message: 'Internal server error',
       });

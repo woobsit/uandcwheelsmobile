@@ -1,4 +1,4 @@
-// src/models/passwordResetToken.model.ts
+// src/models/passwordResetToken.model.js
 const { Model, DataTypes } = require( 'sequelize');
 const sequelize = require( '../config/config');
 

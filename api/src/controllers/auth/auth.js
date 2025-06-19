@@ -67,7 +67,6 @@ const register = async (req, res) => {
         success: false,
         message: 'Invalid credentials',
       });
-      return
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -88,10 +87,9 @@ const register = async (req, res) => {
  const tokenExpiration = remember_token ? '30d' : '1d'; 
     const payload = { id: user.id, email: user.email };
     const token = generateToken(payload, tokenExpiration);
-
     const { password: _, verification_token, ...userData } = user.get({ plain: true });
     
-    res.status(200).json({
+   return res.status(200).json({
       success: true,
       message: 'Login successful',
       data: { 
@@ -270,11 +268,50 @@ const register = async (req, res) => {
 }
   // New Logout Endpoint
  const logout = async (req, res) => {
-   return res.status(200).json({
-        success: true,
-        message: 'Logged out successfully'
+  try {
+    // Validate authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Invalid authorization header' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Malformed token' });
+    }
+
+    // Validate user payload
+    if (!req.user || !req.user.exp) {
+      return res.status(401).json({ error: 'Invalid user session' });
+    }
+
+    const expiresAt = new Date(req.user.exp * 1000);
+
+    // Use transaction for safety
+    await db.sequelize.transaction(async (t) => {
+      await db.RevokedToken.create({
+        token,
+        expires_at: expiresAt,
+        user_id: req.user.id
+      }, { transaction: t });
     });
 
+    // Optional: Tell client to clear storage
+    res.setHeader('Clear-Site-Data', '"cookies", "storage"');
+
+    return res.status(200).json({ 
+      success: true,
+      message: 'Logged out successfully' 
+    });
+
+  } catch (error) {
+    logger.error('Logout error', { 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+    return res.status(500).json({ 
+      error: 'Logout failed'
+    });
+  }
 };
 
 module.exports = {register, login, verifyEmail, forgotPassword, resetPassword, logout}

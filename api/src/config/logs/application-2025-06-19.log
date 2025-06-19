@@ -1,0 +1,181 @@
+2025-06-19 14:38:44 info: Server running on port 5000
+2025-06-19 14:38:44 error: Database sync failed
+2025-06-19 14:41:22 info: Server running on port 5000
+2025-06-19 14:41:22 error: Database sync failed
+2025-06-19 15:06:48 info: Server running on port 5000
+2025-06-19 15:06:51 info: Server running on port 5000
+2025-06-19 15:06:52 info: Cron jobs initialized
+2025-06-19 15:06:52 info: Database synced successfully
+2025-06-19 15:07:24 info: Server running on port 5000
+2025-06-19 15:07:25 info: Cron jobs initialized
+2025-06-19 15:07:25 info: Database synced successfully
+2025-06-19 15:07:41 info: Server running on port 5000
+2025-06-19 15:07:41 info: Cron jobs initialized
+2025-06-19 15:07:41 info: Database synced successfully
+2025-06-19 15:12:29 info: Server running on port 5000
+2025-06-19 15:12:30 info: Cron jobs initialized
+2025-06-19 15:12:30 info: Database synced successfully
+2025-06-19 15:13:12 info: Server running on port 5000
+2025-06-19 15:13:12 info: Cron jobs initialized
+2025-06-19 15:13:12 info: Database synced successfully
+2025-06-19 15:15:54 info: Server running on port 5000
+2025-06-19 15:15:54 info: Cron jobs initialized
+2025-06-19 15:15:54 info: Database synced successfully
+2025-06-19 15:17:16 info: Server running on port 5000
+2025-06-19 15:17:16 info: Cron jobs initialized
+2025-06-19 15:17:16 info: Database synced successfully
+2025-06-19 15:18:21 info: Server running on port 5000
+2025-06-19 15:18:22 info: Cron jobs initialized
+2025-06-19 15:18:22 info: Database synced successfully
+2025-06-19 15:18:24 info: Server running on port 5000
+2025-06-19 15:18:24 info: Cron jobs initialized
+2025-06-19 15:18:24 info: Database synced successfully
+2025-06-19 15:18:38 info: Server running on port 5000
+2025-06-19 15:18:38 info: Cron jobs initialized
+2025-06-19 15:18:38 info: Database synced successfully
+2025-06-19 15:20:17 info: Server running on port 5000
+2025-06-19 15:20:18 error: Database sync failed
+2025-06-19 15:21:52 info: Server running on port 5000
+2025-06-19 15:21:52 error: Database sync failed
+2025-06-19 15:22:02 info: Server running on port 5000
+2025-06-19 15:22:06 error: Database sync failed
+2025-06-19 15:22:45 info: Server running on port 5000
+2025-06-19 15:22:45 error: Database sync failed
+2025-06-19 15:32:24 info: Server running on port 5000
+2025-06-19 15:32:24 error: Database sync failed
+2025-06-19 15:32:40 info: Server running on port 5000
+2025-06-19 15:32:40 error: Database sync failed
+2025-06-19 15:49:45 info: Server running on port 5000
+2025-06-19 15:49:46 error: Database sync failed
+2025-06-19 16:13:47 info: Server running on port 5000
+2025-06-19 16:13:49 error: Database sync failed
+2025-06-19 16:14:00 info: Server running on port 5000
+2025-06-19 16:14:04 error: Database sync failed
+2025-06-19 16:14:24 info: Server running on port 5000
+2025-06-19 16:14:26 error: Database sync failed
+2025-06-19 16:50:40 info: Server running on port 5000
+2025-06-19 16:50:41 error: Database sync failed
+2025-06-19 16:50:44 info: Server running on port 5000
+2025-06-19 16:50:45 info: Cron jobs initialized
+2025-06-19 16:50:45 info: Database synced successfully
+2025-06-19 16:52:01 error: Database sync failed
+2025-06-19 16:52:12 info: Test database connection closed
+2025-06-19 16:52:15 error: Database sync failed
+2025-06-19 16:52:20 info: Test database connection closed
+2025-06-19 17:00:00 info: Running expired password reset tokens cleanup
+2025-06-19 17:00:00 info: Cleaned up 0 expired password reset table
+2025-06-19 17:03:31 info: Server running on port 5000
+2025-06-19 17:03:31 info: Cron jobs initialized
+2025-06-19 17:03:31 info: Database synced successfully
+2025-06-19 17:03:49 info: Server running on port 5000
+2025-06-19 17:03:50 info: Cron jobs initialized
+2025-06-19 17:03:50 info: Database synced successfully
+2025-06-19 17:04:01 info: Server running on port 5000
+2025-06-19 17:04:01 info: Cron jobs initialized
+2025-06-19 17:04:01 info: Database synced successfully
+2025-06-19 17:04:37 info: Server running on port 5000
+2025-06-19 17:04:37 info: Cron jobs initialized
+2025-06-19 17:04:37 info: Database synced successfully
+2025-06-19 17:04:44 info: Server running on port 5000
+2025-06-19 17:04:44 info: Cron jobs initialized
+2025-06-19 17:04:44 info: Database synced successfully
+2025-06-19 17:05:11 info: Server running on port 5000
+2025-06-19 17:05:11 info: Cron jobs initialized
+2025-06-19 17:05:11 info: Database synced successfully
+2025-06-19 17:05:14 info: Server running on port 5000
+2025-06-19 17:05:15 info: Cron jobs initialized
+2025-06-19 17:05:15 info: Database synced successfully
+2025-06-19 17:06:06 info: Server running on port 5000
+2025-06-19 17:06:06 info: Cron jobs initialized
+2025-06-19 17:06:06 info: Database synced successfully
+2025-06-19 17:11:05 info: Server running on port 5000
+2025-06-19 17:11:05 info: Cron jobs initialized
+2025-06-19 17:11:05 info: Database synced successfully
+2025-06-19 17:11:08 info: Server running on port 5000
+2025-06-19 17:11:08 info: Cron jobs initialized
+2025-06-19 17:11:08 info: Database synced successfully
+2025-06-19 17:11:14 info: Server running on port 5000
+2025-06-19 17:11:14 info: Cron jobs initialized
+2025-06-19 17:11:14 info: Database synced successfully
+2025-06-19 17:20:35 info: Server running on port 5000
+2025-06-19 17:20:35 info: Cron jobs initialized
+2025-06-19 17:20:35 info: Database synced successfully
+2025-06-19 17:21:33 info: Server running on port 5000
+2025-06-19 17:21:33 info: Cron jobs initialized
+2025-06-19 17:21:33 info: Database synced successfully
+2025-06-19 17:22:10 info: Server running on port 5000
+2025-06-19 17:22:10 info: Cron jobs initialized
+2025-06-19 17:22:10 info: Database synced successfully
+2025-06-19 17:43:33 info: Server running on port 5000
+2025-06-19 17:43:34 info: Cron jobs initialized
+2025-06-19 17:43:34 info: Database synced successfully
+2025-06-19 17:44:29 info: Server running on port 5000
+2025-06-19 17:44:29 info: Cron jobs initialized
+2025-06-19 17:44:29 info: Database synced successfully
+2025-06-19 17:44:57 info: Server running on port 5000
+2025-06-19 17:44:57 info: Cron jobs initialized
+2025-06-19 17:44:57 info: Database synced successfully
+2025-06-19 17:45:04 info: Server running on port 5000
+2025-06-19 17:45:04 info: Cron jobs initialized
+2025-06-19 17:45:04 info: Database synced successfully
+2025-06-19 17:45:06 info: Server running on port 5000
+2025-06-19 17:45:07 info: Cron jobs initialized
+2025-06-19 17:45:07 info: Database synced successfully
+2025-06-19 17:45:23 info: Server running on port 5000
+2025-06-19 17:45:23 info: Cron jobs initialized
+2025-06-19 17:45:23 info: Database synced successfully
+2025-06-19 18:00:00 info: Running expired password reset tokens cleanup
+2025-06-19 18:00:00 info: Cleaned up 0 expired password reset table
+2025-06-19 18:10:39 info: Server running on port 5000
+2025-06-19 18:10:39 info: Cron jobs initialized
+2025-06-19 18:10:39 info: Database synced successfully
+2025-06-19 18:10:49 info: Server running on port 5000
+2025-06-19 18:10:49 info: Cron jobs initialized
+2025-06-19 18:10:49 info: Database synced successfully
+2025-06-19 18:11:26 info: Server running on port 5000
+2025-06-19 18:11:26 info: Cron jobs initialized
+2025-06-19 18:11:26 info: Database synced successfully
+2025-06-19 18:11:30 info: Server running on port 5000
+2025-06-19 18:11:30 info: Cron jobs initialized
+2025-06-19 18:11:30 info: Database synced successfully
+2025-06-19 18:11:36 info: Server running on port 5000
+2025-06-19 18:11:36 info: Cron jobs initialized
+2025-06-19 18:11:36 info: Database synced successfully
+2025-06-19 18:11:38 info: Server running on port 5000
+2025-06-19 18:11:38 info: Cron jobs initialized
+2025-06-19 18:11:38 info: Database synced successfully
+2025-06-19 18:12:15 info: Server running on port 5000
+2025-06-19 18:12:15 info: Cron jobs initialized
+2025-06-19 18:12:15 info: Database synced successfully
+2025-06-19 18:12:22 info: Server running on port 5000
+2025-06-19 18:12:22 info: Cron jobs initialized
+2025-06-19 18:12:22 info: Database synced successfully
+2025-06-19 18:12:40 info: Server running on port 5000
+2025-06-19 18:12:40 info: Cron jobs initialized
+2025-06-19 18:12:41 info: Database synced successfully
+2025-06-19 18:12:54 info: Server running on port 5000
+2025-06-19 18:12:54 error: Database sync failed
+2025-06-19 18:17:16 info: Server running on port 5000
+2025-06-19 18:17:17 error: Database sync failed
+2025-06-19 18:17:19 info: Server running on port 5000
+2025-06-19 18:17:19 error: Database sync failed
+2025-06-19 18:17:22 info: Server running on port 5000
+2025-06-19 18:17:22 error: Database sync failed
+2025-06-19 18:18:36 info: Server running on port 5000
+2025-06-19 18:18:36 error: Database sync failed
+2025-06-19 18:18:45 info: Server running on port 5000
+2025-06-19 18:18:46 error: Database sync failed
+2025-06-19 18:23:02 info: Server running on port 5000
+2025-06-19 18:23:03 error: Database sync failed
+2025-06-19 18:24:41 info: Server running on port 5000
+2025-06-19 18:24:42 error: Database sync failed
+2025-06-19 18:25:07 info: Server running on port 5000
+2025-06-19 18:25:07 error: Database sync failed
+2025-06-19 18:29:23 info: Server running on port 5000
+2025-06-19 18:29:23 error: Database sync failed
+2025-06-19 18:29:58 info: Server running on port 5000
+2025-06-19 18:29:59 error: Database sync failed
+2025-06-19 18:30:07 info: Server running on port 5000
+2025-06-19 18:30:07 error: Database sync failed
+2025-06-19 18:30:24 info: Server running on port 5000
+2025-06-19 18:30:24 error: Database sync failed
