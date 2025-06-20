@@ -1,4 +1,4 @@
-// src/config/config.ts
+// src/config/config.js
  const{ Sequelize } =require( 'sequelize'); // Import Options type for better typing
  const dotenv =require( 'dotenv');
 

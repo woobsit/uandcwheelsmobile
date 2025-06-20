@@ -4,13 +4,12 @@ const passport = require('./middlewares/auth/passport');
 const morganMiddleware = require('./config/morgan');
 const logger = require('./config/logger');
 const CronService = require('./jobs/authCronJobs/cron.service');
-const { securityMiddlewares } = require( './middlewares/security');
-const { globalRateLimiter } = require( './middlewares/rateLimiter');
-const { createServer } = require( 'http');
-const { authRouter } = require( './routes/auth.routes');
-const {userRouter} = require( './routes/user.routes');
-const {bookingRouter} = require( './routes/booking.routes');
-
+const { securityMiddlewares } = require('./middlewares/security');
+const { globalRateLimiter } = require('./middlewares/rateLimiter');
+const { createServer } = require('http');
+const { authRouter } = require('./routes/auth.routes');
+const { userRouter } = require('./routes/user.routes');
+const { bookingRouter } = require('./routes/booking.routes');
 
 const app = express();
 const server = createServer(app);
@@ -31,7 +30,6 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter); // Add this line
 app.use('/api/v1/bookings', bookingRouter);
 
-
 // Global error catcher for unhandled rejections
 process.on('unhandledRejection', (reason, promise) => {
   logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason.message || reason}`);
@@ -40,7 +38,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Global error catcher for uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error(`Uncaught Exception: ${error.message}`, { stack: error.stack });
   // For uncaught exceptions, it's generally critical and advisable to exit
   // the process to avoid undefined behavior. Process managers like PM2 will restart it.
@@ -53,26 +51,26 @@ app.use((err, req, res, next) => {
     error: err.message,
     stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
   });
 
   // Ensure you send a response here
   res.status(500).json({
     success: false,
-    message: 'Internal server error'
+    message: 'Internal server error',
   });
 });
 
-dbInstance.sync()
+dbInstance
+  .sync()
   .then(() => {
-
     CronService.init(); // Initialize cron jobs
     logger.info('Database synced successfully', CronService.getSchedules());
   })
-  .catch((error) => {
+  .catch(error => {
     logger.error('Database sync failed', { error: error.message });
     // Don't exit if you want the app to run without DB (e.g., for read-only mode)
     // process.exit(1);
   });
 
-module.exports = { app, server }
+module.exports = { app, server };
