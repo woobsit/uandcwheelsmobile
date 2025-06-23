@@ -32,11 +32,25 @@ Bus.init({
       min: 1
     }
   },
+    driver_id: {
+    type: DataTypes.INTEGER,
+    unique: true, // Ensures one-to-one
+    references: {
+      model: 'drivers',
+      key: 'id'
+    }
+  },
   status: {
     type: DataTypes.ENUM('active', 'maintenance', 'retired'),
     defaultValue: 'active'
   }
 }, { sequelize, modelName: 'bus', timestamps: true,
-  paranoid: true  });
+  paranoid: true,  indexes: [
+    // ... existing indexes ...
+    {
+      fields: ['driver_id'], // Optional if you want bidirectional relationship
+      unique: true
+    }
+  ]  });
 
 module.exports = Bus;
