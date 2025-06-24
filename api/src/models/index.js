@@ -10,10 +10,15 @@ const Booking = require('./booking.model');
 
 // No need to call initialize here since it's done in user.model.ts
 
-Bus.belongsTo(Driver, {
-  foreignKey: 'driver_id',
-  as: 'driver',
-});
+// Trip.hasMany(Driver, {
+//   foreignKey: 'driver_id',
+//   as: 'driver',
+// });
+
+// Trip.hasMany(Bus, {
+//   foreignKey: 'bus_id',
+//   as: 'bus', // Alias for when you fetch the associated bus
+// });
 
 const db = {
   sequelize, // The Sequelize instance

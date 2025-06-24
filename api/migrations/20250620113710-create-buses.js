@@ -15,14 +15,6 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true,
       },
-      driver_id: {
-        type: Sequelize.INTEGER,
-        unique: true, // Ensures one-to-one
-        references: {
-          model: 'drivers',
-          key: 'id',
-        },
-      },
       plate_number: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -53,9 +45,6 @@ module.exports = {
       },
     });
 
-     await queryInterface.addIndex('buses', ['driver_id'], {
-      name: 'idx_bus_driver_id'
-    });
   },
 
   down: async queryInterface => {

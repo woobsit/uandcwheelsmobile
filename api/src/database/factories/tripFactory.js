@@ -3,11 +3,12 @@ const faker = require('@faker-js/faker').faker;
 const moment = require('moment');
 
 module.exports = {
-  createTrip: (busId, overrides = {}) => {
+  createTrip: (driverId, busId, overrides = {}) => {
     const departure = moment().add(faker.number.int({ min: 1, max: 30 }), 'days');
 
     return {
       bus_id: busId,
+      driver_id: driverId,
       departure_location: faker.location.city(),
       arrival_location: faker.location.city(),
       departure_time: departure.toDate(),

@@ -25,6 +25,14 @@ module.exports = {
             key: 'id',
           },
         },
+        driver_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'drivers',
+            key: 'id',
+          },
+        },
         departure_location: {
           type: Sequelize.STRING,
           allowNull: false,
