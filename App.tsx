@@ -9,10 +9,10 @@ import LoginScreen from './screens/auth/LoginScreen';
 import ServiceSelectionScreen from './screens/auth/ServiceSelectionScreen';
 import LogisticsHomeScreen from './screens/LogisticsHomeScreen';
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
-import type { RootStackParamList } from './types/AuthProps';
 
 // Create navigators
-const Stack = createStackNavigator<RootStackParamList>();
+//const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
 // Logistics Drawer Navigator (for authenticated users)

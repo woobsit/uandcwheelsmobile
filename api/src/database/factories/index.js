@@ -7,8 +7,8 @@ const bookingFactory = require('./bookingFactory');
 
 module.exports = {
   createUser: userFactory.createUser,
-  createDriver: driverFactory.createDriver,
   createBus: busFactory.createBus,
+  createDriver: driverFactory.createDriver,
   createTrip: tripFactory.createTrip,
-  createBooking: bookingFactory.createBooking
+  createBooking: bookingFactory.createBooking,
 };
