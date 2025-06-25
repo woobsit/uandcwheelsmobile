@@ -1,7 +1,19 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/config');
 
-class Trip extends Model {}
+class Trip extends Model {
+  static associate(models) {
+    this.belongsTo(models.Bus, {
+      foreignKey: 'bus_id',
+      as: 'bus',
+    });
+
+    this.belongsTo(models.Driver, {
+      foreignKey: 'driver_id',
+      as: 'driver',
+    });
+  }
+}
 
 Trip.init(
   {

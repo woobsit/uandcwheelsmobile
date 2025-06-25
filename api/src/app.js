@@ -10,6 +10,8 @@ const { createServer } = require('http');
 const { authRouter } = require('./routes/auth.routes');
 const { userRouter } = require('./routes/user.routes');
 const { bookingRouter } = require('./routes/booking.routes');
+const { busRouter } = require('./routes/bus.routes');
+const { driverRouter } = require('./routes/driver.routes');
 
 const app = express();
 const server = createServer(app);
@@ -29,6 +31,9 @@ app.use(morganMiddleware);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter); // Add this line
 app.use('/api/v1/bookings', bookingRouter);
+
+app.use('/api/v1/buses', busRouter);
+app.use('/api/v1/drivers', driverRouter);
 
 // Global error catcher for unhandled rejections
 process.on('unhandledRejection', (reason, promise) => {

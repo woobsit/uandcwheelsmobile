@@ -117,4 +117,6 @@ const { body, query } =require( 'express-validator');
   body('payment_method').isIn(['credit_card', 'mobile_money', 'bank_transfer'])
 ];
 
+
+
 module.exports = {registerValidators,loginValidators, forgotPasswordValidators, verifyEmailValidators, resetPasswordValidators, updateProfileValidations, searchTripsValidations, createBookingValidations}

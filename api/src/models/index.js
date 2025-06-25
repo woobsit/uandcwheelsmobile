@@ -8,17 +8,7 @@ const RevokedToken = require('./revokedToken.model');
 const Driver = require('./driver.model');
 const Booking = require('./booking.model');
 
-// No need to call initialize here since it's done in user.model.ts
-
-// Trip.hasMany(Driver, {
-//   foreignKey: 'driver_id',
-//   as: 'driver',
-// });
-
-// Trip.hasMany(Bus, {
-//   foreignKey: 'bus_id',
-//   as: 'bus', // Alias for when you fetch the associated bus
-// });
+// No need to call initialize here since it's done in user.model.js
 
 const db = {
   sequelize, // The Sequelize instance
@@ -31,5 +21,12 @@ const db = {
   Trip,
   Booking,
 };
+
+// Add this after initializing all models
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
 
 module.exports = db;

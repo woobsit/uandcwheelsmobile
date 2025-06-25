@@ -2,7 +2,14 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/config');
 
-class Bus extends Model {}
+class Bus extends Model {
+  static associate(models) {
+    this.hasMany(models.Trip, {
+      foreignKey: 'bus_id',
+      as: 'trips'
+    });
+  }
+}
 
 Bus.init(
   {

@@ -1,13 +1,12 @@
-const db =require( '../models/index');
-const logger =require( '../config/logger');
-const { validationResult } =require( 'express-validator');
-const EmailService =require( '../email/email.service');
+const db = require('../models/index');
+const logger = require('../config/logger');
+const { validationResult } = require('express-validator');
+const EmailService = require('../email/email.service');
 
-
- const searchTrips = async (req, res, next) => {
+const searchTrips = async (req, res, next) => {
   try {
     const { from, to, date } = req.query;
-    
+
     const trips = await db.Trip.findAll({
       where: {
         departure_location: from,
@@ -15,15 +14,17 @@ const EmailService =require( '../email/email.service');
         departure_time: {
           [db.Sequelize.Op.between]: [
             new Date(date),
-            new Date(new Date(date).setDate(new Date(date).getDate() + 1))
-          ]
+            new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
+          ],
         },
-        status: 'scheduled'
+        status: 'scheduled',
       },
-      include: [{
-        model: db.Bus,
-        attributes: ['plate_number', 'brand', 'capacity']
-      }]
+      include: [
+        {
+          model: db.Bus,
+          attributes: ['plate_number', 'brand', 'capacity'],
+        },
+      ],
     });
 
     res.json({ success: true, data: trips });
@@ -32,7 +33,7 @@ const EmailService =require( '../email/email.service');
   }
 };
 
- const createBooking = async (req, res, next) => {
+const createBooking = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -41,14 +42,16 @@ const EmailService =require( '../email/email.service');
   const transaction = await db.sequelize.transaction();
   try {
     const { trip_id, seats, payment_method } = req.body;
-    
+
     // 1. Verify trip availability
-    const trip = await db.Trip.findByPk(trip_id, { 
+    const trip = await db.Trip.findByPk(trip_id, {
       transaction,
-      include: [{
-        model: db.Bus,
-        attributes: ['id', 'brand', 'plate_number']
-      }]
+      include: [
+        {
+          model: db.Bus,
+          attributes: ['id', 'brand', 'plate_number'],
+        },
+      ],
     });
 
     if (!trip || trip.status !== 'scheduled') {
@@ -57,25 +60,28 @@ const EmailService =require( '../email/email.service');
     }
 
     // 2. Check seat availability
-    const existingBookings = await db.Booking.findAll({ 
+    const existingBookings = await db.Booking.findAll({
       where: { trip_id },
-      transaction
+      transaction,
     });
-    
+
     const takenSeats = existingBookings.flatMap(b => b.seats);
-    if (seats.some((seat) => takenSeats.includes(seat))) {
+    if (seats.some(seat => takenSeats.includes(seat))) {
       await transaction.rollback();
       return res.status(400).json({ message: 'Some seats are already taken' });
     }
 
     // 3. Create booking
-    const booking = await db.Booking.create({
-      user_id: req.user.id,
-      trip_id,
-      seats,
-      total_amount: seats.length * trip.fare,
-      payment_status: 'pending'
-    }, { transaction });
+    const booking = await db.Booking.create(
+      {
+        user_id: req.user.id,
+        trip_id,
+        seats,
+        total_amount: seats.length * trip.fare,
+        payment_status: 'pending',
+      },
+      { transaction },
+    );
 
     // 4. Process payment (mock implementation)
     await processPaymentMock(booking, payment_method);
@@ -94,25 +100,21 @@ const EmailService =require( '../email/email.service');
     }
 
     // 7. Send confirmation email
-    await EmailService.sendBookingConfirmation(
-      user.email,
-      user.name,
-      {
-        reference: booking.transaction_reference,
-        seats,
-        total_amount: booking.total_amount,
-        trip: {
-          departure_location: trip.departure_location,
-          arrival_location: trip.arrival_location,
-          departure_time: trip.departure_time,
-          estimated_arrival: trip.estimated_arrival
-        },
-        bus: {
-          brand: trip.Bus.brand,
-          plate_number: trip.Bus.plate_number
-        }
-      }
-    );
+    await EmailService.sendBookingConfirmation(user.email, user.name, {
+      reference: booking.transaction_reference,
+      seats,
+      total_amount: booking.total_amount,
+      trip: {
+        departure_location: trip.departure_location,
+        arrival_location: trip.arrival_location,
+        departure_time: trip.departure_time,
+        estimated_arrival: trip.estimated_arrival,
+      },
+      bus: {
+        brand: trip.Bus.brand,
+        plate_number: trip.Bus.plate_number,
+      },
+    });
 
     await transaction.commit();
     res.status(201).json({ success: true, data: booking });
@@ -124,27 +126,33 @@ const EmailService =require( '../email/email.service');
 };
 
 async function processPaymentMock(booking, method) {
-  return new Promise(resolve => setTimeout(() => {
-    booking.update({ 
-      payment_status: 'paid',
-      payment_method: method,
-      transaction_reference: `TX-${Date.now()}`
-    });
-    resolve(true);
-  }, 1000));
+  return new Promise(resolve =>
+    setTimeout(() => {
+      booking.update({
+        payment_status: 'paid',
+        payment_method: method,
+        transaction_reference: `TX-${Date.now()}`,
+      });
+      resolve(true);
+    }, 1000),
+  );
 }
 
- const getUserBookings = async (req, res, next) => {
+const getUserBookings = async (req, res, next) => {
   try {
     const bookings = await db.Booking.findAll({
       where: { user_id: req.user.id },
-      include: [{
-        model: db.Trip,
-        include: [{
-          model: db.Bus,
-          attributes: ['plate_number', 'brand']
-        }]
-      }]
+      include: [
+        {
+          model: db.Trip,
+          include: [
+            {
+              model: db.Bus,
+              attributes: ['plate_number', 'brand'],
+            },
+          ],
+        },
+      ],
     });
     res.json({ success: true, data: bookings });
   } catch (error) {
@@ -152,26 +160,30 @@ async function processPaymentMock(booking, method) {
   }
 };
 
- const getBookingDetails = async (req, res, next) => {
+const getBookingDetails = async (req, res, next) => {
   try {
     const booking = await db.Booking.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
+        user_id: req.user.id,
       },
-      include: [{
-        model: db.Trip,
-        include: [{
-          model: db.Bus,
-          attributes: ['plate_number', 'brand']
-        }]
-      }]
+      include: [
+        {
+          model: db.Trip,
+          include: [
+            {
+              model: db.Bus,
+              attributes: ['plate_number', 'brand'],
+            },
+          ],
+        },
+      ],
     });
-    
+
     if (!booking) {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
-    
+
     res.json({ success: true, data: booking });
   } catch (error) {
     next(error);
@@ -195,4 +207,4 @@ async function processPaymentMock(booking, method) {
 //   return paymentResult.success;
 // }
 
-module.exports = {searchTrips, createBooking, getUserBookings, getBookingDetails}
+module.exports = { searchTrips, createBooking, getUserBookings, getBookingDetails };
