@@ -1,20 +1,11 @@
 // src/controllers/bus.controller.js
 const db = require('../models');
-const { validationResult } = require('express-validator');
-const logger = require('../utils/logger');
+const logger = require('../config/logger');
 
 const createBus = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array(),
-      });
-    }
-
     const bus = await db.Bus.create(req.body);
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: bus,
     });
@@ -95,14 +86,6 @@ const getBusById = async (req, res) => {
 
 const updateBus = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array(),
-      });
-    }
-
     const [updated] = await db.Bus.update(req.body, {
       where: { id: req.params.id },
     });

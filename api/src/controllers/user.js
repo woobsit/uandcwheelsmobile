@@ -1,6 +1,5 @@
 const db = require( '../models/index');
 const logger = require( '../config/logger');
-const { validationResult } = require( 'express-validator');
 
   const getCurrentUser = async (req, res) => {
     try {

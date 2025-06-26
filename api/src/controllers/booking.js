@@ -1,9 +1,8 @@
 const db = require('../models/index');
 const logger = require('../config/logger');
-const { validationResult } = require('express-validator');
 const EmailService = require('../email/email.service');
 
-const searchTrips = async (req, res, next) => {
+const searchTrips = async (req, res) => {
   try {
     const { from, to, date } = req.query;
 
@@ -27,18 +26,19 @@ const searchTrips = async (req, res, next) => {
       ],
     });
 
-    res.json({ success: true, data: trips });
+    return res.status(200).json({ success: true, data: trips });
   } catch (error) {
-    next(error);
+    logger.error('Failed to get trip', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
   }
 };
 
-const createBooking = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
     const { trip_id, seats, payment_method } = req.body;
@@ -117,11 +117,17 @@ const createBooking = async (req, res, next) => {
     });
 
     await transaction.commit();
-    res.status(201).json({ success: true, data: booking });
+    return res.status(201).json({ success: true, data: booking });
   } catch (error) {
     await transaction.rollback();
-    logger.error('Booking failed:', error);
-    next(error);
+    logger.error('Failed to book bus', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
   }
 };
 
@@ -138,55 +144,49 @@ async function processPaymentMock(booking, method) {
   );
 }
 
-const getUserBookings = async (req, res, next) => {
+const getUserBookings = async (req, res) => {
   try {
-    const bookings = await db.Booking.findAll({
-      where: { user_id: req.user.id },
-      include: [
-        {
-          model: db.Trip,
-          include: [
-            {
-              model: db.Bus,
-              attributes: ['plate_number', 'brand'],
-            },
-          ],
-        },
-      ],
-    });
-    res.json({ success: true, data: bookings });
-  } catch (error) {
-    next(error);
-  }
-};
+    const { status } = req.query;
+    const where = { user_id: req.user.id };
 
-const getBookingDetails = async (req, res, next) => {
-  try {
-    const booking = await db.Booking.findOne({
-      where: {
-        id: req.params.id,
-        user_id: req.user.id,
-      },
-      include: [
-        {
-          model: db.Trip,
-          include: [
-            {
-              model: db.Bus,
-              attributes: ['plate_number', 'brand'],
-            },
-          ],
-        },
-      ],
-    });
-
-    if (!booking) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
+    if (status) {
+      where.payment_status = status;
     }
 
-    res.json({ success: true, data: booking });
+    const bookings = await db.Booking.findAll({
+      where,
+      include: [
+        {
+          model: db.Trip,
+          include: [
+            {
+              model: db.Bus,
+              attributes: ['plate_number', 'brand'],
+            },
+            {
+              model: db.Driver,
+              attributes: ['name'],
+            },
+          ],
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+    });
   } catch (error) {
-    next(error);
+    logger.error('Failed to get user bookings', {
+      error: error.message,
+      userId: req.user.id,
+    });
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
   }
 };
 
@@ -207,4 +207,4 @@ const getBookingDetails = async (req, res, next) => {
 //   return paymentResult.success;
 // }
 
-module.exports = { searchTrips, createBooking, getUserBookings, getBookingDetails };
+module.exports = { searchTrips, createBooking, getUserBookings };

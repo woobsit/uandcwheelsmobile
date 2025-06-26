@@ -1,7 +1,6 @@
 // src/controllers/driver.controller.js
 const db = require('../models');
-const { validationResult } = require('express-validator');
-const logger = require('../utils/logger');
+const logger = require( '../config/logger');
 
 const createDriver = async (req, res) => {
   try {

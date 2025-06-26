@@ -1,5 +1,5 @@
 const db = require('../models');
-const logger = require('../utils/logger');
+const logger = require('../config/logger');
 
 const createTrip = async (req, res) => {
   try {
@@ -50,7 +50,7 @@ const createTrip = async (req, res) => {
     logger.error('Failed to create trip', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
     });
@@ -93,7 +93,7 @@ const getAllTrips = async (req, res) => {
     logger.error('Failed to fetch trips', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
     });
@@ -124,7 +124,7 @@ const getTripById = async (req, res) => {
     logger.error('Failed to fetch trip', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
     });
@@ -161,7 +161,7 @@ const updateTrip = async (req, res) => {
     logger.error('Failed to update trip', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
     });
@@ -196,7 +196,7 @@ const deleteTrip = async (req, res) => {
     logger.error('Failed to delete trip', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
     });
