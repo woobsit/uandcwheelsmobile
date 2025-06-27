@@ -79,44 +79,4 @@ const { body, query } =require( 'express-validator');
     })
 ];
 
- const updateProfileValidations = [
-  body('phone')
-    .isString()
-    .withMessage('Phone must be a number')
-    .isLength({ min: 11, max: 11 })
-    .withMessage('Phone must be 11 characters'),
-  
-  body('address')
-    .isString()
-    .withMessage('Address must be a string')
-    .isLength({ max: 255 })
-    .withMessage('Address too long'),
-    
-  body('birth_date')
-    .isISO8601()
-    .withMessage('Invalid date format. Use YYYY-MM-DD'),
-    
-  body('preferred_payment_method')
-    .optional()
-    .isString()
-    .withMessage('Payment method must be a string')
-    .isIn(['credit_card', 'paypal', 'bank_transfer', 'cash'])
-    .withMessage('Invalid payment method'),
-];
-
- const searchTripsValidations = [
-  query('from').notEmpty().isString(),
-  query('to').notEmpty().isString(),
-  query('date').isISO8601().toDate()
-];
-
- const createBookingValidations = [
-  body('trip_id').isInt().toInt(),
-  body('seats').isArray({ min: 1 }),
-  body('seats.*').isInt({ min: 1, max: 50 }),
-  body('payment_method').isIn(['credit_card', 'mobile_money', 'bank_transfer'])
-];
-
-
-
-module.exports = {registerValidators,loginValidators, forgotPasswordValidators, verifyEmailValidators, resetPasswordValidators, updateProfileValidations, searchTripsValidations, createBookingValidations}
+module.exports = {registerValidators,loginValidators, forgotPasswordValidators, verifyEmailValidators, resetPasswordValidators}

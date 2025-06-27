@@ -1,16 +1,21 @@
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
 const moment = require('moment');
 
 const createTripValidator = [
-  body('departure_location')
-    .trim()
-    .notEmpty()
-    .withMessage('Departure location is required'),
-  
-  body('arrival_location')
-    .trim()
-    .notEmpty()
-    .withMessage('Arrival location is required'),
+// For createTripValidator
+body('departure_location_id')
+  .isInt({ min: 1 })
+  .withMessage('Invalid departure location'),
+
+body('arrival_location_id')
+  .isInt({ min: 1 })
+  .withMessage('Invalid arrival location')
+  .custom((value, { req }) => {
+    if (value === req.body.departure_location_id) {
+      throw new Error('Arrival location must be different from departure');
+    }
+    return true;
+  }),
   
   body('departure_time')
     .isISO8601()
@@ -76,7 +81,14 @@ const updateTripValidator = [
     .withMessage('Invalid trip status')
 ];
 
+ const searchTripsValidations = [
+  query('from').notEmpty().isString(),
+  query('to').notEmpty().isString(),
+  query('date').isISO8601().toDate()
+];
+
 module.exports = {
   createTripValidator,
-  updateTripValidator
+  updateTripValidator,
+  searchTripsValidations
 };

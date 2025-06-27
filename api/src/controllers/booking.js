@@ -2,41 +2,6 @@ const db = require('../models/index');
 const logger = require('../config/logger');
 const EmailService = require('../email/email.service');
 
-const searchTrips = async (req, res) => {
-  try {
-    const { from, to, date } = req.query;
-
-    const trips = await db.Trip.findAll({
-      where: {
-        departure_location: from,
-        arrival_location: to,
-        departure_time: {
-          [db.Sequelize.Op.between]: [
-            new Date(date),
-            new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
-          ],
-        },
-        status: 'scheduled',
-      },
-      include: [
-        {
-          model: db.Bus,
-          attributes: ['plate_number', 'brand', 'capacity'],
-        },
-      ],
-    });
-
-    return res.status(200).json({ success: true, data: trips });
-  } catch (error) {
-    logger.error('Failed to get trip', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
-  }
-};
 
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
@@ -131,18 +96,18 @@ const createBooking = async (req, res) => {
   }
 };
 
-async function processPaymentMock(booking, method) {
-  return new Promise(resolve =>
-    setTimeout(() => {
-      booking.update({
-        payment_status: 'paid',
-        payment_method: method,
-        transaction_reference: `TX-${Date.now()}`,
-      });
-      resolve(true);
-    }, 1000),
-  );
-}
+// async function processPaymentMock(booking, method) {
+//   return new Promise(resolve =>
+//     setTimeout(() => {
+//       booking.update({
+//         payment_status: 'paid',
+//         payment_method: method,
+//         transaction_reference: `TX-${Date.now()}`,
+//       });
+//       resolve(true);
+//     }, 1000),
+//   );
+// }
 
 const getUserBookings = async (req, res) => {
   try {
@@ -207,4 +172,4 @@ const getUserBookings = async (req, res) => {
 //   return paymentResult.success;
 // }
 
-module.exports = { searchTrips, createBooking, getUserBookings };
+module.exports = { createBooking, getUserBookings };

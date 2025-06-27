@@ -13,6 +13,18 @@ class Trip extends Model {
       as: 'driver',
     });
   }
+
+      // Add associations for locations
+    this.belongsTo(models.Location, {
+      foreignKey: 'departure_location_id',
+      as: 'departureLocation'
+    });
+
+    this.belongsTo(models.Location, {
+      foreignKey: 'arrival_location_id',
+      as: 'arrivalLocation'
+    });
+  
 }
 
 Trip.init(
@@ -38,13 +50,21 @@ Trip.init(
         key: 'id',
       },
     },
-    departure_location: {
-      type: DataTypes.STRING,
+     departure_location_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'locations',
+        key: 'id',
+      },
     },
-    arrival_location: {
-      type: DataTypes.STRING,
+    arrival_location_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'locations',
+        key: 'id',
+      },
     },
     departure_time: {
       type: DataTypes.DATE,

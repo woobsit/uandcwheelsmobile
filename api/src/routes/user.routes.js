@@ -1,7 +1,7 @@
 const { Router } = require( 'express');
 const passport = require( 'passport');
 const {getCurrentUser, updateProfile} = require( '../controllers/user');
-const { updateProfileValidations } = require( '../middlewares/input-validators');
+const { updateProfileValidations } = require( '../middlewares/validators/user.validator');
 const { validateRequest } = require( '../middlewares/validate-request');
 
 const userRouter = Router();

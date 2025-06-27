@@ -1,9 +1,8 @@
 const { Router } = require( 'express');
-const { registerValidators, loginValidators, verifyEmailValidators, forgotPasswordValidators, resetPasswordValidators } = require( '../middlewares/input-validators');
+const { registerValidators, loginValidators, verifyEmailValidators, forgotPasswordValidators, resetPasswordValidators } = require( '../middlewares/validators/auth.validators');
 const { validateRequest } = require( '../middlewares/validate-request');
 const { register, login, verifyEmail, forgotPassword, resetPassword, logout } = require( '../controllers/auth/auth');
 const { authLimiter  } = require( './../middlewares/rateLimiter');
-
 
 const router = Router();
 
@@ -15,7 +14,7 @@ router.post('/register',
 
 router.post('/login',
   authLimiter,
-loginValidators,
+  loginValidators,
   validateRequest,
   login
 );
@@ -40,7 +39,6 @@ router.post('/reset-password',
 );
 
 router.post('/logout', logout); 
-
 
 const authRouter = router;
 module.exports = { authRouter };

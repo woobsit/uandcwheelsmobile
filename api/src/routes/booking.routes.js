@@ -2,15 +2,12 @@ const { Router } = require('express');
 const passport = require('passport');
 const { searchTrips, createBooking, getUserBookings } = require('../controllers/booking');
 const {
-  searchTripsValidations,
   createBookingValidations,
-} = require('../middlewares/input-validators');
+} = require('../middlewares/validators/booking.validator');
 const { validateRequest } = require('../middlewares/validate-request');
 
 const router = Router();
 
-// Public routes
-router.get('/search', searchTripsValidations, validateRequest, searchTrips);
 
 // Protected routes
 router.use(passport.authenticate('jwt', { session: false }));
