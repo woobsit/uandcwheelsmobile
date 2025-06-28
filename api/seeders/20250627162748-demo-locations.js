@@ -1,28 +1,18 @@
 'use strict';
-const { faker } = require('@faker-js/faker');
+const factory = require('../src/database/factories');
 
 module.exports = {
   async up(queryInterface) {
     const locations = [];
-    const usedNames = new Set();
+    const existingNames = new Set();
     
-    // Generate 20 unique locations
+    // Create 20 unique locations
     while (locations.length < 20) {
-      const name = faker.location.city();
-      if (!usedNames.has(name)) {
-        usedNames.add(name);
-        locations.push({
-          name: name,
-          code: faker.string.alpha(3).toUpperCase(),
-          timezone: faker.helpers.arrayElement([
-            'America/New_York', 
-            'America/Chicago',
-            'America/Denver',
-            'America/Los_Angeles'
-          ]),
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
+      const locationData = factory.createLocation();
+      
+      if (!existingNames.has(locationData.name)) {
+        existingNames.add(locationData.name);
+        locations.push(locationData);
       }
     }
 

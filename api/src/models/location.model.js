@@ -1,4 +1,5 @@
 const { Model, DataTypes } = require('sequelize');
+const sequelize = require('../config/config');
 
   class Location extends Model {
     static associate(models) {
@@ -19,6 +20,7 @@ const { Model, DataTypes } = require('sequelize');
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        allowNull: false,
       },
       name: {
         type: DataTypes.STRING,

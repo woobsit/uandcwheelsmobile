@@ -6,6 +6,14 @@ const db = require('../src/models');
 
 module.exports = {
  async up(queryInterface) {
+
+  // Ensure locations exist before creating trips
+    const locationCount = await db.Location.count();
+    if (locationCount === 0) {
+      await db.Location.bulkCreate(Array(20).fill().map(() => 
+        factory.createLocation()
+      ));
+    }
     const buses = await db.Bus.findAll();
     const drivers = await db.Driver.findAll();
     const locations = await db.Location.findAll(); // Get all locations

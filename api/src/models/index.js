@@ -7,6 +7,8 @@ const Trip = require('./trip.model');
 const RevokedToken = require('./revokedToken.model');
 const Driver = require('./driver.model');
 const Booking = require('./booking.model');
+const Location = require('./location.model');
+
 
 // No need to call initialize here since it's done in user.model.js
 
@@ -20,6 +22,7 @@ const db = {
   Bus,
   Trip,
   Booking,
+  Location
 };
 
 // Add this after initializing all models

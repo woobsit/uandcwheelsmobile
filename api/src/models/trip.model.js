@@ -12,18 +12,21 @@ class Trip extends Model {
       foreignKey: 'driver_id',
       as: 'driver',
     });
+
+    //Add associations for locations
+     this.belongsTo(models.Location, {
+       foreignKey: 'departure_location_id',
+       as: 'departureLocation'
+     });
+
+     this.belongsTo(models.Location, {
+       foreignKey: 'arrival_location_id',
+       as: 'arrivalLocation'
+     });
+
   }
 
-      // Add associations for locations
-    this.belongsTo(models.Location, {
-      foreignKey: 'departure_location_id',
-      as: 'departureLocation'
-    });
-
-    this.belongsTo(models.Location, {
-      foreignKey: 'arrival_location_id',
-      as: 'arrivalLocation'
-    });
+   
   
 }
 
