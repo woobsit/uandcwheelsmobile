@@ -56,7 +56,19 @@ const getDriverById = async (req, res) => {
         {
           model: db.Trip,
           as: 'trips',
-          attributes: ['id', 'departure_location', 'arrival_location', 'departure_time'],
+          attributes: ['id', 'departure_time'],
+           include: [
+            {
+              model: db.Location,
+              as: 'departureLocation',
+              attributes: ['name']
+            },
+            {
+              model: db.Location,
+              as: 'arrivalLocation',
+              attributes: ['name']
+            }
+          ]
         },
       ],
     });
@@ -68,9 +80,17 @@ const getDriverById = async (req, res) => {
       });
     }
 
+     // Format trips with location names
+    const driverData = driver.get({ plain: true });
+    driverData.trips = driverData.trips.map(trip => ({
+      ...trip,
+      departure_location: trip.departureLocation.name,
+      arrival_location: trip.arrivalLocation.name,
+    }));
+
     return res.json({
       success: true,
-      data: driver,
+      data: driverData,
     });
   } catch (error) {
     logger.error('Failed to fetch driver', {

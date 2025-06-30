@@ -4,14 +4,33 @@ const logger = require('../config/logger');
 const createTrip = async (req, res) => {
   try {
     const {
-      departure_location,
-      arrival_location,
+      departure_location_id,
+      arrival_location_id,
       departure_time,
       estimated_arrival,
       fare,
       bus_id,
       driver_id,
     } = req.body;
+
+   // Check if locations exist
+    const departureLocation = await db.Location.findByPk(departure_location_id);
+    const arrivalLocation = await db.Location.findByPk(arrival_location_id);
+    
+    if (!departureLocation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Departure location not found',
+      });
+    }
+    
+    if (!arrivalLocation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Arrival location not found',
+      });
+    }
+
 
     // Check if bus exists
     const bus = await db.Bus.findByPk(bus_id);
@@ -32,8 +51,8 @@ const createTrip = async (req, res) => {
     }
 
     const trip = await db.Trip.create({
-      departure_location,
-      arrival_location,
+      departure_location_id,
+      arrival_location_id,
       departure_time: new Date(departure_time),
       estimated_arrival: new Date(estimated_arrival),
       fare,
@@ -63,8 +82,16 @@ const getAllTrips = async (req, res) => {
     const where = {};
 
     if (status) where.status = status;
-    if (from) where.departure_location = from;
-    if (to) where.arrival_location = to;
+     // Location-based filtering
+    if (from) {
+      const location = await db.Location.findOne({ where: { name: from } });
+      if (location) where.departure_location_id = location.id;
+    }
+    
+    if (to) {
+      const location = await db.Location.findOne({ where: { name: to } });
+      if (location) where.arrival_location_id = location.id;
+    }
 
     if (date) {
       const startDate = new Date(date);
@@ -81,13 +108,33 @@ const getAllTrips = async (req, res) => {
       include: [
         { model: db.Bus, attributes: ['plate_number', 'brand', 'capacity'] },
         { model: db.Driver, attributes: ['name', 'license_number'] },
+         { 
+          model: db.Location, 
+          as: 'departureLocation',
+          attributes: ['name'] 
+        },
+        { 
+          model: db.Location, 
+          as: 'arrivalLocation',
+          attributes: ['name'] 
+        }
       ],
       order: [['departure_time', 'ASC']],
     });
 
+        // Format response with location names
+    const formattedTrips = trips.map(trip => {
+      const tripData = trip.get({ plain: true });
+      return {
+        ...tripData,
+        departure_location: tripData.departureLocation.name,
+        arrival_location: tripData.arrivalLocation.name,
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      data: trips,
+      data: formattedTrips,
     });
   } catch (error) {
     logger.error('Failed to fetch trips', {
@@ -106,6 +153,16 @@ const getTripById = async (req, res) => {
       include: [
         { model: db.Bus, attributes: ['id', 'plate_number', 'brand', 'capacity'] },
         { model: db.Driver, attributes: ['id', 'name', 'license_number', 'phone'] },
+         { 
+          model: db.Location, 
+          as: 'departureLocation',
+          attributes: ['name'] 
+        },
+        { 
+          model: db.Location, 
+          as: 'arrivalLocation',
+          attributes: ['name'] 
+        }
       ],
     });
 
@@ -116,9 +173,17 @@ const getTripById = async (req, res) => {
       });
     }
 
+     // Format response with location names
+    const tripData = trip.get({ plain: true });
+    const formattedTrip = {
+      ...tripData,
+      departure_location: tripData.departureLocation.name,
+      arrival_location: tripData.arrivalLocation.name,
+    };
+
     return res.status(200).json({
       success: true,
-      data: trip,
+      data: formattedTrip,
     });
   } catch (error) {
     logger.error('Failed to fetch trip', {
@@ -207,10 +272,21 @@ const searchTrips = async (req, res) => {
   try {
     const { from, to, date } = req.query;
 
+// Find location IDs
+    const departureLocation = await db.Location.findOne({ where: { name: from } });
+    const arrivalLocation = await db.Location.findOne({ where: { name: to } });
+
+        if (!departureLocation || !arrivalLocation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid departure or arrival location',
+      });
+    }
+
     const trips = await db.Trip.findAll({
       where: {
-        departure_location: from,
-        arrival_location: to,
+        departure_location_id: departureLocation.id,
+        arrival_location_id: arrivalLocation.id,
         departure_time: {
           [db.Sequelize.Op.between]: [
             new Date(date),
@@ -224,10 +300,30 @@ const searchTrips = async (req, res) => {
           model: db.Bus,
           attributes: ['plate_number', 'brand', 'capacity'],
         },
+        {
+          model: db.Location,
+          as: 'departureLocation',
+          attributes: ['name']
+        },
+        {
+          model: db.Location,
+          as: 'arrivalLocation',
+          attributes: ['name']
+        }
       ],
     });
 
-    return res.status(200).json({ success: true, data: trips });
+     // Format response
+    const formattedTrips = trips.map(trip => {
+      const tripData = trip.get({ plain: true });
+      return {
+        ...tripData,
+        departure_location: tripData.departureLocation.name,
+        arrival_location: tripData.arrivalLocation.name,
+      };
+    });
+
+    return res.status(200).json({ success: true, data: formattedTrips });
   } catch (error) {
     logger.error('Failed to get trip', {
       error: error instanceof Error ? error.message : 'Unknown error',

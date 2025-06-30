@@ -16,6 +16,16 @@ const createBooking = async (req, res) => {
           model: db.Bus,
           attributes: ['id', 'brand', 'plate_number'],
         },
+         {
+          model: db.Location,
+          as: 'departureLocation',
+          attributes: ['name']
+        },
+        {
+          model: db.Location,
+          as: 'arrivalLocation',
+          attributes: ['name']
+        }
       ],
     });
 
@@ -70,8 +80,8 @@ const createBooking = async (req, res) => {
       seats,
       total_amount: booking.total_amount,
       trip: {
-        departure_location: trip.departure_location,
-        arrival_location: trip.arrival_location,
+        departure_location: trip.departureLocation.name,
+        arrival_location: trip.arrivalLocation.name,
         departure_time: trip.departure_time,
         estimated_arrival: trip.estimated_arrival,
       },
