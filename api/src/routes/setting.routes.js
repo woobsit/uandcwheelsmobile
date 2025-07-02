@@ -1,10 +1,7 @@
 const { Router } = require('express');
+const { getSettings, updateSettings } = require('../controllers/setting');
 const {
-  getSettings,
-  updateSettings
-} = require('../controllers/setting');
-const {
-  settingValidator  // Changed to match the validator export name
+  settingValidator, // Changed to match the validator export name
 } = require('../middlewares/validators/setting.validator');
 const { validateRequest } = require('../middlewares/validate-request');
 //const { authenticate, authorize } = require('../middlewares/auth');
@@ -19,9 +16,9 @@ router.put(
   '/update',
   //authenticate,
   //authorize('admin'),
-  ...settingValidator,  // Spread the array of validators
+  ...settingValidator, // Spread the array of validators
   validateRequest,
-  updateSettings
+  updateSettings,
 );
 
 const settingRouter = router;

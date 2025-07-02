@@ -6,7 +6,6 @@ const tripFactory = require('./tripFactory');
 const bookingFactory = require('./bookingFactory');
 const locationFactory = require('./locationFactory');
 
-
 module.exports = {
   createLocation: locationFactory.createLocation,
   createUser: userFactory.createUser,

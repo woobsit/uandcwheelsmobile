@@ -1,6 +1,6 @@
 // src/controllers/driver.controller.js
 const db = require('../models');
-const logger = require( '../config/logger');
+const logger = require('../config/logger');
 
 const createDriver = async (req, res) => {
   try {
@@ -57,18 +57,18 @@ const getDriverById = async (req, res) => {
           model: db.Trip,
           as: 'trips',
           attributes: ['id', 'departure_time'],
-           include: [
+          include: [
             {
               model: db.Location,
               as: 'departureLocation',
-              attributes: ['name']
+              attributes: ['name'],
             },
             {
               model: db.Location,
               as: 'arrivalLocation',
-              attributes: ['name']
-            }
-          ]
+              attributes: ['name'],
+            },
+          ],
         },
       ],
     });
@@ -80,7 +80,7 @@ const getDriverById = async (req, res) => {
       });
     }
 
-     // Format trips with location names
+    // Format trips with location names
     const driverData = driver.get({ plain: true });
     driverData.trips = driverData.trips.map(trip => ({
       ...trip,

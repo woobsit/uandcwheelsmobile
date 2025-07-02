@@ -1,11 +1,11 @@
 // services/realtime.service.ts
-const { Server } = require ('socket.io');
+const { Server } = require('socket.io');
 
- function initRealtime(server) {
+function initRealtime(server) {
   const io = new Server(server);
-  
-  io.on('connection', (socket) => {
-    socket.on('joinTrip', (tripId) => {
+
+  io.on('connection', socket => {
+    socket.on('joinTrip', tripId => {
       socket.join(`trip-${tripId}`);
     });
   });
@@ -13,6 +13,6 @@ const { Server } = require ('socket.io');
   return io;
 }
 
-module.exports = {initRealtime}
+module.exports = { initRealtime };
 // In booking controller after successful booking:
 // req.app.get('io').to(`trip-${tripId}`).emit('seatBooked', { seats });

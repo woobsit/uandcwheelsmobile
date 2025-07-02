@@ -1,5 +1,5 @@
-const passport =require( 'passport');
-const { jwtStrategy } =require( './jwt.strategy');
+const passport = require('passport');
+const { jwtStrategy } = require('./jwt.strategy');
 
 passport.use(jwtStrategy);
 

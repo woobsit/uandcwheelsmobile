@@ -2,7 +2,6 @@ const db = require('../models/index');
 const logger = require('../config/logger');
 const EmailService = require('../email/email.service');
 
-
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
@@ -16,16 +15,16 @@ const createBooking = async (req, res) => {
           model: db.Bus,
           attributes: ['id', 'brand', 'plate_number'],
         },
-         {
+        {
           model: db.Location,
           as: 'departureLocation',
-          attributes: ['name']
+          attributes: ['name'],
         },
         {
           model: db.Location,
           as: 'arrivalLocation',
-          attributes: ['name']
-        }
+          attributes: ['name'],
+        },
       ],
     });
 

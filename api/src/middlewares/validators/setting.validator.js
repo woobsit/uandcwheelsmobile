@@ -5,7 +5,7 @@ const settingValidator = [
   body().custom(async (values, { req }) => {
     const validSettings = await db.Setting.findAll({ attributes: ['name'] });
     const settingNames = validSettings.map(s => s.name);
-    
+
     for (const key of Object.keys(values)) {
       if (!settingNames.includes(key)) {
         throw new Error(`Invalid setting: ${key}`);

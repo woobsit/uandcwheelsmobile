@@ -1,10 +1,10 @@
-const { Strategy, ExtractJwt } =require( 'passport-jwt');
-const db =require( '../../models/index'); // Your Sequelize models
+const { Strategy, ExtractJwt } = require('passport-jwt');
+const db = require('../../models/index'); // Your Sequelize models
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_SECRET || 'your_fallback_secret',
-  passReqToCallback: true
+  passReqToCallback: true,
 };
 
 const jwtStrategy = new Strategy(options, async (req, payload, done) => {
@@ -15,9 +15,9 @@ const jwtStrategy = new Strategy(options, async (req, payload, done) => {
     }
 
     // Check if token is revoked
-    const revokedToken = await db.RevokedToken.findOne({ 
+    const revokedToken = await db.RevokedToken.findOne({
       where: { token },
-      attributes: ['id'] // Only fetch what we need
+      attributes: ['id'], // Only fetch what we need
     });
 
     if (revokedToken) {
@@ -26,7 +26,7 @@ const jwtStrategy = new Strategy(options, async (req, payload, done) => {
 
     // Find user without password field
     const user = await db.User.findByPk(payload.id, {
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
     });
 
     if (!user) {

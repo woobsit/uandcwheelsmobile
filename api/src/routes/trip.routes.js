@@ -6,20 +6,19 @@ const {
   getTripById,
   updateTrip,
   deleteTrip,
-  searchTrips
+  searchTrips,
 } = require('../controllers/trip');
 const { validateRequest } = require('../middlewares/validate-request');
 const {
   createTripValidator,
   updateTripValidator,
-  searchTripsValidations
+  searchTripsValidations,
 } = require('../middlewares/validators/trip.validator');
 
 const router = Router();
 
 // Public routes
 router.get('/search', searchTripsValidations, validateRequest, searchTrips);
-
 
 router.post('/create', createTripValidator, validateRequest, createTrip);
 router.get('/all', getAllTrips);

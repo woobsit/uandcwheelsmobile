@@ -10,10 +10,12 @@ import {
   Image,
   Switch,
 } from 'react-native';
-import type { LoginScreenProps } from '../../types/AuthProps';
+//import type { LoginScreenProps } from '../../types/authprops';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import GlobalStyles from '../../assets/styles/globalStyles';
+import Feather from 'react-native-vector-icons/Feather';
 
-export default function LoginScreen({ navigation }: LoginScreenProps) {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -30,7 +32,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
   return (
-    <SafeAreaView edges={['bottom']} style={styles.safeArea}>
+    <SafeAreaView edges={['bottom']} style={GlobalStyles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -39,29 +41,35 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <View style={styles.logoContainer}>
             <Image
               source={require('../../assets/logo.png')}
-              style={styles.logo}
+              style={GlobalStyles.logo}
               resizeMode="contain"
             />
           </View>
 
           <Text style={styles.title}>Welcome Back</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email Address"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
+          <View style={styles.inputWrapper}>
+            <Feather name="mail" size={20} color="#999" style={styles.icon} />
+            <TextInput
+              style={styles.inputField}
+              placeholder="Email Address"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View style={styles.inputWrapper}>
+            <Feather name="lock" size={20} color="#999" style={styles.icon} />
+            <TextInput
+              style={styles.inputField}
+              placeholder="Password"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
 
           {/* Remember Me and Forgot Password Row */}
           <View style={styles.rememberRow}>
@@ -89,7 +97,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         <View style={styles.footer}>
           <Text style={styles.registerPrompt}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.registerText}>Register</Text>
+            <Text style={styles.registerLink}>Register</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -98,10 +106,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   container: {
     flex: 1,
     justifyContent: 'space-between',
@@ -116,15 +120,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  logo: {
-    width: 150,
-    height: 150,
-  },
+
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
+    color: '#363636',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    height: 50,
+  },
+
+  icon: {
+    marginRight: 10,
+  },
+
+  inputField: {
+    flex: 1,
+    fontSize: 16,
   },
   input: {
     height: 50,
@@ -180,7 +201,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginRight: 5,
   },
-  registerText: {
+  registerLink: {
     fontSize: 16,
     color: '#007AFF',
     fontWeight: 'bold',

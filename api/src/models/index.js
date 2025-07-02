@@ -10,8 +10,6 @@ const Booking = require('./booking.model');
 const Location = require('./location.model');
 const Setting = require('./setting.model');
 
-
-
 // No need to call initialize here since it's done in user.model.js
 
 const db = {
@@ -25,7 +23,7 @@ const db = {
   Bus,
   Trip,
   Booking,
-  Location
+  Location,
 };
 
 // Add this after initializing all models

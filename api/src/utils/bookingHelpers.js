@@ -12,5 +12,5 @@ function validateSeatNumber(seat) {
 
 module.exports = {
   generateBookingRef,
-  validateSeatNumber
+  validateSeatNumber,
 };

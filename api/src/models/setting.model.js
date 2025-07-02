@@ -7,7 +7,7 @@ class Setting extends Model {
     return settings.reduce((acc, setting) => {
       // Convert value based on data type
       let value = setting.value;
-      switch(setting.data_type) {
+      switch (setting.data_type) {
         case 'number':
           value = Number(value);
           break;
@@ -15,8 +15,11 @@ class Setting extends Model {
           value = value === 'true';
           break;
         case 'json':
-          try { value = JSON.parse(value); } 
-          catch { value = null; }
+          try {
+            value = JSON.parse(value);
+          } catch {
+            value = null;
+          }
           break;
       }
       acc[setting.name] = value;
@@ -41,7 +44,7 @@ class Setting extends Model {
             stringValue = value.toString();
             setting.data_type = 'number';
           }
-          
+
           await setting.update({ value: stringValue }, { transaction });
         }
       }
@@ -64,5 +67,5 @@ Setting.init(
     sequelize,
     modelName: 'setting',
     timestamps: true,
-  }
+  },
 );

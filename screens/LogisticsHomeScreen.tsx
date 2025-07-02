@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import type { LogisticsHomeScreenProps } from '../types/AuthProps';
+import type { LogisticsHomeScreenProps } from '../types/authProps';
 import { DrawerActions } from '@react-navigation/native';
 
 export default function LogisticsHomeScreen() {
@@ -86,7 +86,7 @@ export default function LogisticsHomeScreen() {
 
         {/* Recent Shipments */}
         <Text style={styles.sectionTitle}>Recent Shipments</Text>
-        {recentShipments.map(shipment => (
+        {/* {recentShipments.map(shipment => (
           <TouchableOpacity
             key={shipment.id}
             style={styles.shipmentCard}
@@ -108,7 +108,7 @@ export default function LogisticsHomeScreen() {
               <Text style={styles.shipmentDate}>{shipment.date}</Text>
             </View>
           </TouchableOpacity>
-        ))}
+        ))} */}
 
         {/* Statistics Card */}
         <View style={styles.statsCard}>

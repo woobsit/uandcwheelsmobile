@@ -3,7 +3,7 @@ const logger = require('../config/logger');
 
 beforeAll(async () => {
   try {
-   await dbInstance.sync({ force: true });
+    await dbInstance.sync({ force: true });
   } catch (error) {
     logger.error('Test database setup failed', error);
     throw error;

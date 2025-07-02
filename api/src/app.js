@@ -40,7 +40,6 @@ app.use('/api/v1/trip', tripRouter);
 app.use('/api/v1/booking', bookingRouter);
 app.use('/api/v1/location', locationRouter);
 
-
 // Global error catcher for unhandled rejections
 process.on('unhandledRejection', (reason, promise) => {
   logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason.message || reason}`);

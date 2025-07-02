@@ -1,6 +1,6 @@
 // logger.ts
-const winston =require( 'winston');
-const DailyRotateFile =require( 'winston-daily-rotate-file');
+const winston = require('winston');
+const DailyRotateFile = require('winston-daily-rotate-file');
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
@@ -10,21 +10,17 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
 
 const logger = winston.createLogger({
   level: 'info',
-  format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    errors({ stack: true }),
-    logFormat
-  ),
+  format: combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), errors({ stack: true }), logFormat),
   transports: [
     new winston.transports.Console({
-      format: combine(colorize(), logFormat)
+      format: combine(colorize(), logFormat),
     }),
     new DailyRotateFile({
       filename: 'src/config/logs/application-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
-      maxFiles: '14d'
+      maxFiles: '14d',
     }),
     new DailyRotateFile({
       level: 'error',
@@ -32,14 +28,14 @@ const logger = winston.createLogger({
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
-      maxFiles: '30d'
-    })
-  ]
+      maxFiles: '30d',
+    }),
+  ],
 });
 
 // Add HTTP severity level (for morgan logs)
 winston.addColors({
-  http: 'cyan'
+  http: 'cyan',
 });
 
 module.exports = logger;

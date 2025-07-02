@@ -1,7 +1,7 @@
 // src/services/cron.service.ts
-const cron =require( 'node-cron');
-const { cleanExpiredRegistrations, cleanExpiredPasswordResetTokens } =require( './authCronJobs');
-const logger =require( '../../config/logger');
+const cron = require('node-cron');
+const { cleanExpiredRegistrations, cleanExpiredPasswordResetTokens } = require('./authCronJobs');
+const logger = require('../../config/logger');
 
 class CronService {
   static init() {
@@ -12,18 +12,18 @@ class CronService {
         await cleanExpiredRegistrations();
       } catch (error) {
         logger.error('Cron job failed', {
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });
 
-      cron.schedule(process.env.CLEAN_PASSWORD_TOKENS_SCHEDULE || '0 * * * *', async () => {
+    cron.schedule(process.env.CLEAN_PASSWORD_TOKENS_SCHEDULE || '0 * * * *', async () => {
       logger.info('Running expired password reset tokens cleanup');
       try {
         await cleanExpiredPasswordResetTokens();
       } catch (error) {
         logger.error('Password token cleanup failed', {
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });
@@ -34,7 +34,7 @@ class CronService {
   static getSchedules() {
     return {
       registrations: process.env.CLEAN_REGISTRATIONS_SCHEDULE || '0 3 * * *',
-      passwordTokens: process.env.CLEAN_PASSWORD_TOKENS_SCHEDULE || '0 * * * *'
+      passwordTokens: process.env.CLEAN_PASSWORD_TOKENS_SCHEDULE || '0 * * * *',
     };
   }
 }

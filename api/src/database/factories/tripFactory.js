@@ -12,7 +12,7 @@ module.exports = {
       bus_id: busId,
       driver_id: driverId,
       departure_location_id: departureLocId, // was departure_location
-      arrival_location_id: arrivalLocId,     // was arrival_location
+      arrival_location_id: arrivalLocId, // was arrival_location
       departure_time: departure,
       estimated_arrival: arrival,
       fare: faker.number.float({ min: 1500, max: 15000, precision: 2 }),

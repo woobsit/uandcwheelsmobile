@@ -1,8 +1,8 @@
-const { Router } = require( 'express');
-const passport = require( 'passport');
-const {getCurrentUser, updateProfile} = require( '../controllers/user');
-const { updateProfileValidations } = require( '../middlewares/validators/user.validator');
-const { validateRequest } = require( '../middlewares/validate-request');
+const { Router } = require('express');
+const passport = require('passport');
+const { getCurrentUser, updateProfile } = require('../controllers/user');
+const { updateProfileValidations } = require('../middlewares/validators/user.validator');
+const { validateRequest } = require('../middlewares/validate-request');
 
 const userRouter = Router();
 
@@ -13,6 +13,6 @@ userRouter.use(passport.authenticate('jwt', { session: false }));
 userRouter.get('/me', getCurrentUser);
 
 // PATCH /api/v1/users/profile - Update user profile
-userRouter.patch('/profile', updateProfileValidations,validateRequest, updateProfile);
+userRouter.patch('/profile', updateProfileValidations, validateRequest, updateProfile);
 
-module.exports = {userRouter};
+module.exports = { userRouter };

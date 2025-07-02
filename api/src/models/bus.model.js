@@ -6,7 +6,7 @@ class Bus extends Model {
   static associate(models) {
     this.hasMany(models.Trip, {
       foreignKey: 'bus_id',
-      as: 'trips'
+      as: 'trips',
     });
   }
 }

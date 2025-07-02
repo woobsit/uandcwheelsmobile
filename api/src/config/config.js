@@ -1,6 +1,6 @@
 // src/config/config.js
- const{ Sequelize } =require( 'sequelize'); // Import Options type for better typing
- const dotenv =require( 'dotenv');
+const { Sequelize } = require('sequelize'); // Import Options type for better typing
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -16,8 +16,7 @@ const getDbConfig = () => {
         logging: process.env.DB_LOGGING === 'true', // Add logging here
         dialectOptions: {
           charset: 'utf8mb4',
-         
-        }
+        },
       };
     case 'test':
       return {
@@ -29,8 +28,7 @@ const getDbConfig = () => {
         logging: process.env.DB_LOGGING === 'true', // Add logging here
         dialectOptions: {
           charset: 'utf8mb4',
-         
-        }
+        },
       };
     default: // development
       return {
@@ -42,8 +40,7 @@ const getDbConfig = () => {
         logging: process.env.DB_LOGGING === 'true', // Add logging here
         dialectOptions: {
           charset: 'utf8mb4',
-         
-        }
+        },
       };
   }
 };
@@ -63,20 +60,18 @@ const dbInstance = new Sequelize({
     max: 5,
     min: 0,
     acquire: 30000,
-    idle: 10000
-  }
+    idle: 10000,
+  },
 });
 
-
-  (async () => {
-    try {
-      await dbInstance.authenticate();
-      console.log('Database connection established successfully');
-    } catch (error) {
-      console.error('Unable to connect to the database:', error);
-      process.exit(1);
-    }
-  })();
-
+(async () => {
+  try {
+    await dbInstance.authenticate();
+    console.log('Database connection established successfully');
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+    process.exit(1);
+  }
+})();
 
 module.exports = dbInstance;

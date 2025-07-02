@@ -44,7 +44,6 @@ module.exports = {
         allowNull: true,
       },
     });
-
   },
 
   down: async queryInterface => {

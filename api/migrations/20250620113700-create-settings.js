@@ -38,14 +38,17 @@ module.exports = {
       { name: 'is_booking_active', value: 'true', data_type: 'boolean' },
     ];
 
-    await queryInterface.bulkInsert('settings', defaultSettings.map(setting => ({
-      ...setting,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })));
+    await queryInterface.bulkInsert(
+      'settings',
+      defaultSettings.map(setting => ({
+        ...setting,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })),
+    );
   },
-  
+
   down: async queryInterface => {
     await queryInterface.dropTable('settings');
-  }
+  },
 };

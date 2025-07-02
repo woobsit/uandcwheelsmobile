@@ -1,9 +1,9 @@
-const request = require( 'supertest');
-const { app } = require( '../../app');
-const dbInstance = require( '../../config/config');
-const User = require( '../../models/user.model');
-const logger = require( '../../config/logger');
-const { createTestUser, getAuthToken } = require( '../test-utils/test-utils'); // We'll create these helpers
+const request = require('supertest');
+const { app } = require('../../app');
+const dbInstance = require('../../config/config');
+const User = require('../../models/user.model');
+const logger = require('../../config/logger');
+const { createTestUser, getAuthToken } = require('../test-utils/test-utils'); // We'll create these helpers
 
 describe('User Management API Endpoints', () => {
   let testUser;
@@ -14,7 +14,7 @@ describe('User Management API Endpoints', () => {
     testUser = await createTestUser({
       name: 'Test User',
       email: 'user.test@example.com',
-      password: 'testpassword123'
+      password: 'testpassword123',
     });
     authToken = await getAuthToken(testUser.email, 'testpassword123');
   });
@@ -26,8 +26,7 @@ describe('User Management API Endpoints', () => {
 
   describe('GET /api/v1/users/me - Get current user profile', () => {
     test('should return 401 if not authenticated', async () => {
-      const response = await request(app)
-        .get('/api/v1/users/me');
+      const response = await request(app).get('/api/v1/users/me');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -49,7 +48,7 @@ describe('User Management API Endpoints', () => {
         birth_date: testUser.birth_date,
         preferred_payment_method: testUser.preferred_payment_method,
         created_at: expect.any(String),
-        updated_at: expect.any(String)
+        updated_at: expect.any(String),
       });
       expect(response.body.data).not.toHaveProperty('password');
       expect(response.body.data).not.toHaveProperty('resetToken');
@@ -61,13 +60,11 @@ describe('User Management API Endpoints', () => {
       phone: '+1234567890',
       address: '123 Test Street',
       birth_date: '1990-01-01',
-      preferred_payment_method: 'credit_card'
+      preferred_payment_method: 'credit_card',
     };
 
     test('should return 401 if not authenticated', async () => {
-      const response = await request(app)
-        .patch('/api/v1/users/profile')
-        .send(validUpdateData);
+      const response = await request(app).patch('/api/v1/users/profile').send(validUpdateData);
 
       expect(response.status).toBe(401);
     });
@@ -85,7 +82,7 @@ describe('User Management API Endpoints', () => {
         phone: validUpdateData.phone,
         address: validUpdateData.address,
         birth_date: validUpdateData.birth_date,
-        preferred_payment_method: validUpdateData.preferred_payment_method
+        preferred_payment_method: validUpdateData.preferred_payment_method,
       });
 
       // Verify changes in database
@@ -116,8 +113,8 @@ describe('User Management API Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body.errors).toContainEqual(
         expect.objectContaining({
-          msg: 'Phone must be between 10-15 characters'
-        })
+          msg: 'Phone must be between 10-15 characters',
+        }),
       );
     });
 
@@ -131,8 +128,8 @@ describe('User Management API Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body.errors).toContainEqual(
         expect.objectContaining({
-          msg: 'Address too long'
-        })
+          msg: 'Address too long',
+        }),
       );
     });
 
@@ -145,8 +142,8 @@ describe('User Management API Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body.errors).toContainEqual(
         expect.objectContaining({
-          msg: 'Invalid date format. Use YYYY-MM-DD'
-        })
+          msg: 'Invalid date format. Use YYYY-MM-DD',
+        }),
       );
     });
 
@@ -159,8 +156,8 @@ describe('User Management API Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body.errors).toContainEqual(
         expect.objectContaining({
-          msg: 'Invalid payment method'
-        })
+          msg: 'Invalid payment method',
+        }),
       );
     });
   });

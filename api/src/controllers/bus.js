@@ -56,19 +56,19 @@ const getBusById = async (req, res) => {
         {
           model: db.Trip,
           as: 'trips',
-         attributes: ['id', 'departure_time'],
+          attributes: ['id', 'departure_time'],
           include: [
             {
               model: db.Location,
               as: 'departureLocation',
-              attributes: ['name']
+              attributes: ['name'],
             },
             {
               model: db.Location,
               as: 'arrivalLocation',
-              attributes: ['name']
-            }
-          ]
+              attributes: ['name'],
+            },
+          ],
         },
       ],
     });
@@ -80,14 +80,13 @@ const getBusById = async (req, res) => {
       });
     }
 
-     // Format trips with location names
+    // Format trips with location names
     const busData = bus.get({ plain: true });
     busData.trips = busData.trips.map(trip => ({
       ...trip,
       departure_location: trip.departureLocation.name,
       arrival_location: trip.arrivalLocation.name,
     }));
-
 
     return res.status(200).json({
       success: true,

@@ -1,115 +1,120 @@
 {
-    "keep": {
-        "days": true,
-        "amount": 30
+  "keep": {
+    "days": true,
+    "amount": 30
+  },
+  "auditLog": "src\\config\\logs\\.67789b56da4b51a97aa194326d17346d562c0436-audit.json",
+  "files": [
+    {
+      "date": 1748956293147,
+      "name": "src\\config\\logs\\error-2025-06-03.log",
+      "hash": "40074d19e5a5ca59aa8c9d977bdd36338c78240f4424979e82d523e890627774"
     },
-    "auditLog": "src\\config\\logs\\.67789b56da4b51a97aa194326d17346d562c0436-audit.json",
-    "files": [
-        {
-            "date": 1748956293147,
-            "name": "src\\config\\logs\\error-2025-06-03.log",
-            "hash": "40074d19e5a5ca59aa8c9d977bdd36338c78240f4424979e82d523e890627774"
-        },
-        {
-            "date": 1749021435422,
-            "name": "src\\config\\logs\\error-2025-06-04.log",
-            "hash": "1ee8b09c9399d282ed9bdf88fe128f860f4895a14063e3200dea4873fda95970"
-        },
-        {
-            "date": 1749115030073,
-            "name": "src\\config\\logs\\error-2025-06-05.log",
-            "hash": "5eaa4536e13217cb258dd1db04d77840edfc8c43dcd7c3f569f55fceeaf5eb1e"
-        },
-        {
-            "date": 1749469229059,
-            "name": "src\\config\\logs\\error-2025-06-09.log",
-            "hash": "e0d1849e128450976a9758f04ce5dae2b20fa61ab37a9587fe87f8cadd7f3127"
-        },
-        {
-            "date": 1749549567276,
-            "name": "src\\config\\logs\\error-2025-06-10.log",
-            "hash": "e2b64e035458fd941e131142cbfb3bbe0d98467e288b3e12ab759134ae3c6b6b"
-        },
-        {
-            "date": 1749629346196,
-            "name": "src\\config\\logs\\error-2025-06-11.log",
-            "hash": "e31a9adb8edf590354cc0a1fc458ccda258a7dd051f4480454bc7174e2e6e758"
-        },
-        {
-            "date": 1749723407266,
-            "name": "src\\config\\logs\\error-2025-06-12.log",
-            "hash": "7c49254c5b7522da722a915c30a05c551ef2c1eda7d7e5220da95e9c3c3397e4"
-        },
-        {
-            "date": 1749803762137,
-            "name": "src\\config\\logs\\error-2025-06-13.log",
-            "hash": "753352ad13e5f67d6b39b4855165c7390d2018612660395f1a39eddc84e1789d"
-        },
-        {
-            "date": 1749894645486,
-            "name": "src\\config\\logs\\error-2025-06-14.log",
-            "hash": "746f77a4668c51bdbd2a5b275977a9d5089c034db51a853409173f6f7ceccde8"
-        },
-        {
-            "date": 1750060440578,
-            "name": "src\\config\\logs\\error-2025-06-16.log",
-            "hash": "a9a1a05683225a325e030aad98ca63511fd1a2a4a7a6c15d98468c58e9dcd70a"
-        },
-        {
-            "date": 1750147046534,
-            "name": "src\\config\\logs\\error-2025-06-17.log",
-            "hash": "ba23711f8f5fc653db13fd545bf1f2fc68afbfaa2944615bbd83dc8926f8cbb2"
-        },
-        {
-            "date": 1750238094338,
-            "name": "src\\config\\logs\\error-2025-06-18.log",
-            "hash": "9619842f0e4174e1195214ab29b26b9e916e3ea5bbd7bd4e09b9da772e59fcc9"
-        },
-        {
-            "date": 1750320000128,
-            "name": "src\\config\\logs\\error-2025-06-19.log",
-            "hash": "27358aa6cecb1a36a4468d33a556e788a717c803afc184294dad5a76c5f77820"
-        },
-        {
-            "date": 1750416574001,
-            "name": "src\\config\\logs\\error-2025-06-20.log",
-            "hash": "d3b04ae6e51a65ee47cbdf2de3c6f4237e3ec2c37c5d2d65581fd0b332928752"
-        },
-        {
-            "date": 1750668073239,
-            "name": "src\\config\\logs\\error-2025-06-23.log",
-            "hash": "eb38634eddbedae498fc1a0f4c6936389be4caf1b8dc4fced184d2f5360f637b"
-        },
-        {
-            "date": 1750769857833,
-            "name": "src\\config\\logs\\error-2025-06-24.log",
-            "hash": "6feea0e2a0895054ca15835e1ea7914f0018fb3969b4ccf082d05b44905d7dd8"
-        },
-        {
-            "date": 1750843852228,
-            "name": "src\\config\\logs\\error-2025-06-25.log",
-            "hash": "dce8d7a898b83990cb2f4b352688efc931ead367048949c2e90ce21b1e20f162"
-        },
-        {
-            "date": 1750925502260,
-            "name": "src\\config\\logs\\error-2025-06-26.log",
-            "hash": "bcde6c1a5b07dc106eafefd5fe6c9a00b70f6227d1aeca742cb931c7baf1453a"
-        },
-        {
-            "date": 1751014683750,
-            "name": "src\\config\\logs\\error-2025-06-27.log",
-            "hash": "9195774136e5acf260d1ffd43ee9add658f206e754055f0bb40611020ddd00bc"
-        },
-        {
-            "date": 1751107506964,
-            "name": "src\\config\\logs\\error-2025-06-28.log",
-            "hash": "4367b0b50c512f8da05e5d1bc44f8fa915b1cb02e66c0f8109634109169d93e2"
-        },
-        {
-            "date": 1751272452255,
-            "name": "src\\config\\logs\\error-2025-06-30.log",
-            "hash": "35d28e041c4b328764988013d2251fb168c6c2ad39239051193732b6ca33d4f5"
-        }
-    ],
-    "hashType": "sha256"
+    {
+      "date": 1749021435422,
+      "name": "src\\config\\logs\\error-2025-06-04.log",
+      "hash": "1ee8b09c9399d282ed9bdf88fe128f860f4895a14063e3200dea4873fda95970"
+    },
+    {
+      "date": 1749115030073,
+      "name": "src\\config\\logs\\error-2025-06-05.log",
+      "hash": "5eaa4536e13217cb258dd1db04d77840edfc8c43dcd7c3f569f55fceeaf5eb1e"
+    },
+    {
+      "date": 1749469229059,
+      "name": "src\\config\\logs\\error-2025-06-09.log",
+      "hash": "e0d1849e128450976a9758f04ce5dae2b20fa61ab37a9587fe87f8cadd7f3127"
+    },
+    {
+      "date": 1749549567276,
+      "name": "src\\config\\logs\\error-2025-06-10.log",
+      "hash": "e2b64e035458fd941e131142cbfb3bbe0d98467e288b3e12ab759134ae3c6b6b"
+    },
+    {
+      "date": 1749629346196,
+      "name": "src\\config\\logs\\error-2025-06-11.log",
+      "hash": "e31a9adb8edf590354cc0a1fc458ccda258a7dd051f4480454bc7174e2e6e758"
+    },
+    {
+      "date": 1749723407266,
+      "name": "src\\config\\logs\\error-2025-06-12.log",
+      "hash": "7c49254c5b7522da722a915c30a05c551ef2c1eda7d7e5220da95e9c3c3397e4"
+    },
+    {
+      "date": 1749803762137,
+      "name": "src\\config\\logs\\error-2025-06-13.log",
+      "hash": "753352ad13e5f67d6b39b4855165c7390d2018612660395f1a39eddc84e1789d"
+    },
+    {
+      "date": 1749894645486,
+      "name": "src\\config\\logs\\error-2025-06-14.log",
+      "hash": "746f77a4668c51bdbd2a5b275977a9d5089c034db51a853409173f6f7ceccde8"
+    },
+    {
+      "date": 1750060440578,
+      "name": "src\\config\\logs\\error-2025-06-16.log",
+      "hash": "a9a1a05683225a325e030aad98ca63511fd1a2a4a7a6c15d98468c58e9dcd70a"
+    },
+    {
+      "date": 1750147046534,
+      "name": "src\\config\\logs\\error-2025-06-17.log",
+      "hash": "ba23711f8f5fc653db13fd545bf1f2fc68afbfaa2944615bbd83dc8926f8cbb2"
+    },
+    {
+      "date": 1750238094338,
+      "name": "src\\config\\logs\\error-2025-06-18.log",
+      "hash": "9619842f0e4174e1195214ab29b26b9e916e3ea5bbd7bd4e09b9da772e59fcc9"
+    },
+    {
+      "date": 1750320000128,
+      "name": "src\\config\\logs\\error-2025-06-19.log",
+      "hash": "27358aa6cecb1a36a4468d33a556e788a717c803afc184294dad5a76c5f77820"
+    },
+    {
+      "date": 1750416574001,
+      "name": "src\\config\\logs\\error-2025-06-20.log",
+      "hash": "d3b04ae6e51a65ee47cbdf2de3c6f4237e3ec2c37c5d2d65581fd0b332928752"
+    },
+    {
+      "date": 1750668073239,
+      "name": "src\\config\\logs\\error-2025-06-23.log",
+      "hash": "eb38634eddbedae498fc1a0f4c6936389be4caf1b8dc4fced184d2f5360f637b"
+    },
+    {
+      "date": 1750769857833,
+      "name": "src\\config\\logs\\error-2025-06-24.log",
+      "hash": "6feea0e2a0895054ca15835e1ea7914f0018fb3969b4ccf082d05b44905d7dd8"
+    },
+    {
+      "date": 1750843852228,
+      "name": "src\\config\\logs\\error-2025-06-25.log",
+      "hash": "dce8d7a898b83990cb2f4b352688efc931ead367048949c2e90ce21b1e20f162"
+    },
+    {
+      "date": 1750925502260,
+      "name": "src\\config\\logs\\error-2025-06-26.log",
+      "hash": "bcde6c1a5b07dc106eafefd5fe6c9a00b70f6227d1aeca742cb931c7baf1453a"
+    },
+    {
+      "date": 1751014683750,
+      "name": "src\\config\\logs\\error-2025-06-27.log",
+      "hash": "9195774136e5acf260d1ffd43ee9add658f206e754055f0bb40611020ddd00bc"
+    },
+    {
+      "date": 1751107506964,
+      "name": "src\\config\\logs\\error-2025-06-28.log",
+      "hash": "4367b0b50c512f8da05e5d1bc44f8fa915b1cb02e66c0f8109634109169d93e2"
+    },
+    {
+      "date": 1751272452255,
+      "name": "src\\config\\logs\\error-2025-06-30.log",
+      "hash": "35d28e041c4b328764988013d2251fb168c6c2ad39239051193732b6ca33d4f5"
+    },
+    {
+      "date": 1751361448671,
+      "name": "src\\config\\logs\\error-2025-07-01.log",
+      "hash": "a21350764fc442f4a71bb0ddf9f2b3a55f9dae2ce4b41cc6681b5093ef099c7b"
+    }
+  ],
+  "hashType": "sha256"
 }

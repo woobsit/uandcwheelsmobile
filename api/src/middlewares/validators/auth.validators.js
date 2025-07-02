@@ -1,82 +1,102 @@
-const { body, query } =require( 'express-validator');
+const { body, query } = require('express-validator');
 
- const registerValidators = [
+const registerValidators = [
   // Name validation
   body('name')
     .trim()
-    .notEmpty().withMessage('Name is required')
-    .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2-50 characters'),
+    .notEmpty()
+    .withMessage('Name is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Name must be between 2-50 characters'),
 
   // Email validation
   body('email')
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Email must be valid')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
     .normalizeEmail(),
 
   // Password validation
   body('password')
-    .notEmpty().withMessage('Password is required')
-    .isLength({ min: 6, max: 20 }).withMessage('Password must be between 6-20 characters'),
-   
-    body('confirmPassword')
-    .notEmpty().withMessage('Confirm Password is required')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6, max: 20 })
+    .withMessage('Password must be between 6-20 characters'),
+
+  body('confirmPassword')
+    .notEmpty()
+    .withMessage('Confirm Password is required')
     .custom((value, { req }) => {
       if (value !== req.body.password) {
         throw new Error('Passwords do not match');
       }
       return true;
-    })
+    }),
 ];
 
- const loginValidators = [
- 
+const loginValidators = [
   body('email')
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Email must be valid')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
     .normalizeEmail(),
 
   // Password validation
-  body('password')
-    .notEmpty().withMessage('Password is required'),  
+  body('password').notEmpty().withMessage('Password is required'),
 
-     body('rememberMe')
+  body('rememberMe')
     .optional()
-    .isBoolean().withMessage('Remember me must be a boolean')
-    .toBoolean() // Convert string 'true'/'false' to boolean
+    .isBoolean()
+    .withMessage('Remember me must be a boolean')
+    .toBoolean(), // Convert string 'true'/'false' to boolean
 ];
 
 // src/middlewares/input-validators.ts
- const forgotPasswordValidators = [
+const forgotPasswordValidators = [
   body('email')
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Email must be valid')
-    .normalizeEmail()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
+    .normalizeEmail(),
 ];
 
- const verifyEmailValidators = [
-  query('token') 
-    .notEmpty().withMessage('Verification token is required')
-    .isString().withMessage('Verification token must be a string') // Add type check
+const verifyEmailValidators = [
+  query('token')
+    .notEmpty()
+    .withMessage('Verification token is required')
+    .isString()
+    .withMessage('Verification token must be a string'), // Add type check
 ];
- const resetPasswordValidators = [
-  body('token')
-    .notEmpty().withMessage('Token is required'),
-    
+const resetPasswordValidators = [
+  body('token').notEmpty().withMessage('Token is required'),
+
   body('password')
-    .notEmpty().withMessage('Password is required')
-    .isLength({ min: 6, max: 20 }).withMessage('Password must be between 6-20 characters'),
-    
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6, max: 20 })
+    .withMessage('Password must be between 6-20 characters'),
+
   body('confirmPassword')
-    .notEmpty().withMessage('Confirm Password is required')
+    .notEmpty()
+    .withMessage('Confirm Password is required')
     .custom((value, { req }) => {
       if (value !== req.body.password) {
         throw new Error('Passwords do not match');
       }
       return true;
-    })
+    }),
 ];
 
-module.exports = {registerValidators,loginValidators, forgotPasswordValidators, verifyEmailValidators, resetPasswordValidators}
+module.exports = {
+  registerValidators,
+  loginValidators,
+  forgotPasswordValidators,
+  verifyEmailValidators,
+  resetPasswordValidators,
+};

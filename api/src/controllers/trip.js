@@ -13,24 +13,23 @@ const createTrip = async (req, res) => {
       driver_id,
     } = req.body;
 
-   // Check if locations exist
+    // Check if locations exist
     const departureLocation = await db.Location.findByPk(departure_location_id);
     const arrivalLocation = await db.Location.findByPk(arrival_location_id);
-    
+
     if (!departureLocation) {
       return res.status(404).json({
         success: false,
         message: 'Departure location not found',
       });
     }
-    
+
     if (!arrivalLocation) {
       return res.status(404).json({
         success: false,
         message: 'Arrival location not found',
       });
     }
-
 
     // Check if bus exists
     const bus = await db.Bus.findByPk(bus_id);
@@ -82,12 +81,12 @@ const getAllTrips = async (req, res) => {
     const where = {};
 
     if (status) where.status = status;
-     // Location-based filtering
+    // Location-based filtering
     if (from) {
       const location = await db.Location.findOne({ where: { name: from } });
       if (location) where.departure_location_id = location.id;
     }
-    
+
     if (to) {
       const location = await db.Location.findOne({ where: { name: to } });
       if (location) where.arrival_location_id = location.id;
@@ -108,21 +107,21 @@ const getAllTrips = async (req, res) => {
       include: [
         { model: db.Bus, attributes: ['plate_number', 'brand', 'capacity'] },
         { model: db.Driver, attributes: ['name', 'license_number'] },
-         { 
-          model: db.Location, 
+        {
+          model: db.Location,
           as: 'departureLocation',
-          attributes: ['name'] 
+          attributes: ['name'],
         },
-        { 
-          model: db.Location, 
+        {
+          model: db.Location,
           as: 'arrivalLocation',
-          attributes: ['name'] 
-        }
+          attributes: ['name'],
+        },
       ],
       order: [['departure_time', 'ASC']],
     });
 
-        // Format response with location names
+    // Format response with location names
     const formattedTrips = trips.map(trip => {
       const tripData = trip.get({ plain: true });
       return {
@@ -153,16 +152,16 @@ const getTripById = async (req, res) => {
       include: [
         { model: db.Bus, attributes: ['id', 'plate_number', 'brand', 'capacity'] },
         { model: db.Driver, attributes: ['id', 'name', 'license_number', 'phone'] },
-         { 
-          model: db.Location, 
+        {
+          model: db.Location,
           as: 'departureLocation',
-          attributes: ['name'] 
+          attributes: ['name'],
         },
-        { 
-          model: db.Location, 
+        {
+          model: db.Location,
           as: 'arrivalLocation',
-          attributes: ['name'] 
-        }
+          attributes: ['name'],
+        },
       ],
     });
 
@@ -173,7 +172,7 @@ const getTripById = async (req, res) => {
       });
     }
 
-     // Format response with location names
+    // Format response with location names
     const tripData = trip.get({ plain: true });
     const formattedTrip = {
       ...tripData,
@@ -272,11 +271,11 @@ const searchTrips = async (req, res) => {
   try {
     const { from, to, date } = req.query;
 
-// Find location IDs
+    // Find location IDs
     const departureLocation = await db.Location.findOne({ where: { name: from } });
     const arrivalLocation = await db.Location.findOne({ where: { name: to } });
 
-        if (!departureLocation || !arrivalLocation) {
+    if (!departureLocation || !arrivalLocation) {
       return res.status(400).json({
         success: false,
         message: 'Invalid departure or arrival location',
@@ -303,17 +302,17 @@ const searchTrips = async (req, res) => {
         {
           model: db.Location,
           as: 'departureLocation',
-          attributes: ['name']
+          attributes: ['name'],
         },
         {
           model: db.Location,
           as: 'arrivalLocation',
-          attributes: ['name']
-        }
+          attributes: ['name'],
+        },
       ],
     });
 
-     // Format response
+    // Format response
     const formattedTrips = trips.map(trip => {
       const tripData = trip.get({ plain: true });
       return {
@@ -335,12 +334,11 @@ const searchTrips = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createTrip,
   getAllTrips,
   getTripById,
   updateTrip,
   deleteTrip,
-  searchTrips
+  searchTrips,
 };
