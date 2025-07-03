@@ -16,7 +16,7 @@ const api: AxiosInstance = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-  async (config: AxiosRequestConfig) => {
+  async (config: any) => {
     // Add auth token to request headers
     const token = await getAuthToken();
     if (token && config.headers) {

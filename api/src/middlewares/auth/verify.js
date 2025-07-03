@@ -1,13 +1,18 @@
+// utils/verify.js
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'access-secret';
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh-secret';
 
-const generateToken = (payload, tokenExpiration) => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: tokenExpiration });
+const generateToken = (payload, type = 'access') => {
+  const secret = type === 'access' ? ACCESS_TOKEN_SECRET : REFRESH_TOKEN_SECRET;
+  const expiresIn = type === 'access' ? '15m' : '7d';
+  return jwt.sign(payload, secret, { expiresIn });
 };
 
-const verifyToken = token => {
-  return jwt.verify(token, JWT_SECRET);
+const verifyToken = (token, type = 'access') => {
+  const secret = type === 'access' ? ACCESS_TOKEN_SECRET : REFRESH_TOKEN_SECRET;
+  return jwt.verify(token, secret);
 };
 
 module.exports = { generateToken, verifyToken };

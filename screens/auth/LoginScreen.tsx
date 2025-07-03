@@ -14,6 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GlobalStyles from '../../assets/styles/globalStyles';
 import Feather from 'react-native-vector-icons/Feather';
+import { AuthService } from '../../requests';
+import { showApiErrorAlert } from '../../utils/apiHelpers';
+
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');

@@ -18,6 +18,8 @@ import GlobalStyles from '../../assets/styles/globalStyles';
 import Feather from 'react-native-vector-icons/Feather';
 import useRefreshControl from '../../hooks/useRefreshControl';
 import { matchEmail } from '../../utils/pregmatch';
+import { AuthService } from '../../requests';
+import { showApiErrorAlert } from '../../utils/apiHelpers';
 
 export default function RegisterScreen({ navigation }: any) {
   const [formData, setFormData] = useState({
@@ -124,15 +126,39 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       setIsLoading(true);
 
-      // Simulate API request
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call actual registration service
+      const response = await AuthService.register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      });
 
-      console.log('Registration successful:', formData);
-      Alert.alert('Success', 'Your account has been created!');
-      navigation.navigate('Login');
-    } catch (error) {
+      // Handle successful registration
+      console.log('Registration successful:', response);
+      Alert.alert(
+        'Success',
+        'Your account has been created! Please check your email to verify your account.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Login'),
+          },
+        ],
+      );
+    } catch (error: any) {
+      // Handle API errors
       console.error('Registration error:', error);
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+
+      // Use your error formatting utility
+      showApiErrorAlert(error, 'Failed to create account');
+
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        setErrors(prev => ({
+          ...prev,
+          email: 'Email is already registered',
+        }));
+      }
     } finally {
       setIsLoading(false);
     }

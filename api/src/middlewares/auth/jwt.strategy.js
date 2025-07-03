@@ -1,41 +1,81 @@
+// middlewares/auth/jwt.strategy.js
 const { Strategy, ExtractJwt } = require('passport-jwt');
-const db = require('../../models/index'); // Your Sequelize models
+const { verifyToken } = require('./verify');
+const db = require('../../models/index');
+const { Op } = require('sequelize');
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET || 'your_fallback_secret',
+  secretOrKey: process.env.ACCESS_TOKEN_SECRET || 'access-secret',
   passReqToCallback: true,
+  ignoreExpiration: false, // Use passport-jwt's built-in expiration check
 };
 
 const jwtStrategy = new Strategy(options, async (req, payload, done) => {
   try {
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
     if (!token) {
-      return done(null, false, { message: 'No token provided' });
+      return done(null, false, {
+        code: 'MISSING_TOKEN',
+        message: 'No authentication token provided',
+      });
     }
 
-    // Check if token is revoked
+    // 1. Check token revocation
     const revokedToken = await db.RevokedToken.findOne({
-      where: { token },
-      attributes: ['id'], // Only fetch what we need
+      where: {
+        token,
+        expires_at: { [Op.gt]: new Date() }, // Only check non-expired revocations
+      },
+      attributes: ['id'],
     });
 
     if (revokedToken) {
-      return done(null, false, { message: 'Token revoked' });
+      return done(null, false, {
+        code: 'TOKEN_REVOKED',
+        message: 'Token has been revoked',
+      });
     }
 
-    // Find user without password field
+    // 2. Verify user exists
     const user = await db.User.findByPk(payload.id, {
       attributes: { exclude: ['password'] },
+      raw: true,
     });
 
     if (!user) {
-      return done(null, false, { message: 'User not found' });
+      return done(null, false, {
+        code: 'USER_NOT_FOUND',
+        message: 'User account does not exist',
+      });
     }
+
+    // 3. Attach user to request
+    req.user = user;
 
     return done(null, user);
   } catch (error) {
-    return done(error, false);
+    // Handle specific JWT errors
+    if (error.name === 'TokenExpiredError') {
+      return done(null, false, {
+        code: 'TOKEN_EXPIRED',
+        message: 'Access token has expired',
+      });
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return done(null, false, {
+        code: 'INVALID_TOKEN',
+        message: 'Invalid access token',
+      });
+    }
+
+    // Log other errors
+    console.error('JWT Verification Error:', error.message);
+    return done(null, false, {
+      code: 'AUTH_ERROR',
+      message: 'Authentication failed',
+    });
   }
 });
 

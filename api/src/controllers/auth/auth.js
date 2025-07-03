@@ -82,15 +82,26 @@ const login = async (req, res) => {
     }
 
     const tokenExpiration = remember_token ? '30d' : '1d';
+    // Generate tokens
     const payload = { id: user.id, email: user.email };
-    const token = generateToken(payload, tokenExpiration);
-    const { password: _, verification_token, ...userData } = user.get({ plain: true });
+    const accessToken = generateToken(payload, 'access');
+    const refreshToken = generateToken(payload, 'refresh');
+
+    // Store refresh token in DB
+    await db.RefreshToken.create({
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    });
+
+    const { password: _, ...userData } = user.get({ plain: true });
 
     return res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
-        token,
+        accessToken,
+        refreshToken, // Send to client
         user: userData,
       },
     });
@@ -102,6 +113,62 @@ const login = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error during login',
+    });
+  }
+};
+
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token required',
+      });
+    }
+
+    // Verify token
+    const decoded = verifyToken(refreshToken, 'refresh');
+
+    // Check DB for valid token
+    const tokenRecord = await db.RefreshToken.findOne({
+      where: {
+        token: refreshToken,
+        userId: decoded.id,
+        revoked: false,
+        expiresAt: { [Op.gt]: new Date() },
+      },
+    });
+
+    if (!tokenRecord) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token',
+      });
+    }
+
+    // Generate new access token
+    const payload = { id: decoded.id, email: decoded.email };
+    const newAccessToken = generateToken(payload, 'access');
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        accessToken: newAccessToken,
+      },
+    });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token',
+      });
+    }
+    logger.error('Refresh token error', { error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
     });
   }
 };
@@ -263,52 +330,88 @@ const resetPassword = async (req, res) => {
 };
 // New Logout Endpoint
 const logout = async (req, res) => {
+  // Start transaction
+  const transaction = await db.sequelize.transaction();
+  
   try {
-    // Validate authorization header
+    // 1. Validate authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      await transaction.rollback();
       return res.status(401).json({ error: 'Invalid authorization header' });
     }
 
-    const token = authHeader.split(' ')[1];
-    if (!token) {
+    const accessToken = authHeader.split(' ')[1];
+    if (!accessToken) {
+      await transaction.rollback();
       return res.status(401).json({ error: 'Malformed token' });
     }
 
-    // Validate user payload
-    if (!req.user || !req.user.exp) {
+    // 2. Validate user payload
+    if (!req.user || !req.user.id || !req.user.exp) {
+      await transaction.rollback();
       return res.status(401).json({ error: 'Invalid user session' });
     }
 
     const expiresAt = new Date(req.user.exp * 1000);
+    
+    // 3. Get refresh token from request
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      await transaction.rollback();
+      return res.status(400).json({ error: 'Refresh token required' });
+    }
 
-    // Use transaction for safety
-    await db.sequelize.transaction(async t => {
-      await db.RevokedToken.create(
-        {
-          token,
-          expires_at: expiresAt,
-          user_id: req.user.id,
+    // 4. Perform all revocations in transaction
+    // Revoke access token
+    await db.RevokedToken.create({
+      token: accessToken,
+      expires_at: expiresAt,
+      user_id: req.user.id
+    }, { transaction });
+
+    // Revoke refresh token
+    await db.RefreshToken.update(
+      { revoked: true },
+      { 
+        where: { 
+          token: refreshToken,
+          userId: req.user.id // Security: ensure token belongs to user
         },
-        { transaction: t },
-      );
-    });
+        transaction
+      }
+    );
 
-    // Optional: Tell client to clear storage
-    res.setHeader('Clear-Site-Data', '"cookies", "storage"');
+    // 5. Commit transaction
+    await transaction.commit();
 
-    return res.status(200).json({
-      success: true,
-      message: 'Logged out successfully',
-    });
+    // 6. Client-side cleanup instructions
+    return res.status(200)
+      .set('Clear-Site-Data', '"cookies", "storage"')
+      .json({
+        success: true,
+        message: 'Logged out successfully',
+      });
   } catch (error) {
+    // Rollback on any error
+    if (transaction) await transaction.rollback();
+    
     logger.error('Logout error', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
+    
     return res.status(500).json({
       error: 'Logout failed',
     });
   }
 };
 
-module.exports = { register, login, verifyEmail, forgotPassword, resetPassword, logout };
+module.exports = {
+  register,
+  login,
+  refreshToken,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
+  logout,
+};

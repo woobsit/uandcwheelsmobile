@@ -2,8 +2,16 @@ export interface User {
   id: string;
   name: string;
   email: string;
+phone: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UpdateProfileData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
 }
 
 export interface AuthResponse {
@@ -21,7 +29,6 @@ export interface LoginCredentials {
 export interface RegisterData {
   name: string;
   email: string;
-  phone: string;
   password: string;
 }
 
@@ -33,4 +40,9 @@ export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
 }

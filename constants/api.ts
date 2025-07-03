@@ -3,15 +3,17 @@ export const TIMEOUT = 30000; // 30 seconds
 
 export const ENDPOINTS = {
   LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
+         REGISTER: '/auth/register',
   LOGOUT: '/auth/logout',
   REFRESH_TOKEN: '/auth/refresh-token',
+  VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  PASSWORD_RESET: (token: string) => `/auth/reset-password/${token}`,
   TRIPS: '/trips',
   TRIP_DETAILS: (id: string) => `/trips/${id}`,
   BOOKINGS: '/bookings',
   BOOKING_DETAILS: (id: string) => `/bookings/${id}`,
   LOCATIONS: '/locations',
   USER_PROFILE: '/users/profile',
-  VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
+  BUSES_CREATE: '/bus' 
 };
-
