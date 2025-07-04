@@ -16,20 +16,39 @@ import GlobalStyles from '../../assets/styles/globalStyles';
 import Feather from 'react-native-vector-icons/Feather';
 import { AuthService } from '../../requests';
 import { showApiErrorAlert } from '../../utils/apiHelpers';
-
+// In LoginScreen.js
+import { saveTokens } from '../../utils/apiHelpers';
 
 export default function LoginScreen({ navigation }: any) {
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
 
-  const handleLogin = () => {
-    console.log('Login attempted with:', { email, password, rememberMe });
-    navigation.navigate('ServiceSelection'); // New screen after registration
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true);
 
-    // Add your authentication logic here
+      const response = await AuthService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Save tokens to secure storage
+      await saveTokens(response.data.accessToken, response.data.refreshToken);
+
+      // Redirect to main app
+      navigation.navigate('Main');
+    } catch (error) {
+      showApiErrorAlert(error, 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
-
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword'); // Make sure to add this to your navigation types
   };

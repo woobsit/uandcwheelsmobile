@@ -1,13 +1,18 @@
 // src/utils/authUtils.ts
 import { Alert } from 'react-native';
-import CookieManager from 'react-native-cookies';
+import * as SecureStore from 'expo-secure-store';
 import { ApiResponse } from '../types/api';
+import axios from 'axios';
+
+// Secure storage keys
+const ACCESS_TOKEN_KEY = 'auth_access_token';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
 
 // Format error message for display
 export const formatErrorMessage = (error: any): string => {
   if (error?.response?.data) {
     const response = error.response.data as ApiResponse<any>;
-    
+
     if (response.message) return response.message;
     if (response.error?.details) return Object.values(response.error.details).join('\n');
   } else if (error.request) {
@@ -21,49 +26,75 @@ export const showApiErrorAlert = (error: any, customMessage: string | null = nul
   Alert.alert('Error', customMessage || formatErrorMessage(error));
 };
 
-// Get cookies from API domain
-const getApiCookies = async () => {
-  return CookieManager.get('https://your-api-domain.com');
-};
+// // Get cookies from API domain
+// const getApiCookies = async () => {
+//   return CookieManager.get('https://your-api-domain.com');
+// };
 
-// Get auth token from cookies
+// Get auth token from secure storage
 export const getAuthToken = async (): Promise<string | null> => {
-  const cookies = await getApiCookies();
-  return cookies.authToken?.value || null;
+  try {
+    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  } catch (error) {
+    console.error('Failed to get auth token', error);
+    return null;
+  }
 };
 
-// Get refresh token from cookies
+// Get refresh token from secure storage
 export const getRefreshToken = async (): Promise<string | null> => {
-  const cookies = await getApiCookies();
-  return cookies.refreshToken?.value || null;
+  try {
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  } catch (error) {
+    console.error('Failed to get refresh token', error);
+    return null;
+  }
 };
 
-// Save tokens to cookies
+// Save tokens to secure storage
 export const saveTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
-  const domain = 'your-api-domain.com';
-  
-  await CookieManager.set('https://' + domain, {
-    name: 'authToken',
-    value: accessToken,
-    domain: '.' + domain,
-    path: '/',
-    secure: true,
-    expires: new Date(Date.now() + 15 * 60 * 1000).toISOString()
-  });
-
-  await CookieManager.set('https://' + domain, {
-    name: 'refreshToken',
-    value: refreshToken,
-    domain: '.' + domain,
-    path: '/',
-    secure: true,
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-  });
+  try {
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+  } catch (error) {
+    console.error('Failed to save tokens', error);
+  }
 };
 
-// Clear tokens from cookies
+// Clear tokens from secure storage
 export const clearTokens = async (): Promise<void> => {
-  const domain = 'your-api-domain.com';
-  await CookieManager.clearByName('https://' + domain, 'authToken', '/');
-  await CookieManager.clearByName('https://' + domain, 'refreshToken', '/');
+  try {
+    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  } catch (error) {
+    console.error('Failed to clear tokens', error);
+  }
+};
+
+// Add to axios request config
+export const attachAuthToken = async (config: any) => {
+  const token = await getAuthToken();
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+};
+
+// Refresh auth token
+export const refreshAuthToken = async () => {
+  try {
+    const refreshToken = await getRefreshToken();
+    if (!refreshToken) throw new Error('No refresh token available');
+
+    const response = await axios.post('/auth/refresh-token', {
+      refreshToken,
+    });
+
+    const { accessToken, refreshToken: newRefreshToken } = response.data;
+    await saveTokens(accessToken, newRefreshToken || refreshToken);
+    return accessToken;
+  } catch (error) {
+    await clearTokens();
+    throw error;
+  }
 };

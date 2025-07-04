@@ -22,27 +22,22 @@ export interface CreateBookingData {
 const BookingService = {
   createBooking: async (bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
     try {
-      const response = await api.post<ApiResponse<Booking>>(
-        ENDPOINTS.BOOKINGS, 
-        bookingData
-      );
+      const response = await api.post<ApiResponse<Booking>>(ENDPOINTS.BOOKINGS, bookingData);
       return response.data;
     } catch (error) {
       throw error;
     }
   },
-  
+
   getBookingById: async (bookingId: string): Promise<ApiResponse<Booking>> => {
     try {
-      const response = await api.get<ApiResponse<Booking>>(
-        ENDPOINTS.BOOKING_DETAILS(bookingId)
-      );
+      const response = await api.get<ApiResponse<Booking>>(ENDPOINTS.BOOKING_DETAILS(bookingId));
       return response.data;
     } catch (error) {
       throw error;
     }
   },
-  
+
   getUserBookings: async (userId: string): Promise<ApiResponse<Booking[]>> => {
     try {
       const response = await api.get<ApiResponse<Booking[]>>(ENDPOINTS.BOOKINGS, {
@@ -53,12 +48,10 @@ const BookingService = {
       throw error;
     }
   },
-  
+
   cancelBooking: async (bookingId: string): Promise<ApiResponse<Booking>> => {
     try {
-      const response = await api.delete<ApiResponse<Booking>>(
-        ENDPOINTS.BOOKING_DETAILS(bookingId)
-      );
+      const response = await api.delete<ApiResponse<Booking>>(ENDPOINTS.BOOKING_DETAILS(bookingId));
       return response.data;
     } catch (error) {
       throw error;

@@ -3,7 +3,7 @@ export const TIMEOUT = 30000; // 30 seconds
 
 export const ENDPOINTS = {
   LOGIN: '/auth/login',
-         REGISTER: '/auth/register',
+  REGISTER: '/auth/register',
   LOGOUT: '/auth/logout',
   REFRESH_TOKEN: '/auth/refresh-token',
   VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
@@ -15,5 +15,6 @@ export const ENDPOINTS = {
   BOOKING_DETAILS: (id: string) => `/bookings/${id}`,
   LOCATIONS: '/locations',
   USER_PROFILE: '/users/profile',
-  BUSES_CREATE: '/bus' 
+  BUSES: '/bus',
+  DRIVERS: '/driver',
 };

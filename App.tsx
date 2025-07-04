@@ -1,7 +1,7 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack'; // Use native stack
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import WelcomeScreen from './screens/WelcomeScreen';
 import RegisterScreen from './screens/auth/RegisterScreen';
@@ -12,7 +12,7 @@ import CustomDrawerContent from './components/molecules/CustomDrawerContent'; //
 
 // Create navigators
 //const Stack = createStackNavigator<RootStackParamList>();
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 // Logistics Drawer Navigator (for authenticated users)
@@ -48,7 +48,7 @@ export default function App() {
           <Stack.Screen name="ServiceSelection" component={ServiceSelectionScreen} />
 
           {/* Main App (after authentication) */}
-          <Stack.Screen name="Home" component={LogisticsDrawer} />
+          {/* <Stack.Screen name="Home" component={LogisticsDrawer} /> */}
 
           {/* You can keep this as alternative if needed */}
           <Stack.Screen

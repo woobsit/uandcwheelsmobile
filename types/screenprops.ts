@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 // Define your authentication stack parameters
-type AuthStackParamList = {
+export type AuthStackParamList = {
   Welcome: undefined;
   ServiceSelection: undefined;
   Login: undefined;
@@ -19,10 +19,7 @@ type AuthStackParamList = {
 };
 
 // Welcome screen props type
-export type WelcomeScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'Welcome'
->;
+export type WelcomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 // ServiceSelection screen props type
 export type ServiceSelectionScreenProps = NativeStackScreenProps<
@@ -31,25 +28,13 @@ export type ServiceSelectionScreenProps = NativeStackScreenProps<
 >;
 
 // Register screen props type
-export type RegisterScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'Register'
->;
+export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 // Login screen props type
-export type LoginScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'Login'
->;
+export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 // LogisticsHome screen props type
-export type LogisticsHomeScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'LogisticsHome'
->;
+export type LogisticsHomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'LogisticsHome'>;
 
 // TransportHome screen props type
-export type TransportHomeScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'TransportHome'
->;
+export type TransportHomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'TransportHome'>;

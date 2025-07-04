@@ -8,11 +8,11 @@ interface UseRefreshControlOptions {
 
 const useRefreshControl = (options: UseRefreshControlOptions) => {
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     options.onRefreshStart?.();
-    
+
     try {
       await options.refreshAction();
     } finally {
@@ -20,7 +20,7 @@ const useRefreshControl = (options: UseRefreshControlOptions) => {
       options.onRefreshEnd?.();
     }
   }, [options]);
-  
+
   return {
     refreshing,
     onRefresh,

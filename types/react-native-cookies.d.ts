@@ -26,9 +26,9 @@ declare module 'react-native-cookies' {
         expires?: string;
         secure?: boolean;
         httpOnly?: boolean;
-      }
+      },
     ): Promise<void>;
-    
+
     get(url: string): Promise<Cookies>;
     clearByName(url: string, name: string, path?: string): Promise<void>;
     clearAll(): Promise<void>;

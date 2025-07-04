@@ -126,7 +126,7 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       setIsLoading(true);
 
-      // Call actual registration service
+      // Call registration service
       const response = await AuthService.register({
         name: formData.fullName,
         email: formData.email,
@@ -134,7 +134,8 @@ export default function RegisterScreen({ navigation }: any) {
       });
 
       // Handle successful registration
-      console.log('Registration successful:', response);
+      console.log('Registration successful:', response.data);
+
       Alert.alert(
         'Success',
         'Your account has been created! Please check your email to verify your account.',
@@ -146,18 +147,16 @@ export default function RegisterScreen({ navigation }: any) {
         ],
       );
     } catch (error: any) {
-      // Handle API errors
       console.error('Registration error:', error);
 
-      // Use your error formatting utility
-      showApiErrorAlert(error, 'Failed to create account');
-
-      // Handle specific error cases
+      // Handle API errors
       if (error.response?.status === 409) {
         setErrors(prev => ({
           ...prev,
           email: 'Email is already registered',
         }));
+      } else {
+        showApiErrorAlert(error, 'Failed to create account');
       }
     } finally {
       setIsLoading(false);

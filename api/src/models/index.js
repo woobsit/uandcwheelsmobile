@@ -11,7 +11,6 @@ const Location = require('./location.model');
 const Setting = require('./setting.model');
 const RefreshToken = require('./refreshToken.model');
 
-
 // No need to call initialize here since it's done in user.model.js
 
 const db = {

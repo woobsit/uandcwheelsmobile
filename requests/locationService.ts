@@ -12,50 +12,43 @@ const LocationService = {
       throw error;
     }
   },
-  
+
   getLocationById: async (id: string): Promise<ApiResponse<Location>> => {
     try {
-      const response = await api.get<ApiResponse<Location>>(
-        `${ENDPOINTS.LOCATIONS}/${id}`
-      );
+      const response = await api.get<ApiResponse<Location>>(`${ENDPOINTS.LOCATIONS}/${id}`);
       return response.data;
     } catch (error) {
       throw error;
     }
   },
-  
+
   createLocation: async (locationData: CreateLocationData): Promise<ApiResponse<Location>> => {
     try {
-      const response = await api.post<ApiResponse<Location>>(
-        ENDPOINTS.LOCATIONS,
-        locationData
-      );
+      const response = await api.post<ApiResponse<Location>>(ENDPOINTS.LOCATIONS, locationData);
       return response.data;
     } catch (error) {
       throw error;
     }
   },
-  
+
   updateLocation: async (
-    id: string, 
-    updateData: Partial<CreateLocationData>
+    id: string,
+    updateData: Partial<CreateLocationData>,
   ): Promise<ApiResponse<Location>> => {
     try {
       const response = await api.patch<ApiResponse<Location>>(
         `${ENDPOINTS.LOCATIONS}/${id}`,
-        updateData
+        updateData,
       );
       return response.data;
     } catch (error) {
       throw error;
     }
   },
-  
+
   deleteLocation: async (id: string): Promise<ApiResponse<void>> => {
     try {
-      const response = await api.delete<ApiResponse<void>>(
-        `${ENDPOINTS.LOCATIONS}/${id}`
-      );
+      const response = await api.delete<ApiResponse<void>>(`${ENDPOINTS.LOCATIONS}/${id}`);
       return response.data;
     } catch (error) {
       throw error;

@@ -8,28 +8,14 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { WelcomeScreenProps } from '../types/screenprops';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '../types/screenprops'; // Import your param list
 
-//import type { WelcomeScreenProps } from '../types/authprops';
+export default function WelcomeScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
-// Welcome screen props type
-// Define your authentication stack parameters
-type AuthStackParamList = {
-  Welcome: undefined;
-  ServiceSelection: undefined;
-  Login: undefined;
-  Register: undefined;
-  ForgotPassword: undefined;
-  LogisticsHome: undefined;
-  TransportHome: undefined;
-  // Add other auth screens here
-};
-
-export type WelcomeScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'Welcome'
->;
-
-export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
   // Animation values
   const scale = useSharedValue(0.5);
   const opacity = useSharedValue(0);

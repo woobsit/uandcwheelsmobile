@@ -1,69 +1,32 @@
 import api from './axiosInstance';
-import { ENDPOINTS } from '../constants/api';
-import { 
-  LoginCredentials, 
-  RegisterData, 
-  AuthResponse, 
-  RefreshTokenRequest, 
-  RefreshTokenResponse 
-} from '../types/auth';
-import { ApiResponse } from '../types/api';
 
-const AuthService = {
-  login: async (credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> => {
-    try {
-      const response = await api.post<ApiResponse<AuthResponse>>(
-        ENDPOINTS.LOGIN, 
-        credentials
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+export const AuthService = {
+  register: (data: { name: string; email: string; password: string }) => {
+    return api.post('/auth/register', data);
   },
-  
-  register: async (userData: RegisterData): Promise<ApiResponse<AuthResponse>> => {
-    try {
-      const response = await api.post<ApiResponse<AuthResponse>>(
-        ENDPOINTS.REGISTER, 
-        userData
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+
+  login: (credentials: { email: string; password: string }) => {
+    return api.post('/auth/login', credentials);
   },
-  
-  logout: async (): Promise<ApiResponse<void>> => {
-    try {
-      const response = await api.post<ApiResponse<void>>(ENDPOINTS.LOGOUT);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+
+  logout: () => {
+    return api.post('/auth/logout');
   },
-  
-  refreshToken: async (data: RefreshTokenRequest): Promise<ApiResponse<RefreshTokenResponse>> => {
-    try {
-      const response = await api.post<ApiResponse<RefreshTokenResponse>>(
-        ENDPOINTS.REFRESH_TOKEN, 
-        data
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+
+  refreshToken: (refreshToken: string) => {
+    return api.post('/auth/refresh-token', { refreshToken });
   },
-  
-  verifyEmail: async (token: string): Promise<ApiResponse<void>> => {
-    try {
-      const response = await api.get<ApiResponse<void>>(
-        ENDPOINTS.VERIFY_EMAIL(token)
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+
+  verifyEmail: (token: string) => {
+    return api.get(`/auth/verify-email?token=${token}`);
+  },
+
+  forgotPassword: (email: string) => {
+    return api.post('/auth/forgot-password', { email });
+  },
+
+  resetPassword: (data: { token: string; password: string }) => {
+    return api.post('/auth/reset-password', data);
   },
 };
 

@@ -332,7 +332,7 @@ const resetPassword = async (req, res) => {
 const logout = async (req, res) => {
   // Start transaction
   const transaction = await db.sequelize.transaction();
-  
+
   try {
     // 1. Validate authorization header
     const authHeader = req.headers.authorization;
@@ -354,7 +354,7 @@ const logout = async (req, res) => {
     }
 
     const expiresAt = new Date(req.user.exp * 1000);
-    
+
     // 3. Get refresh token from request
     const { refreshToken } = req.body;
     if (!refreshToken) {
@@ -364,42 +364,43 @@ const logout = async (req, res) => {
 
     // 4. Perform all revocations in transaction
     // Revoke access token
-    await db.RevokedToken.create({
-      token: accessToken,
-      expires_at: expiresAt,
-      user_id: req.user.id
-    }, { transaction });
+    await db.RevokedToken.create(
+      {
+        token: accessToken,
+        expires_at: expiresAt,
+        user_id: req.user.id,
+      },
+      { transaction },
+    );
 
     // Revoke refresh token
     await db.RefreshToken.update(
       { revoked: true },
-      { 
-        where: { 
+      {
+        where: {
           token: refreshToken,
-          userId: req.user.id // Security: ensure token belongs to user
+          userId: req.user.id, // Security: ensure token belongs to user
         },
-        transaction
-      }
+        transaction,
+      },
     );
 
     // 5. Commit transaction
     await transaction.commit();
 
     // 6. Client-side cleanup instructions
-    return res.status(200)
-      .set('Clear-Site-Data', '"cookies", "storage"')
-      .json({
-        success: true,
-        message: 'Logged out successfully',
-      });
+    return res.status(200).set('Clear-Site-Data', '"cookies", "storage"').json({
+      success: true,
+      message: 'Logged out successfully',
+    });
   } catch (error) {
     // Rollback on any error
     if (transaction) await transaction.rollback();
-    
+
     logger.error('Logout error', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    
+
     return res.status(500).json({
       error: 'Logout failed',
     });

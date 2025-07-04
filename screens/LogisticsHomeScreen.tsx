@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import type { LogisticsHomeScreenProps } from '../types/authProps';
+import type { LogisticsHomeScreenProps } from '../types/screenprops';
 import { DrawerActions } from '@react-navigation/native';
 
 export default function LogisticsHomeScreen() {
