@@ -15,6 +15,7 @@ export type AuthStackParamList = {
   NewShipment: undefined;
   TrackPackage: undefined;
   ShipmentDetails: undefined;
+  EmailVerification: undefined;
   // Add other auth screens here
 };
 
@@ -38,3 +39,6 @@ export type LogisticsHomeScreenProps = NativeStackScreenProps<AuthStackParamList
 
 // TransportHome screen props type
 export type TransportHomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'TransportHome'>;
+
+// EmailVerificationScreen screen props type
+export type EmailVerificationScreenProps = NativeStackScreenProps<AuthStackParamList, 'EmailVerification'>;

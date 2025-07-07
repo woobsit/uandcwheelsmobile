@@ -23,14 +23,14 @@ import { showApiErrorAlert } from '../../utils/apiHelpers';
 
 export default function RegisterScreen({ navigation }: any) {
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
 
   const [errors, setErrors] = useState({
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -42,13 +42,13 @@ export default function RegisterScreen({ navigation }: any) {
   // Function to reset the form
   const resetForm = () => {
     setFormData({
-      fullName: '',
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
     });
     setErrors({
-      fullName: '',
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -73,19 +73,18 @@ export default function RegisterScreen({ navigation }: any) {
   const validateForm = () => {
     let valid = true;
     const newErrors = {
-      fullName: '',
+      name: '',
       email: '',
-
       password: '',
       confirmPassword: '',
     };
 
     // Validate full name
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required';
       valid = false;
-    } else if (formData.fullName.trim().length < 3) {
-      newErrors.fullName = 'Full name must be at least 3 characters';
+    } else if (formData.name.trim().length < 3) {
+      newErrors.name = 'Full name must be at least 3 characters';
       valid = false;
     }
 
@@ -122,15 +121,16 @@ export default function RegisterScreen({ navigation }: any) {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     try {
       setIsLoading(true);
 
       // Call registration service
       const response = await AuthService.register({
-        name: formData.fullName,
+        name: formData.name,
         email: formData.email,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
+
       });
 
       // Handle successful registration
@@ -204,12 +204,12 @@ export default function RegisterScreen({ navigation }: any) {
               <TextInput
                 style={styles.inputField}
                 placeholder="Full Name"
-                value={formData.fullName}
-                onChangeText={text => setFormData({ ...formData, fullName: text })}
+                value={formData.name}
+                onChangeText={text => setFormData({ ...formData, name: text })}
               />
             </View>
             <View style={styles.errorTextContainer}>
-              {errors.fullName ? <Text style={styles.errorText}>{errors.fullName}</Text> : null}
+              {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
             </View>
 
             {/* Email Input */}

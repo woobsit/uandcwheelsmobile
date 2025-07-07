@@ -8,6 +8,7 @@ import RegisterScreen from './screens/auth/RegisterScreen';
 import LoginScreen from './screens/auth/LoginScreen';
 import ServiceSelectionScreen from './screens/auth/ServiceSelectionScreen';
 import LogisticsHomeScreen from './screens/LogisticsHomeScreen';
+import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; // You'll create this
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
 
 // Create navigators
@@ -46,7 +47,7 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="ServiceSelection" component={ServiceSelectionScreen} />
-
+<Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
           {/* Main App (after authentication) */}
           {/* <Stack.Screen name="Home" component={LogisticsDrawer} /> */}
 

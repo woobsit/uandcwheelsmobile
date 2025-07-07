@@ -2,10 +2,9 @@ import axios from 'axios';
 import { attachAuthToken, refreshAuthToken, clearTokens } from '../utils/apiHelpers';
 
 const api = axios.create({
-  baseURL: 'https://your-api-domain.com/api',
+  baseURL: 'http://192.168.0.120:5000/api/v1',
   timeout: 10000,
 });
-
 // Request interceptor
 api.interceptors.request.use(attachAuthToken);
 

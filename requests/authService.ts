@@ -1,7 +1,8 @@
 import api from './axiosInstance';
 
 export const AuthService = {
-  register: (data: { name: string; email: string; password: string }) => {
+  register: (data: { name: string; email: string; password: string; confirmPassword: String }) => {
+    
     return api.post('/auth/register', data);
   },
 
@@ -27,6 +28,9 @@ export const AuthService = {
 
   resetPassword: (data: { token: string; password: string }) => {
     return api.post('/auth/reset-password', data);
+  },
+   resendVerification: (email: string) => {
+    return api.post('/auth/resend-verification', { email });
   },
 };
 

@@ -10,30 +10,30 @@ const registerValidators = [
     .withMessage('Name must be between 2-50 characters'),
 
   // Email validation
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('Email must be valid')
-    .normalizeEmail(),
+   body('email')
+     .trim()
+     .notEmpty()
+     .withMessage('Email is required')
+     .isEmail()
+     .withMessage('Email must be valid')
+     .normalizeEmail(),
 
   // Password validation
   body('password')
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 6, max: 20 })
-    .withMessage('Password must be between 6-20 characters'),
+    .isLength({ min: 6, max: 255 })
+    .withMessage('Password must be between 6-255 characters'),
 
-  body('confirmPassword')
-    .notEmpty()
-    .withMessage('Confirm Password is required')
-    .custom((value, { req }) => {
-      if (value !== req.body.password) {
-        throw new Error('Passwords do not match');
-      }
-      return true;
-    }),
+   body('confirmPassword')
+     .notEmpty()
+     .withMessage('Confirm Password is required')
+     .custom((value, { req }) => {
+       if (value !== req.body.password) {
+         throw new Error('Passwords do not match');
+       }
+       return true;
+     }),
 ];
 
 const loginValidators = [

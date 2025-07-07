@@ -32,7 +32,7 @@ const register = async (req, res) => {
       verification_token_expires: verificationExpires,
     });
 
-    //await EmailService.sendVerificationEmail(email, name, verificationToken, verificationExpires);
+    await EmailService.sendVerificationEmail(email, name, verificationToken, verificationExpires);
 
     return res.status(201).json({
       success: true,
@@ -407,6 +407,62 @@ const logout = async (req, res) => {
   }
 };
 
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await db.User.findOne({ where: { email } });
+    
+    if (!user) {
+      // Don't reveal if user exists for security
+      return res.status(200).json({
+        success: true,
+        message: 'If your email is registered, a new verification email has been sent.',
+      });
+    }
+
+    // Check if already verified
+    if (user.email_verified_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified',
+      });
+    }
+
+    // Generate new token and expiration
+    const newToken = uuid.v4();
+    const newExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
+    await user.update({
+      verification_token: newToken,
+      verification_token_expires: newExpiration,
+    });
+
+    // Send new verification email
+    await EmailService.sendVerificationEmail(
+      user.email, 
+      user.name, 
+      newToken, 
+      newExpiration
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'New verification email sent',
+    });
+  } catch (error) {
+    logger.error('Resend verification failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification email',
+    });
+  }
+};
+
+
 module.exports = {
   register,
   login,
@@ -414,5 +470,6 @@ module.exports = {
   verifyEmail,
   forgotPassword,
   resetPassword,
+  resendVerification,
   logout,
 };
