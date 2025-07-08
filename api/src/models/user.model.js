@@ -65,11 +65,15 @@ class User extends Model {
           allowNull: true,
         },
         password: {
-          type: DataTypes.STRING(60),
+          type: DataTypes.STRING(255),
           allowNull: false,
         },
         verification_token: {
           type: DataTypes.STRING,
+          allowNull: true,
+        },
+        verification_code: {
+          type: DataTypes.INTEGER(6),
           allowNull: true,
         },
         remember_token: {

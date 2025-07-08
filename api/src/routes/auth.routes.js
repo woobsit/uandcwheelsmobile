@@ -5,12 +5,17 @@ const {
   verifyEmailValidators,
   forgotPasswordValidators,
   resetPasswordValidators,
+  verifyEmailByCodeValidators,
+  resendVerificationValidators
+
 } = require('../middlewares/validators/auth.validators');
 const { validateRequest } = require('../middlewares/validate-request');
 const {
   register,
   login,
   verifyEmail,
+  verifyEmailByCode,
+  resendVerification,
   forgotPassword,
   resetPassword,
   logout,
@@ -24,6 +29,10 @@ router.post('/register', registerValidators, validateRequest, register);
 router.post('/login', authLimiter, loginValidators, validateRequest, login);
 
 router.get('/verify-email', verifyEmailValidators, validateRequest, verifyEmail);
+
+router.post('/verify-email', verifyEmailByCodeValidators, validateRequest,verifyEmailByCode); // For mobile
+
+router.post('/resend-verification', resendVerificationValidators, validateRequest,resendVerification);
 
 router.post('/forgot-password', forgotPasswordValidators, validateRequest, forgotPassword);
 

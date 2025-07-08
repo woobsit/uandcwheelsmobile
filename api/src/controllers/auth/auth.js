@@ -1,12 +1,17 @@
 const bcrypt = require('bcryptjs');
 const uuid = require('uuid');
 const db = require('../../models/index');
-//const EmailService = require( '../../email/email.service');
+const EmailService = require( '../../email/email.service');
 const PasswordResetToken = require('../../models/passwordResetToken.model');
 const { generateToken } = require('../../middlewares/auth/verify');
 const logger = require('../../config/logger');
 const { Op } = require('sequelize');
 //const dbInstance = require('../../config/config');
+
+// Generate a 6-digit verification code
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 const register = async (req, res) => {
   try {
@@ -21,7 +26,8 @@ const register = async (req, res) => {
     }
 
     const verificationToken = uuid.v4();
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     const user = await db.User.create({
       name,
@@ -29,10 +35,17 @@ const register = async (req, res) => {
       password,
       email_verified_at: null,
       verification_token: verificationToken,
+      verification_code: verificationCode,
       verification_token_expires: verificationExpires,
     });
 
-    await EmailService.sendVerificationEmail(email, name, verificationToken, verificationExpires);
+    await EmailService.sendVerificationEmail(
+      email, 
+      name, 
+      verificationToken, 
+      verificationCode,
+      verificationExpires
+    );
 
     return res.status(201).json({
       success: true,
@@ -44,15 +57,14 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Registration failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    logger.error('Registration failed', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error during registration',
     });
   }
 };
+
 
 const login = async (req, res) => {
   try {
@@ -176,6 +188,7 @@ const refreshToken = async (req, res) => {
 const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
+    
     if (!token || typeof token !== 'string') {
       return res.status(400).json({
         success: false,
@@ -183,29 +196,24 @@ const verifyEmail = async (req, res) => {
       });
     }
 
-    const user = await db.User.findOne({ where: { verification_token: token } });
+    const user = await db.User.findOne({ 
+      where: { 
+        verification_token: token,
+        verification_token_expires: { [Op.gt]: new Date() }
+      } 
+    });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Invalid verification token',
+        message: 'Invalid or expired verification token',
       });
-    }
-
-    // Check if token has expired
-    if (user.verification_token_expires && new Date() > user.verification_token_expires) {
-      await user.destroy(); // Optional: Clean up expired registration
-      return res.status(410).json({
-        // 410 Gone
-        success: false,
-        message: 'Verification link has expired. Please register again.',
-      });
-      return;
     }
 
     await user.update({
       email_verified_at: new Date(),
       verification_token: null,
+      verification_code: null,
       verification_token_expires: null,
     });
 
@@ -214,16 +222,121 @@ const verifyEmail = async (req, res) => {
       message: 'Email verified successfully. You can now log in.',
     });
   } catch (error) {
-    logger.error('Email verification failed', {
-      token: req.query.token,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    logger.error('Email verification failed', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error during email verification',
     });
   }
 };
+
+const verifyEmailByCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+        const numericCode = parseInt(code, 10); // Convert to number
+
+
+
+    if (!email || !code) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and verification code are required',
+      });
+    }
+
+    const user = await db.User.findOne({ 
+      where: { 
+        email,
+        verification_code: numericCode,
+        verification_token_expires: { [Op.gt]: new Date() }
+      } 
+    });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid email or verification code',
+      });
+    }
+
+    await user.update({
+      email_verified_at: new Date(),
+      verification_token: null,
+      verification_code: null,
+      verification_token_expires: null,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified successfully.',
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      }
+    });
+  } catch (error) {
+    logger.error('Email verification by code failed', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during email verification',
+    });
+  }
+};
+
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    const user = await db.User.findOne({ 
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If the email is registered, a new verification will be sent',
+      });
+    }
+
+    if (user.email_verified_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified',
+      });
+    }
+
+    const verificationToken = uuid.v4();
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await user.update({
+      verification_token: verificationToken,
+      verification_code: verificationCode,
+      verification_token_expires: verificationExpires,
+    });
+
+    await EmailService.sendVerificationEmail(
+      email, 
+      user.name, 
+      verificationToken, 
+      verificationCode,
+      verificationExpires
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'New verification email sent',
+    });
+  } catch (error) {
+    logger.error('Resend verification failed', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification',
+    });
+  }
+};
+
 
 const forgotPassword = async (req, res) => {
   try {
@@ -407,69 +520,14 @@ const logout = async (req, res) => {
   }
 };
 
-const resendVerification = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    // Find user by email
-    const user = await db.User.findOne({ where: { email } });
-    
-    if (!user) {
-      // Don't reveal if user exists for security
-      return res.status(200).json({
-        success: true,
-        message: 'If your email is registered, a new verification email has been sent.',
-      });
-    }
-
-    // Check if already verified
-    if (user.email_verified_at) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified',
-      });
-    }
-
-    // Generate new token and expiration
-    const newToken = uuid.v4();
-    const newExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    
-    await user.update({
-      verification_token: newToken,
-      verification_token_expires: newExpiration,
-    });
-
-    // Send new verification email
-    await EmailService.sendVerificationEmail(
-      user.email, 
-      user.name, 
-      newToken, 
-      newExpiration
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: 'New verification email sent',
-    });
-  } catch (error) {
-    logger.error('Resend verification failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to resend verification email',
-    });
-  }
-};
-
-
 module.exports = {
   register,
   login,
   refreshToken,
   verifyEmail,
+  verifyEmailByCode,
+  resendVerification,
   forgotPassword,
   resetPassword,
-  resendVerification,
   logout,
 };

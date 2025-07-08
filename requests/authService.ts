@@ -22,6 +22,9 @@ export const AuthService = {
     return api.get(`/auth/verify-email?token=${token}`);
   },
 
+   verifyEmailByMobile: (code: string, email: string) => {
+    return api.post('/auth/verify-email', { code, email });
+  },
   forgotPassword: (email: string) => {
     return api.post('/auth/forgot-password', { email });
   },

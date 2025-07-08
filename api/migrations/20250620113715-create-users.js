@@ -9,7 +9,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.createTable('buses', {
+    await queryInterface.createTable('users', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -65,11 +65,15 @@ module.exports = {
         allowNull: true,
       },
       password: {
-        type: Sequelize.STRING(60),
+        type: Sequelize.STRING(255),
         allowNull: false,
       },
       verification_token: {
         type: Sequelize.STRING,
+        allowNull: true,
+      },
+      verification_code: {
+        type: Sequelize.INTEGER(6),
         allowNull: true,
       },
       remember_token: {

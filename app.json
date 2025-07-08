@@ -3,6 +3,7 @@
     "packagerOpts": {
       "assetExts": ["json"]
     },
+    "scheme": "exp://192.168.0.120:8081",
     "name": "uandcwheelsmobile",
     "slug": "uandcwheelsmobile",
     "version": "1.0.0",
@@ -16,9 +17,30 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+       "bundleIdentifier": "com.exp://192.168.0.120:8081",
+       "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["exp://192.168.0.120:8081"],
+            "CFBundleURLName": "com.exp://192.168.0.120:8081"
+          }
+        ]
+      }
     },
     "android": {
+       "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "exp://192.168.0.120:8081",
+              "host": "verify-email"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

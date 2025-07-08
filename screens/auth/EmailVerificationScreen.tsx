@@ -11,65 +11,43 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { AuthService } from '../../requests';
 import { showApiErrorAlert } from '../../utils/apiHelpers';
-import { useNavigation } from '@react-navigation/native';
+import { 
+  useNavigation,
+  useRoute,
+  RouteProp
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/screenprops';
 
 // Resend timer in seconds
 const RESEND_TIMEOUT = 60;
 
+type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
+
 export default function VerificationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const [token, setToken] = useState('');
-  const [email, setEmail] = useState('');
+  const route = useRoute<EmailVerificationScreenRouteProp>();
+  
+  // Get email from navigation parameters
+  const email = route.params?.email || '';
+  
+  const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendDisabled, setResendDisabled] = useState(true);
   const [countdown, setCountdown] = useState(RESEND_TIMEOUT);
-  const tokenInputRef = useRef<TextInput>(null);
+  const codeInputRef = useRef<TextInput>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load email from navigation params
+  // Start the countdown timer when screen mounts
   useEffect(() => {
-    // In a real app, you might get this from navigation params or async storage
-    const userEmail = 'user@example.com'; // Replace with actual email
-    setEmail(userEmail);
-    
-    // Handle deep linking for verification
-    const handleDeepLink = (event: { url: string }) => {
-      const url = new URL(event.url);
-      const tokenParam = url.searchParams.get('token');
-      if (tokenParam) {
-        setToken(tokenParam);
-        handleVerify(tokenParam);
-      }
-    };
-
-    // Listen for deep links
-    Linking.addEventListener('url', handleDeepLink);
-
-    // Check if app was opened with a deep link
-    Linking.getInitialURL().then(url => {
-      if (url) {
-        const parsedUrl = new URL(url);
-        const tokenParam = parsedUrl.searchParams.get('token');
-        if (tokenParam) {
-          setToken(tokenParam);
-          handleVerify(tokenParam);
-        }
-      }
-    });
-
-    // Start resend countdown
     startCountdown();
 
     return () => {
-      Linking.removeAllListeners('url');
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
@@ -77,6 +55,10 @@ export default function VerificationScreen() {
   const startCountdown = () => {
     setResendDisabled(true);
     setCountdown(RESEND_TIMEOUT);
+    
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+    }
     
     countdownRef.current = setInterval(() => {
       setCountdown(prev => {
@@ -90,16 +72,20 @@ export default function VerificationScreen() {
     }, 1000);
   };
 
-  const handleVerify = async (verificationToken?: string) => {
-    const verifyToken = verificationToken || token;
-    if (!verifyToken) {
+  const handleVerify = async () => {
+    if (!code) {
       Alert.alert('Error', 'Please enter your verification code');
+      return;
+    }
+
+    if (code.length < 6) {
+      Alert.alert('Invalid Code', 'Verification code must be 6 digits');
       return;
     }
 
     try {
       setIsLoading(true);
-      await AuthService.verifyEmail(verifyToken);
+      await AuthService.verifyEmailByMobile(code, email);
       
       Alert.alert(
         'Email Verified!',
@@ -114,6 +100,11 @@ export default function VerificationScreen() {
   };
 
   const handleResend = async () => {
+    if (!email) {
+      Alert.alert('Error', 'No email address found for resending verification');
+      return;
+    }
+
     try {
       setIsLoading(true);
       await AuthService.resendVerification(email);
@@ -156,30 +147,31 @@ export default function VerificationScreen() {
             
             <View style={styles.inputContainer}>
               <TextInput
-                ref={tokenInputRef}
+                ref={codeInputRef}
                 style={styles.input}
                 placeholder="Enter verification code"
                 placeholderTextColor="#999"
-                value={token}
-                onChangeText={setToken}
+                value={code}
+                onChangeText={setCode}
                 keyboardType="number-pad"
                 maxLength={6}
-                autoFocus={!token}
+                autoFocus={!code}
                 editable={!isLoading}
-                onSubmitEditing={() => handleVerify()}
+                onSubmitEditing={handleVerify}
               />
               <TouchableOpacity 
                 style={styles.scanButton}
-                onPress={() => tokenInputRef.current?.focus()}
+                onPress={() => codeInputRef.current?.focus()}
+                disabled={isLoading}
               >
-                <Feather name="edit" size={20} color="#4A90E2" />
+                <Feather name="edit" size={20} color={isLoading ? "#999" : "#4A90E2"} />
               </TouchableOpacity>
             </View>
             
             <TouchableOpacity
-              style={[styles.button, isLoading && styles.disabledButton]}
-              onPress={() => handleVerify()}
-              disabled={isLoading}
+              style={[styles.button, (isLoading || code.length < 6) && styles.disabledButton]}
+              onPress={handleVerify}
+              disabled={isLoading || code.length < 6}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
@@ -220,7 +212,6 @@ export default function VerificationScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

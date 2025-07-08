@@ -16,18 +16,21 @@ class EmailService {
     },
   });
 
-  static async sendVerificationEmail(email, name, token, expiresAt) {
-    const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
-
+  static async sendVerificationEmail(email, name, token, code, expiresAt) {
+    const webVerificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
+    const mobileVerificationCode = code;
+    
     const templatePath = path.join(__dirname, './templates/verification-email.hbs');
     const templateSource = fs.readFileSync(templatePath, 'utf8');
     const template = handlebars.compile(templateSource);
 
     const html = template({
       name,
-      verificationUrl,
+      webVerificationUrl,
+      mobileVerificationCode,
       supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com',
       expirationTime: expiresAt.toLocaleString(),
+      appName: process.env.APP_NAME || 'Our App'
     });
 
     await this.transporter.sendMail({

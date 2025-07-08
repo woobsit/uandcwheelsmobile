@@ -93,10 +93,38 @@ const resetPasswordValidators = [
     }),
 ];
 
+const verifyEmailByCodeValidators = [
+    body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
+    .normalizeEmail(),
+  
+    body('code')
+    .matches(/^[0-9]{6}$/)
+    .withMessage('Invalid code')
+    .toInt(),
+];
+
+const resendVerificationValidators = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
+    .normalizeEmail(),
+];
+
+
 module.exports = {
   registerValidators,
   loginValidators,
   forgotPasswordValidators,
   verifyEmailValidators,
   resetPasswordValidators,
+  verifyEmailByCodeValidators,
+  resendVerificationValidators
 };

@@ -133,19 +133,21 @@ export default function RegisterScreen({ navigation }: any) {
 
       });
 
-      // Handle successful registration
-      console.log('Registration successful:', response.data);
+          navigation.navigate('EmailVerification', { email: formData.email });
 
-      Alert.alert(
-        'Success',
-        'Your account has been created! Please check your email to verify your account.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Login'),
-          },
-        ],
-      );
+      // // Handle successful registration
+      // console.log('Registration successful:', response.data);
+
+      // Alert.alert(
+      //   'Success',
+      //   'Your account has been created! Please check your email to verify your account.',
+      //   [
+      //     {
+      //       text: 'OK',
+      //       onPress: () => navigation.navigate('Login'),
+      //     },
+      //   ],
+      // );
     } catch (error: any) {
       console.error('Registration error:', error);
 
