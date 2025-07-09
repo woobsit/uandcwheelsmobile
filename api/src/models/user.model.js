@@ -43,16 +43,6 @@ class User extends Model {
             isDate: true,
           },
         },
-        is_active_transport: {
-          type: DataTypes.BOOLEAN,
-          allowNull: false,
-          defaultValue: true,
-        },
-        is_active_logistics: {
-          type: DataTypes.BOOLEAN,
-          allowNull: false,
-          defaultValue: true,
-        },
         preferred_payment_method: {
           type: DataTypes.STRING,
           allowNull: true,
@@ -68,10 +58,6 @@ class User extends Model {
           type: DataTypes.STRING(255),
           allowNull: false,
         },
-        verification_token: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
         verification_code: {
           type: DataTypes.INTEGER(6),
           allowNull: true,
@@ -83,7 +69,7 @@ class User extends Model {
         verification_token_expires: {
           type: DataTypes.DATE,
           allowNull: true,
-          comment: 'Expiration time for verification token (24 hours after registration)',
+          comment: 'Expiration time for verification token (15 minutes after registration)',
         },
         created_at: {
           type: DataTypes.DATE,

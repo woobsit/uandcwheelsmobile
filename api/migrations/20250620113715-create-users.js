@@ -43,16 +43,7 @@ module.exports = {
           isDate: true,
         },
       },
-      is_active_transport: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      is_active_logistics: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
+           
       preferred_payment_method: {
         type: Sequelize.STRING,
         allowNull: true,
@@ -68,10 +59,6 @@ module.exports = {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
-      verification_token: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       verification_code: {
         type: Sequelize.INTEGER(6),
         allowNull: true,
@@ -83,7 +70,7 @@ module.exports = {
       verification_token_expires: {
         type: Sequelize.DATE,
         allowNull: true,
-        comment: 'Expiration time for verification token (24 hours after registration)',
+        comment: 'Expiration time for verification token (15 minutes after registration)',
       },
       created_at: {
         type: Sequelize.DATE,

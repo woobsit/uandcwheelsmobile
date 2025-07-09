@@ -3,29 +3,25 @@
 <head>
     <style>
         .container { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .button { background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
-        .code { font-size: 24px; font-weight: bold; letter-spacing: 3px; padding: 10px; background: #f0f0f0; display: inline-block; margin: 10px 0; }
-        .mobile-instructions { background: #e8f4ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .code { font-size: 32px; font-weight: bold; letter-spacing: 5px; padding: 15px; background: #f0f0f0; display: inline-block; margin: 20px 0; }
+        .instructions { margin: 20px 0; line-height: 1.6; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Hello {{name}},</h2>
-        <p>Thank you for registering with {{appName}}. Please verify your email address to complete your registration.</p>
+        <p>Thank you for registering with {{appName}}. Please verify your email address using this code:</p>
         
-        <div class="mobile-instructions">
-            <h3>For Mobile App Users:</h3>
-            <p>Enter this verification code in your mobile app:</p>
-            <div class="code">{{mobileVerificationCode}}</div>
+        <div class="code">{{code}}</div>
+        
+        <div class="instructions">
+            <p>Enter this code in:</p>
+            <ul>
+                <li>Our website: <a href="{{webUrl}}">{{webUrl}}</a></li>
+                <li>Our mobile app: Verification screen</li>
+            </ul>
             <p>This code will expire on: {{expirationTime}}</p>
         </div>
-        
-        <h3>For Web Users:</h3>
-        <p>
-            <a href="{{webVerificationUrl}}" class="button">Verify Email Address</a>
-        </p>
-        <p>Or copy and paste this link into your browser:</p>
-        <p><a href="{{webVerificationUrl}}">{{webVerificationUrl}}</a></p>
         
         <p>If you didn't create an account, please ignore this email.</p>
         <p>Best regards,<br>The {{appName}} Team</p>

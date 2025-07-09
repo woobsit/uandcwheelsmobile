@@ -5,9 +5,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'; // 
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import WelcomeScreen from './screens/WelcomeScreen';
 import RegisterScreen from './screens/auth/RegisterScreen';
+import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
 import LoginScreen from './screens/auth/LoginScreen';
-import ServiceSelectionScreen from './screens/auth/ServiceSelectionScreen';
-import LogisticsHomeScreen from './screens/LogisticsHomeScreen';
+import ForgotPasswordScreen from './screens/auth/ForgetPasswordScreen';
+import PasswordResetScreen from './screens/auth/PasswordResetScreen';
+import DashboardScreen from './screens/DashboardScreen';
 import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; // You'll create this
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
 
@@ -17,7 +19,7 @@ const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 // Logistics Drawer Navigator (for authenticated users)
-function LogisticsDrawer() {
+function DashboardDrawer() {
   return (
     <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
@@ -28,7 +30,7 @@ function LogisticsDrawer() {
         overlayColor: 'rgba(0,0,0,0.5)',
       }}
     >
-      <Drawer.Screen name="LogisticsHome" component={LogisticsHomeScreen} />
+      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       {/* Add other logistics screens here */}
       {/* <Drawer.Screen name="Shipments" component={ShipmentsScreen} /> */}
       {/* <Drawer.Screen name="Drivers" component={DriversScreen} /> */}
@@ -46,15 +48,17 @@ export default function App() {
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="ServiceSelection" component={ServiceSelectionScreen} />
-<Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
+         
+          <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           {/* Main App (after authentication) */}
           {/* <Stack.Screen name="Home" component={LogisticsDrawer} /> */}
 
           {/* You can keep this as alternative if needed */}
           <Stack.Screen
-            name="LogisticsHome"
-            component={LogisticsDrawer}
+            name="Dashboard"
+            component={DashboardDrawer}
             options={{ gestureEnabled: false }} // Disable swipe back to auth
           />
         </Stack.Navigator>

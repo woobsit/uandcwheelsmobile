@@ -10,11 +10,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import type { LogisticsHomeScreenProps } from '../types/screenprops';
+import type { HomeScreenProps } from '../types/screenprops';
 import { DrawerActions } from '@react-navigation/native';
 
-export default function LogisticsHomeScreen() {
-  const navigation = useNavigation<LogisticsHomeScreenProps['navigation']>();
+export default function HomeScreen() {
+  const navigation = useNavigation<HomeScreenProps['navigation']>();
 
   // Mock data - replace with your API data
   const recentShipments = [

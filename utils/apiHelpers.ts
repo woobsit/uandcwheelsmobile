@@ -52,12 +52,19 @@ export const getRefreshToken = async (): Promise<string | null> => {
 };
 
 // Save tokens to secure storage
-export const saveTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
+export const saveTokens = async (accessToken: string, refreshToken: string, rememberMe?: boolean): Promise<void> => {
   try {
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+
+      if (rememberMe) {
+    // Save email for auto-fill (but never save password!)
+    await SecureStore.setItemAsync('remembered_email', email);
+  } else {
+    await SecureStore.deleteItemAsync('remembered_email');
+  }
   } catch (error) {
-    console.error('Failed to save tokens', error);
+    showApiErrorAlert(error, 'Failed to login');
   }
 };
 

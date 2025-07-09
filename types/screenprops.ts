@@ -1,32 +1,27 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 
 // Define your authentication stack parameters
 export type AuthStackParamList = {
   Welcome: undefined;
-  ServiceSelection: undefined;
   Login: undefined;
   Register: undefined;
+  EmailVerification: undefined;
   ForgotPassword: undefined;
-  LogisticsHome: undefined;
-  TransportHome: undefined;
+  ResetPassword: undefined;
+  Dashboard: undefined;
   Notifications: undefined;
   Settings: undefined;
   UserProfile: undefined;
   NewShipment: undefined;
   TrackPackage: undefined;
   ShipmentDetails: undefined;
-  EmailVerification: undefined;
+  
   // Add other auth screens here
 };
 
 // Welcome screen props type
 export type WelcomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
-
-// ServiceSelection screen props type
-export type ServiceSelectionScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'ServiceSelection'
->;
 
 // Register screen props type
 export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
@@ -34,11 +29,18 @@ export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Re
 // Login screen props type
 export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-// LogisticsHome screen props type
-export type LogisticsHomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'LogisticsHome'>;
-
-// TransportHome screen props type
-export type TransportHomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'TransportHome'>;
+// Dashboard screen props type
+export type DashboardScreenProps = NativeStackScreenProps<AuthStackParamList, 'Dashboard'>;
 
 // EmailVerificationScreen screen props type
 export type EmailVerificationScreenProps = NativeStackScreenProps<AuthStackParamList, 'EmailVerification'>;
+
+export type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
+
+// ForgotPasswordScreen screen props type
+export type ForgotPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
+
+// ResetPasswordScreen screen props type
+export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
+
+export type EmailResetScreenRouteProp = RouteProp<AuthStackParamList, 'ResetPassword'>;

@@ -12,8 +12,6 @@ module.exports = {
       phone: `0${faker.string.numeric(10)}`, // Nigerian format
       address: faker.location.streetAddress(),
       birth_date: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
-      is_active_transport: true,
-      is_active_logistics: true,
       preferred_payment_method: faker.helpers.arrayElement([
         'credit_card',
         'bank_transfer',

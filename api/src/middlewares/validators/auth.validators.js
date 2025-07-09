@@ -36,6 +36,22 @@ const registerValidators = [
      }),
 ];
 
+const verifyEmailValidators = [
+    body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
+    .normalizeEmail(),
+  
+    body('code')
+    .trim()
+    .notEmpty().withMessage('Verification code is required')
+    .isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits')
+    .isNumeric().withMessage('Code must contain only numbers')
+];
+
 const loginValidators = [
   body('email')
     .trim()
@@ -66,46 +82,39 @@ const forgotPasswordValidators = [
     .normalizeEmail(),
 ];
 
-const verifyEmailValidators = [
-  query('token')
-    .notEmpty()
-    .withMessage('Verification token is required')
-    .isString()
-    .withMessage('Verification token must be a string'), // Add type check
-];
+// const verifyResetCodeValidators = [
+//     body('email')
+//     .trim()
+//     .notEmpty()
+//     .withMessage('Email is required')
+//     .isEmail()
+//     .withMessage('Email must be valid')
+//     .normalizeEmail(),
+  
+//     body('code')
+//     .trim()
+//     .notEmpty().withMessage('Password reset code is required')
+//     .isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits')
+//     .isNumeric().withMessage('Code must contain only numbers')
+// ];
+
 const resetPasswordValidators = [
-  body('token').notEmpty().withMessage('Token is required'),
-
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
-    .isLength({ min: 6, max: 20 })
-    .withMessage('Password must be between 6-20 characters'),
-
-  body('confirmPassword')
-    .notEmpty()
-    .withMessage('Confirm Password is required')
-    .custom((value, { req }) => {
-      if (value !== req.body.password) {
-        throw new Error('Passwords do not match');
-      }
-      return true;
-    }),
-];
-
-const verifyEmailByCodeValidators = [
-    body('email')
+  body('email')
     .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('Email must be valid')
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Email must be valid')
     .normalizeEmail(),
   
-    body('code')
-    .matches(/^[0-9]{6}$/)
-    .withMessage('Invalid code')
-    .toInt(),
+  body('code')
+    .trim()
+    .notEmpty().withMessage('Reset code is required')
+    .isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits')
+    .isNumeric().withMessage('Code must contain only numbers'),
+  
+  body('password')
+    .trim()
+    .notEmpty().withMessage('Password is required')
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
 ];
 
 const resendVerificationValidators = [
@@ -123,8 +132,8 @@ module.exports = {
   registerValidators,
   loginValidators,
   forgotPasswordValidators,
-  verifyEmailValidators,
+  //verifyResetCodeValidators,
   resetPasswordValidators,
-  verifyEmailByCodeValidators,
+  verifyEmailValidators,
   resendVerificationValidators
 };

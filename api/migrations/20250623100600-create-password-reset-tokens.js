@@ -11,14 +11,19 @@ module.exports = {
      */
     await queryInterface.createTable('password_reset_tokens', {
       email: { type: Sequelize.STRING, allowNull: false, primaryKey: true },
-      token: {
-        type: Sequelize.STRING,
+      code: {
+        type: Sequelize.INTEGER(6),
         allowNull: false,
       },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
+      },
+      expires_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        comment:  'Expiration time for password reset token (15 minutes after registration)',
       },
     });
   },

@@ -1,33 +1,45 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { AuthService } from '../../requests';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types/screenprops';
+import { AuthStackParamList, EmailResetScreenRouteProp } from '../../types/screenprops';
 
-export default function ForgotPasswordScreen() {
+export default function ResetPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const [email, setEmail] = useState('');
+  const route = useRoute<EmailResetScreenRouteProp>();
+  const email = route.params?.email || '';
+  
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
+    if (!code || code.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit code');
+      return;
+    }
+    
+    if (!password) {
+      Alert.alert('Error', 'Please enter a new password');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
       return;
     }
 
     try {
       setIsLoading(true);
-      await AuthService.forgotPassword(email);
+      await AuthService.resetPassword(email, code, password);
       
-      Alert.alert('Code Sent', 'A password reset code has been sent to your email', [
-        { 
-          text: 'OK', 
-          onPress: () => navigation.navigate('ResetPassword', { email }) 
-        }
+      Alert.alert('Success', 'Your password has been reset successfully', [
+        { text: 'OK', onPress: () => navigation.navigate('Login') }
       ]);
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to send reset code');
+      Alert.alert('Error', error.message || 'Failed to reset password');
     } finally {
       setIsLoading(false);
     }
@@ -35,17 +47,37 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Forgot Password</Text>
-      <Text style={styles.subtitle}>Enter your email to receive a reset code</Text>
+      <Text style={styles.title}>Reset Password</Text>
+      <Text style={styles.emailText}>{email}</Text>
       
       <TextInput
         style={styles.input}
-        placeholder="Email address"
+        placeholder="Reset code"
         placeholderTextColor="#999"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        value={code}
+        onChangeText={setCode}
+        keyboardType="number-pad"
+        maxLength={6}
+        editable={!isLoading}
+      />
+      
+      <TextInput
+        style={styles.input}
+        placeholder="New password"
+        placeholderTextColor="#999"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        editable={!isLoading}
+      />
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm password"
+        placeholderTextColor="#999"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
         editable={!isLoading}
       />
       
@@ -57,7 +89,7 @@ export default function ForgotPasswordScreen() {
         {isLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Send Reset Code</Text>
+          <Text style={styles.buttonText}>Reset Password</Text>
         )}
       </TouchableOpacity>
       
@@ -66,7 +98,7 @@ export default function ForgotPasswordScreen() {
         onPress={() => navigation.goBack()}
         disabled={isLoading}
       >
-        <Text style={styles.backText}>Back to Login</Text>
+        <Text style={styles.backText}>Back to Forgot Password</Text>
       </TouchableOpacity>
     </View>
   );
@@ -84,11 +116,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
   },
-  subtitle: {
+  emailText: {
     fontSize: 16,
-    color: '#666',
+    fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    color: '#333',
   },
   input: {
     height: 50,
@@ -96,7 +129,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    marginBottom: 15,
     fontSize: 16,
   },
   button: {

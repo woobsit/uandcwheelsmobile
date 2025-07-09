@@ -18,19 +18,19 @@ export const AuthService = {
     return api.post('/auth/refresh-token', { refreshToken });
   },
 
-  verifyEmail: (token: string) => {
-    return api.get(`/auth/verify-email?token=${token}`);
-  },
-
-   verifyEmailByMobile: (code: string, email: string) => {
+   verifyEmail: (code: string, email: string) => {
     return api.post('/auth/verify-email', { code, email });
   },
   forgotPassword: (email: string) => {
     return api.post('/auth/forgot-password', { email });
   },
 
-  resetPassword: (data: { token: string; password: string }) => {
-    return api.post('/auth/reset-password', data);
+  verifyResetCode: (email: string, code: number) => {
+    return api.post('/auth/verify-reset-code', { email, code });
+  },
+
+  resetPassword: (email: string, code: string, password: string ) => {
+    return api.post('/auth/reset-password', { email, code, password });
   },
    resendVerification: (email: string) => {
     return api.post('/auth/resend-verification', { email });

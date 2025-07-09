@@ -4,8 +4,8 @@ const {
   loginValidators,
   verifyEmailValidators,
   forgotPasswordValidators,
+  //verifyResetCodeValidators,
   resetPasswordValidators,
-  verifyEmailByCodeValidators,
   resendVerificationValidators
 
 } = require('../middlewares/validators/auth.validators');
@@ -14,9 +14,9 @@ const {
   register,
   login,
   verifyEmail,
-  verifyEmailByCode,
   resendVerification,
   forgotPassword,
+  //verifyResetCode,
   resetPassword,
   logout,
 } = require('../controllers/auth/auth');
@@ -28,13 +28,13 @@ router.post('/register', registerValidators, validateRequest, register);
 
 router.post('/login', authLimiter, loginValidators, validateRequest, login);
 
-router.get('/verify-email', verifyEmailValidators, validateRequest, verifyEmail);
-
-router.post('/verify-email', verifyEmailByCodeValidators, validateRequest,verifyEmailByCode); // For mobile
+router.post('/verify-email', verifyEmailValidators, validateRequest, verifyEmail);
 
 router.post('/resend-verification', resendVerificationValidators, validateRequest,resendVerification);
 
 router.post('/forgot-password', forgotPasswordValidators, validateRequest, forgotPassword);
+
+//router.post('/verify-reset-code', verifyResetCodeValidators, validateRequest, verifyResetCode);
 
 router.post(
   '/reset-password',

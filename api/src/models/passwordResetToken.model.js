@@ -11,14 +11,19 @@ PasswordResetToken.init(
       allowNull: false,
       primaryKey: true,
     },
-    token: {
-      type: DataTypes.STRING,
+    code: {
+      type: DataTypes.INTEGER(6),
       allowNull: false,
     },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+    },
+     expires_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      comment: 'Expiration time for password reset token (15 minutes after registration)',
     },
   },
   {
@@ -32,7 +37,7 @@ PasswordResetToken.init(
         fields: ['email'],
       },
       {
-        fields: ['token'],
+        fields: ['code'],
       },
     ],
   },

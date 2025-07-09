@@ -18,16 +18,13 @@ import { AuthService } from '../../requests';
 import { showApiErrorAlert } from '../../utils/apiHelpers';
 import { 
   useNavigation,
-  useRoute,
-  RouteProp
+  useRoute
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types/screenprops';
+import { AuthStackParamList, EmailVerificationScreenRouteProp } from '../../types/screenprops';
 
 // Resend timer in seconds
 const RESEND_TIMEOUT = 60;
-
-type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
 
 export default function VerificationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -78,14 +75,14 @@ export default function VerificationScreen() {
       return;
     }
 
-    if (code.length < 6) {
+    if (!code || code.length !== 6) {
       Alert.alert('Invalid Code', 'Verification code must be 6 digits');
       return;
     }
 
     try {
       setIsLoading(true);
-      await AuthService.verifyEmailByMobile(code, email);
+      await AuthService.verifyEmail(code, email);
       
       Alert.alert(
         'Email Verified!',

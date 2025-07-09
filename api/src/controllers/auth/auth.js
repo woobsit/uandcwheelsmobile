@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const uuid = require('uuid');
 const db = require('../../models/index');
 const EmailService = require( '../../email/email.service');
 const PasswordResetToken = require('../../models/passwordResetToken.model');
@@ -25,16 +24,17 @@ const register = async (req, res) => {
       });
     }
 
-    const verificationToken = uuid.v4();
+    //const verificationToken = uuid.v4();
     const verificationCode = generateVerificationCode();
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+   // Change to 15 minutes (15 * 60 * 1000)
+    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     const user = await db.User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password,
       email_verified_at: null,
-      verification_token: verificationToken,
+      //verification_token: verificationToken,
       verification_code: verificationCode,
       verification_token_expires: verificationExpires,
     });
@@ -42,7 +42,7 @@ const register = async (req, res) => {
     await EmailService.sendVerificationEmail(
       email, 
       name, 
-      verificationToken, 
+      //verificationToken, 
       verificationCode,
       verificationExpires
     );
@@ -185,52 +185,8 @@ const refreshToken = async (req, res) => {
   }
 };
 
+
 const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.query;
-    
-    if (!token || typeof token !== 'string') {
-      return res.status(400).json({
-        success: false,
-        message: 'Verification token is required',
-      });
-    }
-
-    const user = await db.User.findOne({ 
-      where: { 
-        verification_token: token,
-        verification_token_expires: { [Op.gt]: new Date() }
-      } 
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invalid or expired verification token',
-      });
-    }
-
-    await user.update({
-      email_verified_at: new Date(),
-      verification_token: null,
-      verification_code: null,
-      verification_token_expires: null,
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: 'Email verified successfully. You can now log in.',
-    });
-  } catch (error) {
-    logger.error('Email verification failed', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error during email verification',
-    });
-  }
-};
-
-const verifyEmailByCode = async (req, res) => {
   try {
     const { email, code } = req.body;
         const numericCode = parseInt(code, 10); // Convert to number
@@ -251,7 +207,7 @@ const verifyEmailByCode = async (req, res) => {
         verification_token_expires: { [Op.gt]: new Date() }
       } 
     });
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -261,7 +217,6 @@ const verifyEmailByCode = async (req, res) => {
 
     await user.update({
       email_verified_at: new Date(),
-      verification_token: null,
       verification_code: null,
       verification_token_expires: null,
     });
@@ -276,7 +231,7 @@ const verifyEmailByCode = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error('Email verification by code failed', error);
+    logger.error('Email verification failed', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error during email verification',
@@ -306,12 +261,12 @@ const resendVerification = async (req, res) => {
       });
     }
 
-    const verificationToken = uuid.v4();
+    //const verificationToken = uuid.v4();
     const verificationCode = generateVerificationCode();
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     await user.update({
-      verification_token: verificationToken,
+      //verification_token: verificationToken,
       verification_code: verificationCode,
       verification_token_expires: verificationExpires,
     });
@@ -319,7 +274,7 @@ const resendVerification = async (req, res) => {
     await EmailService.sendVerificationEmail(
       email, 
       user.name, 
-      verificationToken, 
+      //verificationToken, 
       verificationCode,
       verificationExpires
     );
@@ -352,26 +307,27 @@ const forgotPassword = async (req, res) => {
     }
 
     // Generate token and store in separate table
-    const token = uuid.v4();
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+    const code = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // Change to 15 minutes (15 * 60 * 1000)
 
     // Upsert token (update or create)
     await PasswordResetToken.upsert({
       email,
-      token,
+      code,
       created_at: new Date(),
+      expires_at: expiresAt
     });
 
-    // await EmailService.sendPasswordResetEmail(
-    //   user.email,
-    //   user.name,
-    //   token,
-    //   expiresAt
-    // );
+     await EmailService.sendPasswordResetEmail(
+       user.email,
+       user.name,
+       code,
+       expiresAt
+     );
 
     return res.status(200).json({
       success: true,
-      message: 'Password reset link sent to your email',
+      message: 'Password reset code sent to your email',
     });
   } catch (error) {
     logger.error('Forgot password failed', {
@@ -384,30 +340,62 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+// const verifyResetCode = async (req, res) => {
+//   try {
+//     const { email, code } = req.body;
+    
+//     const tokenRecord = await PasswordResetToken.findOne({
+//       where: {
+//         email,
+//         code,
+//         expires_at: { [Op.gt]: new Date() }
+//       }
+//     });
+
+//     if (!tokenRecord) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Invalid or expired reset code',
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Reset code verified successfully',
+//     });
+//   } catch (error) {
+//     logger.error('Reset code verification failed', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Failed to verify reset code',
+//     });
+//   }
+// };
+
+
 const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { email, code, password } = req.body;
 
     // Find token record
     const tokenRecord = await PasswordResetToken.findOne({
       where: {
-        token,
-        created_at: {
-          [Op.gt]: new Date(Date.now() - 60 * 60 * 1000), // Created within last hour
-        },
+       email,
+        code,
+        expires_at: { [Op.gt]: new Date() }
       },
     });
 
     if (!tokenRecord) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired reset token',
+        message: 'Invalid or expired reset code',
       });
     }
 
     // Find associated user
     const user = await db.User.findOne({
-      where: { email: tokenRecord.email },
+      where: { email },
     });
 
     if (!user) {
@@ -424,7 +412,7 @@ const resetPassword = async (req, res) => {
 
     // Delete the used token
     await PasswordResetToken.destroy({
-      where: { email: tokenRecord.email },
+      where: { email },
     });
 
     return res.status(200).json({
@@ -525,9 +513,9 @@ module.exports = {
   login,
   refreshToken,
   verifyEmail,
-  verifyEmailByCode,
   resendVerification,
   forgotPassword,
+  //verifyResetCode,
   resetPassword,
   logout,
 };
