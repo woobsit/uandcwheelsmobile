@@ -26,12 +26,6 @@ export const showApiErrorAlert = (error: any, customMessage: string | null = nul
   Alert.alert('Error', customMessage || formatErrorMessage(error));
 };
 
-// // Get cookies from API domain
-// const getApiCookies = async () => {
-//   return CookieManager.get('https://your-api-domain.com');
-// };
-
-// Get auth token from secure storage
 export const getAuthToken = async (): Promise<string | null> => {
   try {
     return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
@@ -48,23 +42,6 @@ export const getRefreshToken = async (): Promise<string | null> => {
   } catch (error) {
     console.error('Failed to get refresh token', error);
     return null;
-  }
-};
-
-// Save tokens to secure storage
-export const saveTokens = async (accessToken: string, refreshToken: string, rememberMe?: boolean): Promise<void> => {
-  try {
-    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
-
-      if (rememberMe) {
-    // Save email for auto-fill (but never save password!)
-    await SecureStore.setItemAsync('remembered_email', email);
-  } else {
-    await SecureStore.deleteItemAsync('remembered_email');
-  }
-  } catch (error) {
-    showApiErrorAlert(error, 'Failed to login');
   }
 };
 
@@ -102,6 +79,59 @@ export const refreshAuthToken = async () => {
     return accessToken;
   } catch (error) {
     await clearTokens();
+    throw error;
+  }
+};
+
+// Save remembered email
+export const saveRememberedEmail = async (email: string) => {
+  try {
+    await SecureStore.setItemAsync('remembered_email', email);
+  } catch (error) {
+    console.log('Error saving remembered email', error);
+  }
+};
+
+// Load remembered email
+export const loadRememberedEmail = async (): Promise<string | null> => {
+  try {
+    return await SecureStore.getItemAsync('remembered_email');
+  } catch (error) {
+    console.log('Error loading remembered email', error);
+    return null;
+  }
+};
+
+// Remove remembered email
+export const removeRememberedEmail = async () => {
+  try {
+    await SecureStore.deleteItemAsync('remembered_email');
+  } catch (error) {
+    console.log('Error removing remembered email', error);
+  }
+};
+
+// Update your saveTokens function to handle rememberMe
+export const saveTokens = async (
+  accessToken: string, 
+  refreshToken: string,
+  rememberMe?: boolean,
+  email?: string
+) => {
+  try {
+
+    // Save tokens
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+    
+    // Handle email remembering
+    if (rememberMe && email) {
+      await saveRememberedEmail(email);
+    } else {
+      await removeRememberedEmail();
+    }
+  } catch (error) {
+    console.log('Error saving tokens', error);
     throw error;
   }
 };

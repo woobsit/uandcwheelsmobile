@@ -16,8 +16,9 @@ import GlobalStyles from '../../assets/styles/globalStyles';
 import Feather from 'react-native-vector-icons/Feather';
 import { AuthService } from '../../requests';
 import { matchEmail } from '../../utils/pregmatch';
-import { showApiErrorAlert } from '../../utils/apiHelpers';
-import { saveTokens } from '../../utils/apiHelpers';
+import { showApiErrorAlert, saveTokens, 
+  loadRememberedEmail } from '../../utils/apiHelpers';
+
 
 export default function LoginScreen({ navigation }: any) {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,25 +32,24 @@ export default function LoginScreen({ navigation }: any) {
     rememberMe: false, // Added rememberMe to form data
   });
 
-  // Optional: Load saved credentials if rememberMe was enabled previously
+  // Load saved credentials
   useEffect(() => {
-    const loadSavedCredentials = async () => {
+    const loadCredentials = async () => {
       try {
-        // Implement this function to load saved credentials from secure storage
-        // const savedCredentials = await loadSavedCredentials();
-        // if (savedCredentials) {
-        //   setFormData({
-        //     email: savedCredentials.email,
-        //     password: '',
-        //     rememberMe: true,
-        //   });
-        // }
+        const savedEmail = await loadRememberedEmail();
+        if (savedEmail) {
+          setFormData(prev => ({
+            ...prev,
+            email: savedEmail,
+            rememberMe: true
+          }));
+        }
       } catch (error) {
-        console.log('Error loading saved credentials', error);
+        console.log('Error loading credentials', error);
       }
     };
     
-    loadSavedCredentials();
+    loadCredentials();
   }, []);
 
   const validateForm = () => {
@@ -93,13 +93,19 @@ export default function LoginScreen({ navigation }: any) {
         remember_token: formData.rememberMe, // Send rememberMe as remember_token
       });
 
-      // Save tokens to secure storage
-      await saveTokens(
-        response.accessToken, 
-        response.refreshToken,
-        formData.rememberMe // Optionally save rememberMe preference
-      );
+    //  if (!response.data.data.accessToken || !response.data.data.refreshToken) {
+    //    throw new Error('Tokens not found in response');
+    //  }
 
+       //Save tokens to secure storage
+        //  await saveTokens(
+        //    response.data.data.accessToken, 
+        //    response.data.data.refreshToken,
+        //    formData.rememberMe, 
+        //    formData.email
+        //  );
+
+      
       // Redirect to main app
       navigation.navigate('Dashboard');
     } catch (error: any) {
@@ -125,7 +131,10 @@ export default function LoginScreen({ navigation }: any) {
             { text: 'OK' }
           ]
         );
-      } else {
+      } else if (error.message === 'Tokens not found in response') {
+      Alert.alert('Login Error', 'Authentication tokens not received');
+    
+    }else {
         showApiErrorAlert(error, 'Login failed');
       }
     } finally {
@@ -145,6 +154,10 @@ export default function LoginScreen({ navigation }: any) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
+
+  const toggleRememberMe = () => {
+  handleInputChange('rememberMe', !formData.rememberMe);
+};
 
   return (
     <SafeAreaView edges={['bottom']} style={GlobalStyles.safeArea}>
@@ -175,7 +188,10 @@ export default function LoginScreen({ navigation }: any) {
               onChangeText={text => handleInputChange('email', text)}
             />
           </View>
-          {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+          <View style={styles.errorTextContainer}>
+             {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+            </View>
+          
 
           {/* Password Input */}
           <View style={styles.inputWrapper}>
@@ -188,11 +204,15 @@ export default function LoginScreen({ navigation }: any) {
               onChangeText={text => handleInputChange('password', text)}
             />
           </View>
-          {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-
+         
+          <View style={styles.errorTextContainer}>
+              {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+            </View>
           {/* Remember Me and Forgot Password Row */}
           <View style={styles.rememberRow}>
-            <View style={styles.rememberMeContainer}>
+
+            
+            <TouchableOpacity onPress={toggleRememberMe} style={styles.rememberMeContainer}>
               <Switch
                 value={formData.rememberMe}
                 onValueChange={value => handleInputChange('rememberMe', value)}
@@ -200,7 +220,7 @@ export default function LoginScreen({ navigation }: any) {
                 thumbColor={formData.rememberMe ? '#007AFF' : '#f4f3f4'}
               />
               <Text style={styles.rememberText}>Remember me</Text>
-            </View>
+            </TouchableOpacity>
 
             <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
@@ -290,8 +310,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 5,
+    marginBottom: 10,
+    marginTop:-10,
   },
   rememberMeContainer: {
     flexDirection: 'row',
@@ -330,5 +350,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 10,
     marginLeft: 5,
+  },
+   errorTextContainer: {
+    height: 24,
+    
   },
 });

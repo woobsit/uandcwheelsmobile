@@ -33,7 +33,7 @@ export default function HomeScreen() {
           <MaterialIcons name="menu" size={24} color="#333" />
         </TouchableOpacity>
 
-        <Text style={styles.screenTitle}>Logistics Dashboard</Text>
+        <Text style={styles.screenTitle}>Dashboard</Text>
 
         <View style={styles.iconsRight}>
           <TouchableOpacity
@@ -58,7 +58,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Logistics Dashboard</Text>
+          <Text style={styles.headerTitle}>Dashboard</Text>
           <TouchableOpacity onPress={() => navigation.navigate('UserProfile')}>
             <Image
               source={{ uri: 'https://i.imgur.com/mCHMpLT.png' }}
@@ -73,7 +73,7 @@ export default function HomeScreen() {
             style={styles.actionCard}
             onPress={() => navigation.navigate('NewShipment')}
           >
-            <Text style={styles.actionText}>New Shipment</Text>
+            <Text style={styles.actionText}>Book Bus</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

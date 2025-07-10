@@ -3,7 +3,7 @@ import { attachAuthToken, refreshAuthToken, clearTokens } from '../utils/apiHelp
 
 const api = axios.create({
   baseURL: 'http://192.168.0.120:5000/api/v1',
-  timeout: 10000,
+  timeout: 20000,
 });
 // Request interceptor
 api.interceptors.request.use(attachAuthToken);
