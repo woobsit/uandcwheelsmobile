@@ -61,10 +61,8 @@ export interface Booking {
   userId: number;
   tripId: number;
   bookingDate: Date | string;
-  passengers: Passenger[];
-  totalAmount: number;
-  currency: string;
-  bookingStatus: BookingStatus;
+  amountPaid: number;
+  status: BookingStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   paymentDate?: Date | string;

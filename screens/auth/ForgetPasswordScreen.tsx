@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { AuthService } from '../../requests';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,14 +27,14 @@ export default function ForgotPasswordScreen() {
     try {
       setIsLoading(true);
       await AuthService.forgotPassword(email);
-      
+
       Alert.alert('Code Sent', 'A password reset code has been sent to your email', [
-        { 
-          text: 'OK', 
-          onPress: () => navigation.navigate('ResetPassword', { email }) 
-        }
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('ResetPassword', { email }),
+        },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to send reset code');
     } finally {
       setIsLoading(false);
@@ -37,7 +45,7 @@ export default function ForgotPasswordScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Forgot Password</Text>
       <Text style={styles.subtitle}>Enter your email to receive a reset code</Text>
-      
+
       <TextInput
         style={styles.input}
         placeholder="Email address"
@@ -48,7 +56,7 @@ export default function ForgotPasswordScreen() {
         autoCapitalize="none"
         editable={!isLoading}
       />
-      
+
       <TouchableOpacity
         style={[styles.button, isLoading && styles.disabledButton]}
         onPress={handleSubmit}
@@ -60,7 +68,7 @@ export default function ForgotPasswordScreen() {
           <Text style={styles.buttonText}>Send Reset Code</Text>
         )}
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}

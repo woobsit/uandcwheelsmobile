@@ -113,17 +113,16 @@ export const removeRememberedEmail = async () => {
 
 // Update your saveTokens function to handle rememberMe
 export const saveTokens = async (
-  accessToken: string, 
+  accessToken: string,
   refreshToken: string,
   rememberMe?: boolean,
-  email?: string
+  email?: string,
 ) => {
   try {
-
     // Save tokens
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
-    
+
     // Handle email remembering
     if (rememberMe && email) {
       await saveRememberedEmail(email);

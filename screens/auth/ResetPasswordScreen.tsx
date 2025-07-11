@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { AuthService } from '../../requests';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,7 +17,7 @@ export default function ResetPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const route = useRoute<EmailResetScreenRouteProp>();
   const email = route.params?.email || '';
-  
+
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,12 +28,12 @@ export default function ResetPasswordScreen() {
       Alert.alert('Error', 'Please enter a valid 6-digit code');
       return;
     }
-    
+
     if (!password) {
       Alert.alert('Error', 'Please enter a new password');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
@@ -34,11 +42,11 @@ export default function ResetPasswordScreen() {
     try {
       setIsLoading(true);
       await AuthService.resetPassword(email, code, password);
-      
+
       Alert.alert('Success', 'Your password has been reset successfully', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
+        { text: 'OK', onPress: () => navigation.navigate('Login') },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to reset password');
     } finally {
       setIsLoading(false);
@@ -49,7 +57,7 @@ export default function ResetPasswordScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Reset Password</Text>
       <Text style={styles.emailText}>{email}</Text>
-      
+
       <TextInput
         style={styles.input}
         placeholder="Reset code"
@@ -60,7 +68,7 @@ export default function ResetPasswordScreen() {
         maxLength={6}
         editable={!isLoading}
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="New password"
@@ -70,7 +78,7 @@ export default function ResetPasswordScreen() {
         secureTextEntry
         editable={!isLoading}
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Confirm password"
@@ -80,7 +88,7 @@ export default function ResetPasswordScreen() {
         secureTextEntry
         editable={!isLoading}
       />
-      
+
       <TouchableOpacity
         style={[styles.button, isLoading && styles.disabledButton]}
         onPress={handleSubmit}
@@ -92,7 +100,7 @@ export default function ResetPasswordScreen() {
           <Text style={styles.buttonText}>Reset Password</Text>
         )}
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}

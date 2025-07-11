@@ -20,7 +20,7 @@ PasswordResetToken.init(
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
-     expires_at: {
+    expires_at: {
       type: DataTypes.DATE,
       allowNull: false,
       comment: 'Expiration time for password reset token (15 minutes after registration)',

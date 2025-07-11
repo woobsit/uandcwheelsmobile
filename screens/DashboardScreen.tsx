@@ -1,20 +1,32 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image, // Add this import
+  Image,
+  RefreshControl, // Add this import
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons';
-import type { HomeScreenProps } from '../types/screenprops';
-import { DrawerActions } from '@react-navigation/native';
+import type { DashboardScreenProps } from '../types/screenprops';
+import TopNavBar from '../components/molecules/TopNavBar';
+import useRefreshControl from '../hooks/useRefreshControl';
 
-export default function HomeScreen() {
-  const navigation = useNavigation<HomeScreenProps['navigation']>();
+export default function DashboardScreen() {
+  const navigation = useNavigation<DashboardScreenProps['navigation']>();
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  // Create refresh control logic
+  const { refreshing, onRefresh } = useRefreshControl({
+    refreshAction: async () => {
+      // Scroll to top after refresh
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({ y: 0, animated: true });
+      }
+    },
+  });
 
   // Mock data - replace with your API data
   const recentShipments = [
@@ -24,38 +36,25 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Top Navigation Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} // Or open menu
-        >
-          <MaterialIcons name="menu" size={24} color="#333" />
-        </TouchableOpacity>
-
-        <Text style={styles.screenTitle}>Dashboard</Text>
-
-        <View style={styles.iconsRight}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate('Notifications')}
-          >
-            <MaterialIcons name="notifications" size={24} color="#333" />
-            <View style={styles.notificationBadge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.iconButton, { marginLeft: 15 }]}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <MaterialIcons name="settings" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#007AFF"
+            title="Refreshing..."
+            titleColor="#007AFF"
+            colors={['#007AFF']}
+            progressBackgroundColor="#ffffff"
+          />
+        }
+      >
+        {/* Top Navigation Bar */}
+        <TopNavBar title="Dashboard" />
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Dashboard</Text>
@@ -71,21 +70,21 @@ export default function HomeScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => navigation.navigate('NewShipment')}
+            onPress={() => navigation.navigate('BookTransport')}
           >
-            <Text style={styles.actionText}>Book Bus</Text>
+            <Text style={styles.actionText}>Book Transport</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => navigation.navigate('TrackPackage')}
           >
-            <Text style={styles.actionText}>Track Package</Text>
+            <Text style={styles.actionText}>Use Dispatch</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recent Shipments */}
-        <Text style={styles.sectionTitle}>Recent Shipments</Text>
+        <Text style={styles.sectionTitle}>Recent Trips</Text>
         {/* {recentShipments.map(shipment => (
           <TouchableOpacity
             key={shipment.id}
@@ -137,44 +136,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
-  },
-  screenTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  iconsRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    padding: 5,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    right: -5,
-    top: -5,
-    backgroundColor: 'red',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   container: {
     flexGrow: 1,

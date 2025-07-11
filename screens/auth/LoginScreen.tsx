@@ -9,6 +9,7 @@ import {
   Platform,
   Image,
   Switch,
+  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,9 +17,7 @@ import GlobalStyles from '../../assets/styles/globalStyles';
 import Feather from 'react-native-vector-icons/Feather';
 import { AuthService } from '../../requests';
 import { matchEmail } from '../../utils/pregmatch';
-import { showApiErrorAlert, saveTokens, 
-  loadRememberedEmail } from '../../utils/apiHelpers';
-
+import { showApiErrorAlert, saveTokens, loadRememberedEmail } from '../../utils/apiHelpers';
 
 export default function LoginScreen({ navigation }: any) {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,14 +40,14 @@ export default function LoginScreen({ navigation }: any) {
           setFormData(prev => ({
             ...prev,
             email: savedEmail,
-            rememberMe: true
+            rememberMe: true,
           }));
         }
       } catch (error) {
         console.log('Error loading credentials', error);
       }
     };
-    
+
     loadCredentials();
   }, []);
 
@@ -83,7 +82,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     if (!validateForm()) return;
-    
+
     try {
       setIsLoading(true);
 
@@ -93,19 +92,18 @@ export default function LoginScreen({ navigation }: any) {
         remember_token: formData.rememberMe, // Send rememberMe as remember_token
       });
 
-    //  if (!response.data.data.accessToken || !response.data.data.refreshToken) {
-    //    throw new Error('Tokens not found in response');
-    //  }
+      //  if (!response.data.data.accessToken || !response.data.data.refreshToken) {
+      //    throw new Error('Tokens not found in response');
+      //  }
 
-       //Save tokens to secure storage
-        //  await saveTokens(
-        //    response.data.data.accessToken, 
-        //    response.data.data.refreshToken,
-        //    formData.rememberMe, 
-        //    formData.email
-        //  );
+      //Save tokens to secure storage
+      //  await saveTokens(
+      //    response.data.data.accessToken,
+      //    response.data.data.refreshToken,
+      //    formData.rememberMe,
+      //    formData.email
+      //  );
 
-      
       // Redirect to main app
       navigation.navigate('Dashboard');
     } catch (error: any) {
@@ -116,25 +114,20 @@ export default function LoginScreen({ navigation }: any) {
           password: 'Invalid email or password',
         }));
       } else if (error.response?.status === 403) {
-        Alert.alert(
-          'Email Not Verified',
-          'Please verify your email before logging in',
-          [
-            {
-              text: 'Resend Verification',
-              onPress: () => {
-                AuthService.resendVerification(formData.email)
-                  .then(() => Alert.alert('Email Sent', 'A new verification email has been sent'))
-                  .catch(err => showApiErrorAlert(err, 'Failed to resend verification'));
-              }
+        Alert.alert('Email Not Verified', 'Please verify your email before logging in', [
+          {
+            text: 'Resend Verification',
+            onPress: () => {
+              AuthService.resendVerification(formData.email)
+                .then(() => Alert.alert('Email Sent', 'A new verification email has been sent'))
+                .catch(err => showApiErrorAlert(err, 'Failed to resend verification'));
             },
-            { text: 'OK' }
-          ]
-        );
+          },
+          { text: 'OK' },
+        ]);
       } else if (error.message === 'Tokens not found in response') {
-      Alert.alert('Login Error', 'Authentication tokens not received');
-    
-    }else {
+        Alert.alert('Login Error', 'Authentication tokens not received');
+      } else {
         showApiErrorAlert(error, 'Login failed');
       }
     } finally {
@@ -148,7 +141,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -156,8 +149,8 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   const toggleRememberMe = () => {
-  handleInputChange('rememberMe', !formData.rememberMe);
-};
+    handleInputChange('rememberMe', !formData.rememberMe);
+  };
 
   return (
     <SafeAreaView edges={['bottom']} style={GlobalStyles.safeArea}>
@@ -189,9 +182,8 @@ export default function LoginScreen({ navigation }: any) {
             />
           </View>
           <View style={styles.errorTextContainer}>
-             {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-            </View>
-          
+            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+          </View>
 
           {/* Password Input */}
           <View style={styles.inputWrapper}>
@@ -204,14 +196,12 @@ export default function LoginScreen({ navigation }: any) {
               onChangeText={text => handleInputChange('password', text)}
             />
           </View>
-         
+
           <View style={styles.errorTextContainer}>
-              {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-            </View>
+            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+          </View>
           {/* Remember Me and Forgot Password Row */}
           <View style={styles.rememberRow}>
-
-            
             <TouchableOpacity onPress={toggleRememberMe} style={styles.rememberMeContainer}>
               <Switch
                 value={formData.rememberMe}
@@ -227,8 +217,8 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity 
-            style={[styles.button, isLoading && styles.disabledButton]} 
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.disabledButton]}
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -311,7 +301,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
-    marginTop:-10,
+    marginTop: -10,
   },
   rememberMeContainer: {
     flexDirection: 'row',
@@ -351,8 +341,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 5,
   },
-   errorTextContainer: {
+  errorTextContainer: {
     height: 24,
-    
   },
 });

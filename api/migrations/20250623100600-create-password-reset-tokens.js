@@ -23,7 +23,7 @@ module.exports = {
       expires_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        comment:  'Expiration time for password reset token (15 minutes after registration)',
+        comment: 'Expiration time for password reset token (15 minutes after registration)',
       },
     });
   },

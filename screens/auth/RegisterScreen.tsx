@@ -10,7 +10,6 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -130,10 +129,9 @@ export default function RegisterScreen({ navigation }: any) {
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-
       });
 
-          navigation.navigate('EmailVerification', { email: formData.email });
+      navigation.navigate('EmailVerification', { email: formData.email });
     } catch (error: any) {
       if (error.response?.status === 409) {
         setErrors(prev => ({

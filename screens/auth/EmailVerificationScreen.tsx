@@ -16,10 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { AuthService } from '../../requests';
 import { showApiErrorAlert } from '../../utils/apiHelpers';
-import { 
-  useNavigation,
-  useRoute
-} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList, EmailVerificationScreenRouteProp } from '../../types/screenprops';
 
@@ -29,10 +26,10 @@ const RESEND_TIMEOUT = 60;
 export default function VerificationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const route = useRoute<EmailVerificationScreenRouteProp>();
-  
+
   // Get email from navigation parameters
   const email = route.params?.email || '';
-  
+
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendDisabled, setResendDisabled] = useState(true);
@@ -52,11 +49,11 @@ export default function VerificationScreen() {
   const startCountdown = () => {
     setResendDisabled(true);
     setCountdown(RESEND_TIMEOUT);
-    
+
     if (countdownRef.current) {
       clearInterval(countdownRef.current);
     }
-    
+
     countdownRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
@@ -83,11 +80,11 @@ export default function VerificationScreen() {
     try {
       setIsLoading(true);
       await AuthService.verifyEmail(code, email);
-      
+
       Alert.alert(
         'Email Verified!',
         'Your email has been successfully verified. You can now log in to your account.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
       );
     } catch (error) {
       showApiErrorAlert(error, 'Verification failed');
@@ -129,19 +126,17 @@ export default function VerificationScreen() {
             <View style={styles.iconContainer}>
               <Feather name="mail" size={64} color="#4A90E2" />
             </View>
-            
+
             <Text style={styles.title}>Verify Your Email</Text>
-            
-            <Text style={styles.subtitle}>
-              We've sent a verification code to:
-            </Text>
-            
+
+            <Text style={styles.subtitle}>We've sent a verification code to:</Text>
+
             <Text style={styles.emailText}>{email}</Text>
-            
+
             <Text style={styles.instructions}>
               Please enter the 6-digit code from your email below
             </Text>
-            
+
             <View style={styles.inputContainer}>
               <TextInput
                 ref={codeInputRef}
@@ -156,15 +151,15 @@ export default function VerificationScreen() {
                 editable={!isLoading}
                 onSubmitEditing={handleVerify}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.scanButton}
                 onPress={() => codeInputRef.current?.focus()}
                 disabled={isLoading}
               >
-                <Feather name="edit" size={20} color={isLoading ? "#999" : "#4A90E2"} />
+                <Feather name="edit" size={20} color={isLoading ? '#999' : '#4A90E2'} />
               </TouchableOpacity>
             </View>
-            
+
             <TouchableOpacity
               style={[styles.button, (isLoading || code.length < 6) && styles.disabledButton]}
               onPress={handleVerify}
@@ -176,25 +171,22 @@ export default function VerificationScreen() {
                 <Text style={styles.buttonText}>Verify Email</Text>
               )}
             </TouchableOpacity>
-            
+
             <View style={styles.resendContainer}>
-              <Text style={styles.resendText}>
-                Didn't receive the email? 
-              </Text>
-              
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={resendDisabled || isLoading}
-              >
-                <Text style={[
-                  styles.resendLink,
-                  (resendDisabled || isLoading) && styles.disabledResend
-                ]}>
+              <Text style={styles.resendText}>Didn't receive the email?</Text>
+
+              <TouchableOpacity onPress={handleResend} disabled={resendDisabled || isLoading}>
+                <Text
+                  style={[
+                    styles.resendLink,
+                    (resendDisabled || isLoading) && styles.disabledResend,
+                  ]}
+                >
                   Resend {resendDisabled ? `(${countdown}s)` : ''}
                 </Text>
               </TouchableOpacity>
             </View>
-            
+
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}

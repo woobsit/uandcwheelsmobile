@@ -8,8 +8,8 @@ import RegisterScreen from './screens/auth/RegisterScreen';
 import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
 import LoginScreen from './screens/auth/LoginScreen';
 import ForgotPasswordScreen from './screens/auth/ForgetPasswordScreen';
-import PasswordResetScreen from './screens/auth/PasswordResetScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import BookTransportScreen from './screens/BookTransportScreen';
 import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; // You'll create this
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
 
@@ -32,7 +32,7 @@ function DashboardDrawer() {
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       {/* Add other logistics screens here */}
-      {/* <Drawer.Screen name="Shipments" component={ShipmentsScreen} /> */}
+      <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
       {/* <Drawer.Screen name="Drivers" component={DriversScreen} /> */}
       {/* ... other logistics screens */}
     </Drawer.Navigator>
@@ -48,8 +48,12 @@ export default function App() {
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
-         
-          <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
+
+          <Stack.Screen
+            name="EmailVerification"
+            component={EmailVerificationScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           {/* Main App (after authentication) */}

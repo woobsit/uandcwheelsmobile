@@ -10,13 +10,13 @@ const registerValidators = [
     .withMessage('Name must be between 2-50 characters'),
 
   // Email validation
-   body('email')
-     .trim()
-     .notEmpty()
-     .withMessage('Email is required')
-     .isEmail()
-     .withMessage('Email must be valid')
-     .normalizeEmail(),
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
+    .normalizeEmail(),
 
   // Password validation
   body('password')
@@ -25,31 +25,34 @@ const registerValidators = [
     .isLength({ min: 6, max: 255 })
     .withMessage('Password must be between 6-255 characters'),
 
-   body('confirmPassword')
-     .notEmpty()
-     .withMessage('Confirm Password is required')
-     .custom((value, { req }) => {
-       if (value !== req.body.password) {
-         throw new Error('Passwords do not match');
-       }
-       return true;
-     }),
+  body('confirmPassword')
+    .notEmpty()
+    .withMessage('Confirm Password is required')
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    }),
 ];
 
 const verifyEmailValidators = [
-    body('email')
+  body('email')
     .trim()
     .notEmpty()
     .withMessage('Email is required')
     .isEmail()
     .withMessage('Email must be valid')
     .normalizeEmail(),
-  
-    body('code')
+
+  body('code')
     .trim()
-    .notEmpty().withMessage('Verification code is required')
-    .isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits')
-    .isNumeric().withMessage('Code must contain only numbers')
+    .notEmpty()
+    .withMessage('Verification code is required')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Code must be 6 digits')
+    .isNumeric()
+    .withMessage('Code must contain only numbers'),
 ];
 
 const loginValidators = [
@@ -90,7 +93,7 @@ const forgotPasswordValidators = [
 //     .isEmail()
 //     .withMessage('Email must be valid')
 //     .normalizeEmail(),
-  
+
 //     body('code')
 //     .trim()
 //     .notEmpty().withMessage('Password reset code is required')
@@ -101,20 +104,27 @@ const forgotPasswordValidators = [
 const resetPasswordValidators = [
   body('email')
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Email must be valid')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
     .normalizeEmail(),
-  
+
   body('code')
     .trim()
-    .notEmpty().withMessage('Reset code is required')
-    .isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits')
-    .isNumeric().withMessage('Code must contain only numbers'),
-  
+    .notEmpty()
+    .withMessage('Reset code is required')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Code must be 6 digits')
+    .isNumeric()
+    .withMessage('Code must contain only numbers'),
+
   body('password')
     .trim()
-    .notEmpty().withMessage('Password is required')
-    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters'),
 ];
 
 const resendVerificationValidators = [
@@ -127,7 +137,6 @@ const resendVerificationValidators = [
     .normalizeEmail(),
 ];
 
-
 module.exports = {
   registerValidators,
   loginValidators,
@@ -135,5 +144,5 @@ module.exports = {
   //verifyResetCodeValidators,
   resetPasswordValidators,
   verifyEmailValidators,
-  resendVerificationValidators
+  resendVerificationValidators,
 };

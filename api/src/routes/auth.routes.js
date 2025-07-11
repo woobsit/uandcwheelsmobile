@@ -6,8 +6,7 @@ const {
   forgotPasswordValidators,
   //verifyResetCodeValidators,
   resetPasswordValidators,
-  resendVerificationValidators
-
+  resendVerificationValidators,
 } = require('../middlewares/validators/auth.validators');
 const { validateRequest } = require('../middlewares/validate-request');
 const {
@@ -30,7 +29,12 @@ router.post('/login', authLimiter, loginValidators, validateRequest, login);
 
 router.post('/verify-email', verifyEmailValidators, validateRequest, verifyEmail);
 
-router.post('/resend-verification', resendVerificationValidators, validateRequest,resendVerification);
+router.post(
+  '/resend-verification',
+  resendVerificationValidators,
+  validateRequest,
+  resendVerification,
+);
 
 router.post('/forgot-password', forgotPasswordValidators, validateRequest, forgotPassword);
 

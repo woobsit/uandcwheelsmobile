@@ -43,7 +43,7 @@ module.exports = {
           isDate: true,
         },
       },
-           
+
       preferred_payment_method: {
         type: Sequelize.STRING,
         allowNull: true,

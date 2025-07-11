@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const db = require('../../models/index');
-const EmailService = require( '../../email/email.service');
+const EmailService = require('../../email/email.service');
 const PasswordResetToken = require('../../models/passwordResetToken.model');
 const { generateToken } = require('../../middlewares/auth/verify');
 const logger = require('../../config/logger');
@@ -26,7 +26,7 @@ const register = async (req, res) => {
 
     //const verificationToken = uuid.v4();
     const verificationCode = generateVerificationCode();
-   // Change to 15 minutes (15 * 60 * 1000)
+    // Change to 15 minutes (15 * 60 * 1000)
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     const user = await db.User.create({
@@ -40,11 +40,11 @@ const register = async (req, res) => {
     });
 
     await EmailService.sendVerificationEmail(
-      email, 
-      name, 
-      //verificationToken, 
+      email,
+      name,
+      //verificationToken,
       verificationCode,
-      verificationExpires
+      verificationExpires,
     );
 
     return res.status(201).json({
@@ -64,7 +64,6 @@ const register = async (req, res) => {
     });
   }
 };
-
 
 const login = async (req, res) => {
   try {
@@ -185,13 +184,10 @@ const refreshToken = async (req, res) => {
   }
 };
 
-
 const verifyEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
-        const numericCode = parseInt(code, 10); // Convert to number
-
-
+    const numericCode = parseInt(code, 10); // Convert to number
 
     if (!email || !code) {
       return res.status(400).json({
@@ -200,12 +196,12 @@ const verifyEmail = async (req, res) => {
       });
     }
 
-    const user = await db.User.findOne({ 
-      where: { 
+    const user = await db.User.findOne({
+      where: {
         email,
         verification_code: numericCode,
-        verification_token_expires: { [Op.gt]: new Date() }
-      } 
+        verification_token_expires: { [Op.gt]: new Date() },
+      },
     });
 
     if (!user) {
@@ -228,7 +224,7 @@ const verifyEmail = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-      }
+      },
     });
   } catch (error) {
     logger.error('Email verification failed', error);
@@ -242,8 +238,8 @@ const verifyEmail = async (req, res) => {
 const resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
-    
-    const user = await db.User.findOne({ 
+
+    const user = await db.User.findOne({
       where: { email },
     });
 
@@ -272,11 +268,11 @@ const resendVerification = async (req, res) => {
     });
 
     await EmailService.sendVerificationEmail(
-      email, 
-      user.name, 
-      //verificationToken, 
+      email,
+      user.name,
+      //verificationToken,
       verificationCode,
-      verificationExpires
+      verificationExpires,
     );
 
     return res.status(200).json({
@@ -291,7 +287,6 @@ const resendVerification = async (req, res) => {
     });
   }
 };
-
 
 const forgotPassword = async (req, res) => {
   try {
@@ -315,15 +310,10 @@ const forgotPassword = async (req, res) => {
       email,
       code,
       created_at: new Date(),
-      expires_at: expiresAt
+      expires_at: expiresAt,
     });
 
-     await EmailService.sendPasswordResetEmail(
-       user.email,
-       user.name,
-       code,
-       expiresAt
-     );
+    await EmailService.sendPasswordResetEmail(user.email, user.name, code, expiresAt);
 
     return res.status(200).json({
       success: true,
@@ -343,7 +333,7 @@ const forgotPassword = async (req, res) => {
 // const verifyResetCode = async (req, res) => {
 //   try {
 //     const { email, code } = req.body;
-    
+
 //     const tokenRecord = await PasswordResetToken.findOne({
 //       where: {
 //         email,
@@ -372,7 +362,6 @@ const forgotPassword = async (req, res) => {
 //   }
 // };
 
-
 const resetPassword = async (req, res) => {
   try {
     const { email, code, password } = req.body;
@@ -380,9 +369,9 @@ const resetPassword = async (req, res) => {
     // Find token record
     const tokenRecord = await PasswordResetToken.findOne({
       where: {
-       email,
+        email,
         code,
-        expires_at: { [Op.gt]: new Date() }
+        expires_at: { [Op.gt]: new Date() },
       },
     });
 

@@ -6,6 +6,7 @@ import { DrawerActions } from '@react-navigation/native';
 
 export default function CustomDrawerContent({ navigation }: any) {
   const [deliveryExpanded, setDeliveryExpanded] = useState(false);
+  const [transportExpanded, setTransportExpanded] = useState(false);
   const rotateAnim = useState(new Animated.Value(0))[0];
 
   const toggleDelivery = () => {
@@ -16,6 +17,16 @@ export default function CustomDrawerContent({ navigation }: any) {
       useNativeDriver: true,
     }).start();
     setDeliveryExpanded(!deliveryExpanded);
+  };
+
+  const toggleTransport = () => {
+    Animated.timing(rotateAnim, {
+      toValue: transportExpanded ? 0 : 1,
+      duration: 200,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start();
+    setTransportExpanded(!transportExpanded);
   };
 
   const rotateInterpolate = rotateAnim.interpolate({
@@ -35,15 +46,61 @@ export default function CustomDrawerContent({ navigation }: any) {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Logistics App</Text>
+        <Text style={styles.headerTitle}>UandC Wheels</Text>
       </View>
 
       {/* Main Menu Items */}
       <DrawerItem
         label="Dashboard"
         icon={({ color, size }) => <MaterialIcons name="dashboard" size={size} color={color} />}
-        onPress={() => navigation.navigate('LogisticsHome')}
+        onPress={() => navigation.navigate('Dashboard')}
       />
+
+      {/* Transport Section - Expandable */}
+      <TouchableOpacity style={[styles.sectionHeader, styles.parentItem]} onPress={toggleTransport}>
+        <MaterialIcons name="local-shipping" size={24} color="#333" style={styles.icon} />
+        <Text style={styles.label}>Transport</Text>
+        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+          <MaterialIcons name="expand-more" size={24} color="#333" />
+        </Animated.View>
+      </TouchableOpacity>
+
+      {transportExpanded && (
+        <View style={styles.subItemsContainer}>
+          <DrawerItem
+            label="Book Transport"
+            icon={({ color, size }) => (
+              <View style={styles.subItemIconContainer}>
+                <MaterialIcons
+                  name="add-circle-outline"
+                  size={size}
+                  color={color}
+                  style={styles.drawerIcon}
+                />
+              </View>
+            )}
+            onPress={() => navigation.navigate('NewDelivery')}
+            style={styles.subItem}
+            labelStyle={styles.subItemLabel}
+          />
+          <DrawerItem
+            label="View My Bookings"
+            icon={({ color, size }) => (
+              <View style={styles.subItemIconContainer}>
+                <MaterialIcons
+                  name="list-alt"
+                  size={size}
+                  color={color}
+                  style={styles.drawerIcon}
+                />
+              </View>
+            )}
+            onPress={() => navigation.navigate('ViewDeliveries')}
+            style={styles.subItem}
+            labelStyle={styles.subItemLabel}
+          />
+        </View>
+      )}
 
       {/* Delivery Section - Expandable */}
       <TouchableOpacity style={[styles.sectionHeader, styles.parentItem]} onPress={toggleDelivery}>

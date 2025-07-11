@@ -10,13 +10,14 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: undefined;
   Dashboard: undefined;
+  BookingDetails: undefined;
   Notifications: undefined;
   Settings: undefined;
   UserProfile: undefined;
   NewShipment: undefined;
   TrackPackage: undefined;
   ShipmentDetails: undefined;
-  
+
   // Add other auth screens here
 };
 
@@ -33,12 +34,21 @@ export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login
 export type DashboardScreenProps = NativeStackScreenProps<AuthStackParamList, 'Dashboard'>;
 
 // EmailVerificationScreen screen props type
-export type EmailVerificationScreenProps = NativeStackScreenProps<AuthStackParamList, 'EmailVerification'>;
+export type EmailVerificationScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'EmailVerification'
+>;
 
 export type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
 
 // ForgotPasswordScreen screen props type
-export type ForgotPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
+export type ForgotPasswordScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'ForgotPassword'
+>;
+
+// Booking details props type
+export type BookingDetailsScreenProps = NativeStackScreenProps<AuthStackParamList, 'BookingDetails'>;
 
 // ResetPasswordScreen screen props type
 export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
