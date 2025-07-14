@@ -65,14 +65,63 @@ const updateTripValidator = [
     .withMessage('Invalid trip status'),
 ];
 
-const searchTripsValidations = [
+const searchTripValidator = [
   query('from').notEmpty().isString(),
   query('to').notEmpty().isString(),
   query('date').isISO8601().toDate(),
 ];
 
+const getAllTripValidator = [
+  // Validate 'status' parameter
+  query('status')
+    .optional()
+    .isIn(['scheduled', 'departed', 'arrived', 'cancelled'])
+    .withMessage('Invalid trip status. Valid values: scheduled, departed, arrived, cancelled'),
+
+  // Validate 'from' parameter
+  query('from')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Departure location cannot be empty')
+    .custom(async (value, { req }) => {
+      const location = await db.Location.findOne({ where: { name: value } });
+      if (!location) throw new Error(`Departure location '${value}' not found`);
+      
+      // Store found location for later use in controller
+      req.validatedLocations = req.validatedLocations || {};
+      req.validatedLocations.from = location;
+      return true;
+    }),
+
+  // Validate 'to' parameter
+  query('to')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Arrival location cannot be empty')
+    .custom(async (value, { req }) => {
+      const location = await db.Location.findOne({ where: { name: value } });
+      if (!location) throw new Error(`Arrival location '${value}' not found`);
+      
+      // Store found location for later use in controller
+      req.validatedLocations = req.validatedLocations || {};
+      req.validatedLocations.to = location;
+      return true;
+    }),
+
+  // Validate 'date' parameter
+  query('date')
+    .optional()
+    .isISO8601().withMessage('Invalid date format. Use ISO format (YYYY-MM-DD)')
+    .custom(value => {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) throw new Error('Invalid date value');
+      return true;
+    })
+];
+
 module.exports = {
   createTripValidator,
   updateTripValidator,
-  searchTripsValidations,
+  searchTripValidator,
+  getAllTripValidator
 };

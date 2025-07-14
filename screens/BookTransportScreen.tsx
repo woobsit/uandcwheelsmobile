@@ -39,8 +39,8 @@ export default function BookTransportScreen() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await TripService.getAvailableTrips();
-      setTrips(response.data);
+      const response = await TripService.getAllTrips({ status: 'scheduled' });
+      setTrips(response.data.data);
     } catch (err) {
       setError('Failed to load trips. Please try again.');
       console.error('Error fetching trips:', err);
@@ -52,8 +52,8 @@ export default function BookTransportScreen() {
   // Filter trips based on search term
   const filteredTrips = trips.filter(
     trip =>
-      trip.departure_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trip.arrival_location.toLowerCase().includes(searchTerm.toLowerCase()),
+      trip.departureLocation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      trip.arrivalLocation.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Handle booking

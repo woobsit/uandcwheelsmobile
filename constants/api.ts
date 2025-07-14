@@ -9,7 +9,7 @@ export const ENDPOINTS = {
   VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
   FORGOT_PASSWORD: '/auth/forgot-password',
   PASSWORD_RESET: (token: string) => `/auth/reset-password/${token}`,
-  TRIPS: '/trips',
+  TRIPS: '/all',
   TRIP_DETAILS: (id: string) => `/trips/${id}`,
   BOOKINGS: '/bookings',
   BOOKING_DETAILS: (id: string) => `/bookings/${id}`,
