@@ -6,10 +6,11 @@ export type AuthStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
-  EmailVerification: undefined;
+  EmailVerification: { email: string };
   ForgotPassword: undefined;
-  ResetPassword: undefined;
+  ResetPassword: { email: string };
   Dashboard: undefined;
+  BookTransport: undefined;
   BookingDetails: undefined;
   Notifications: undefined;
   Settings: undefined;
@@ -54,3 +55,6 @@ export type BookingDetailsScreenProps = NativeStackScreenProps<AuthStackParamLis
 export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 export type EmailResetScreenRouteProp = RouteProp<AuthStackParamList, 'ResetPassword'>;
+
+// BookTransport screen props type
+export type BookTransportScreenProps = NativeStackScreenProps<AuthStackParamList, 'BookTransport'>;
