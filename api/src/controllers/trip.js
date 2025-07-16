@@ -77,10 +77,15 @@ const createTrip = async (req, res) => {
 
 const getAllTrips = async (req, res) => {
   try {
-    const { status, from, to, date } = req.query;
+    const { status, from, to, date, page = 1, limit = 10 } = req.query;
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const offset = (pageNumber - 1) * limitNumber;
+
     const where = {};
 
     if (status) where.status = status;
+
     // Location-based filtering
     if (from) {
       const location = await db.Location.findOne({ where: { name: from } });
@@ -102,6 +107,10 @@ const getAllTrips = async (req, res) => {
       };
     }
 
+    // Get total count for pagination
+    const total = await db.Trip.count({ where });
+
+    // Get paginated trips
     const trips = await db.Trip.findAll({
       where,
       include: [
@@ -119,10 +128,12 @@ const getAllTrips = async (req, res) => {
         },
       ],
       order: [['departure_time', 'ASC']],
+      offset,
+      limit: limitNumber,
     });
 
     // Format response with location names
-    const formattedTrips = trips.map(trip => {
+    const items = trips.map(trip => {
       const tripData = trip.get({ plain: true });
       return {
         ...tripData,
@@ -133,10 +144,63 @@ const getAllTrips = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: formattedTrips,
+      data: {
+        items,
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        hasNext: offset + limitNumber < total,
+      },
     });
   } catch (error) {
     logger.error('Failed to fetch trips', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+// controllers/tripController.js
+const getAvailableSeats = async (req, res) => {
+  try {
+    const { tripId } = req.params;
+
+    // Get trip with bus information
+    const trip = await db.Trip.findByPk(tripId, {
+      include: [
+        {
+          model: db.Bus,
+          attributes: ['capacity'],
+        },
+      ],
+    });
+
+    if (!trip) {
+      return res.status(404).json({
+        success: false,
+        message: 'Trip not found',
+      });
+    }
+
+    // Get total booked seats for this trip
+    const totalBooked = await db.Booking.sum('numberOfSeats', {
+      where: { tripId },
+    });
+
+    const availableSeats = trip.Bus.capacity - (totalBooked || 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        availableSeats: Math.max(availableSeats, 0),
+        capacity: trip.Bus.capacity,
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to get available seats', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
     return res.status(500).json({
@@ -341,4 +405,5 @@ module.exports = {
   updateTrip,
   deleteTrip,
   searchTrips,
+  getAvailableSeats,
 };

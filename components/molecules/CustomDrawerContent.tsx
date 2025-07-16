@@ -104,7 +104,7 @@ export default function CustomDrawerContent({ navigation }: any) {
 
       {/* Delivery Section - Expandable */}
       <TouchableOpacity style={[styles.sectionHeader, styles.parentItem]} onPress={toggleDelivery}>
-        <MaterialIcons name="local-shipping" size={24} color="#333" style={styles.icon} />
+        <MaterialIcons name="motorcycle" size={24} color="#333" style={styles.icon} />
         <Text style={styles.label}>Delivery</Text>
         <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
           <MaterialIcons name="expand-more" size={24} color="#333" />

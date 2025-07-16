@@ -6,6 +6,11 @@ import type { TripFilters, Trip } from '../types/trip';
 const TripService = {
   getAllTrips: async (filters: TripFilters = {}): Promise<ApiResponse<PaginatedResponse<Trip>>> => {
     try {
+      // Convert date to ISO string if it's a Date object
+      if (filters.date instanceof Date) {
+        filters.date = filters.date.toISOString().split('T')[0];
+      }
+
       const response = await api.get<ApiResponse<PaginatedResponse<Trip>>>(ENDPOINTS.TRIPS, {
         params: filters,
       });
@@ -14,7 +19,6 @@ const TripService = {
       throw error;
     }
   },
-
   getTripById: async (tripId: string): Promise<ApiResponse<Trip>> => {
     try {
       const response = await api.get<ApiResponse<Trip>>(ENDPOINTS.TRIP_DETAILS(tripId));

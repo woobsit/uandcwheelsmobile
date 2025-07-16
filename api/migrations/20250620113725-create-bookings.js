@@ -29,9 +29,63 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      seat_number: {
-        type: Sequelize.STRING(10),
+      booking_reference: {
+        type: Sequelize.STRING(20),
         allowNull: false,
+        unique: true,
+      },
+      booking_date: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      payment_status: {
+        type: Sequelize.ENUM('pending', 'paid', 'failed', 'refunded'),
+        defaultValue: 'pending',
+      },
+      payment_method: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        validate: {
+          isIn: [['credit_card', 'bank_transfer', 'cash', 'mobile_money', null]],
+        },
+      },
+      amount_paid: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        validate: {
+          min: 0,
+        },
+      },
+      booking_type: {
+        type: Sequelize.ENUM('individual', 'group'),
+        defaultValue: 'individual',
+        allowNull: false,
+      },
+      seats: {
+        type: Sequelize.JSON, // Store seat numbers or quantity
+        allowNull: false,
+        validate: {
+          isValid(value) {
+            if (this.booking_type === 'individual') {
+              if (!Array.isArray(value) || value.length === 0) {
+                throw new Error('Must provide seat numbers for individual booking');
+              }
+            } else {
+              if (typeof value !== 'number' || value < 1) {
+                throw new Error('Must provide valid seat count for group booking');
+              }
+            }
+          },
+        },
+      },
+      status: {
+        type: Sequelize.ENUM('confirmed', 'cancelled', 'completed'),
+        defaultValue: 'confirmed',
+      },
+      notes: {
+        type: Sequelize.TEXT,
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,

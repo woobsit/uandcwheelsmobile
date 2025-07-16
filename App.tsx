@@ -10,6 +10,7 @@ import LoginScreen from './screens/auth/LoginScreen';
 import ForgotPasswordScreen from './screens/auth/ForgetPasswordScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import BookTransportScreen from './screens/BookTransportScreen';
+import BookingDetailsScreen from './screens/BookingDetailsScreen';
 import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; // You'll create this
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
 
@@ -33,6 +34,7 @@ function DashboardDrawer() {
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       {/* Add other logistics screens here */}
       <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
+      <Drawer.Screen name="BookingDetails" component={BookingDetailsScreen} />
       {/* <Drawer.Screen name="Drivers" component={DriversScreen} /> */}
       {/* ... other logistics screens */}
     </Drawer.Navigator>

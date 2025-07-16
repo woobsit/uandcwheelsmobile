@@ -12,21 +12,31 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import useRefreshControl from '../hooks/useRefreshControl';
 import { Trip } from '../types/trip';
 import { formatDate } from '../utils/dateHelpers';
 import { TripService } from '../requests';
 import TopNavBar from '../components/molecules/TopNavBar';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '../types/screenprops';
 
 export default function BookTransportScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  //const route = useRoute<BookingDetailsScreenRouteProp>();
+  //const trip = route.params?.trip || '';
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [error, setError] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    hasNext: false,
+  });
   // Create refresh control
   const { refreshing, onRefresh } = useRefreshControl({
     refreshAction: async () => {
@@ -39,8 +49,17 @@ export default function BookTransportScreen() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await TripService.getAllTrips({ status: 'scheduled' });
-      setTrips(response.data.data);
+      const response = await TripService.getAllTrips({
+        status: 'scheduled',
+        page: pagination.page,
+        limit: pagination.limit,
+      });
+      setTrips(response.data.items);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total,
+        hasNext: response.data.hasNext,
+      }));
     } catch (err) {
       setError('Failed to load trips. Please try again.');
       console.error('Error fetching trips:', err);
@@ -50,11 +69,13 @@ export default function BookTransportScreen() {
   };
 
   // Filter trips based on search term
-  const filteredTrips = trips.filter(
-    trip =>
-      trip.departureLocation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trip.arrivalLocation.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredTrips = trips.filter(trip => {
+    const dep = trip.departure_location ?? ''; // Fallback to empty string
+    const arr = trip.arrival_location ?? ''; // Fallback to empty string
+    const term = searchTerm.toLowerCase();
+
+    return dep.toLowerCase().includes(term) || arr.toLowerCase().includes(term);
+  });
 
   // Handle booking
   const handleBookTrip = (trip: Trip) => {
@@ -144,15 +165,14 @@ export default function BookTransportScreen() {
                   <View style={styles.detailItem}>
                     <MaterialIcons name="directions-bus" size={18} color="#666" />
                     <Text style={styles.detailText}>
-                      {trip.bus?.type || 'Standard Bus'} • {trip.bus?.seat_capacity || 'Unknown'}{' '}
-                      seats
+                      {trip.Bus?.brand || 'Standard Bus'} • {trip.Bus?.capacity || 'Unknown'} seats
                     </Text>
                   </View>
 
                   <View style={styles.detailItem}>
                     <MaterialIcons name="person" size={18} color="#666" />
                     <Text style={styles.detailText}>
-                      {trip.driver?.name || 'Driver information not available'}
+                      {trip.Driver?.name || 'Driver information not available'}
                     </Text>
                   </View>
                 </View>

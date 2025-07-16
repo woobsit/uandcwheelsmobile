@@ -82,11 +82,12 @@ const getAllTripValidator = [
   query('from')
     .optional()
     .trim()
-    .notEmpty().withMessage('Departure location cannot be empty')
+    .notEmpty()
+    .withMessage('Departure location cannot be empty')
     .custom(async (value, { req }) => {
       const location = await db.Location.findOne({ where: { name: value } });
       if (!location) throw new Error(`Departure location '${value}' not found`);
-      
+
       // Store found location for later use in controller
       req.validatedLocations = req.validatedLocations || {};
       req.validatedLocations.from = location;
@@ -97,11 +98,12 @@ const getAllTripValidator = [
   query('to')
     .optional()
     .trim()
-    .notEmpty().withMessage('Arrival location cannot be empty')
+    .notEmpty()
+    .withMessage('Arrival location cannot be empty')
     .custom(async (value, { req }) => {
       const location = await db.Location.findOne({ where: { name: value } });
       if (!location) throw new Error(`Arrival location '${value}' not found`);
-      
+
       // Store found location for later use in controller
       req.validatedLocations = req.validatedLocations || {};
       req.validatedLocations.to = location;
@@ -111,17 +113,18 @@ const getAllTripValidator = [
   // Validate 'date' parameter
   query('date')
     .optional()
-    .isISO8601().withMessage('Invalid date format. Use ISO format (YYYY-MM-DD)')
+    .isISO8601()
+    .withMessage('Invalid date format. Use ISO format (YYYY-MM-DD)')
     .custom(value => {
       const date = new Date(value);
       if (isNaN(date.getTime())) throw new Error('Invalid date value');
       return true;
-    })
+    }),
 ];
 
 module.exports = {
   createTripValidator,
   updateTripValidator,
   searchTripValidator,
-  getAllTripValidator
+  getAllTripValidator,
 };

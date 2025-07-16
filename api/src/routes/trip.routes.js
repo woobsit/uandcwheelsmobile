@@ -13,7 +13,7 @@ const {
   createTripValidator,
   updateTripValidator,
   searchTripValidator,
-  getAllTripValidator
+  getAllTripValidator,
 } = require('../middlewares/validators/trip.validator');
 
 const router = Router();

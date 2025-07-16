@@ -46,11 +46,26 @@ Booking.init(
         key: 'id',
       },
     },
-    seat_number: {
-      type: DataTypes.STRING(10),
+    booking_type: {
+      type: DataTypes.ENUM('individual', 'group'),
+      defaultValue: 'individual',
+      allowNull: false,
+    },
+    seats: {
+      type: DataTypes.JSON, // Store seat numbers or quantity
       allowNull: false,
       validate: {
-        notEmpty: true,
+        isValid(value) {
+          if (this.booking_type === 'individual') {
+            if (!Array.isArray(value) || value.length === 0) {
+              throw new Error('Must provide seat numbers for individual booking');
+            }
+          } else {
+            if (typeof value !== 'number' || value < 1) {
+              throw new Error('Must provide valid seat count for group booking');
+            }
+          }
+        },
       },
     },
     booking_reference: {

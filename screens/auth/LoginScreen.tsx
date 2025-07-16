@@ -116,27 +116,27 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     if (!validateForm()) return;
-
     try {
       setIsLoading(true);
 
-      const response = await AuthService.login({
-        email: formData.email,
-        password: formData.password,
-        remember_token: formData.rememberMe, // Send rememberMe as remember_token
-      });
+      // const response = await AuthService.login({
+      //   email: formData.email,
+      //   password: formData.password,
+      //   remember_token: formData.rememberMe, // Send rememberMe as remember_token
+      // });
 
-      //  if (!response.data.data.accessToken || !response.data.data.refreshToken) {
-      //    throw new Error('Tokens not found in response');
-      //  }
+      //console.log(response);
+      // if (!response.data.data.accessToken || !response.data.data.refreshToken) {
+      //   throw new Error('Tokens not found in response');
+      // }
 
       //Save tokens to secure storage
-      //  await saveTokens(
-      //    response.data.data.accessToken,
-      //    response.data.data.refreshToken,
-      //    formData.rememberMe,
-      //    formData.email
-      //  );
+      // await saveTokens(
+      //   response.data.data.accessToken,
+      //   response.data.data.refreshToken,
+      //   formData.rememberMe,
+      //   formData.email,
+      // );
 
       // Redirect to main app
       navigation.navigate('Dashboard');
@@ -260,6 +260,7 @@ export default function LoginScreen({ navigation }: any) {
                   trackColor={{ false: '#767577', true: '#81b0ff' }}
                   thumbColor={formData.rememberMe ? '#007AFF' : '#f4f3f4'}
                 />
+
                 <Text style={styles.rememberText}>Remember me</Text>
               </TouchableOpacity>
 
