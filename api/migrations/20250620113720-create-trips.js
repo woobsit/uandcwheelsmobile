@@ -60,6 +60,14 @@ module.exports = {
           type: Sequelize.ENUM('scheduled', 'ongoing', 'completed', 'cancelled'),
           defaultValue: 'scheduled',
         },
+        departure_terminal: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        arrival_terminal: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
       },
       {
         // <-- This brace closes createTable

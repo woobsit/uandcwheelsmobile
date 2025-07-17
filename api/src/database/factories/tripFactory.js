@@ -17,6 +17,8 @@ module.exports = {
       estimated_arrival: arrival,
       fare: faker.number.float({ min: 1500, max: 15000, precision: 2 }),
       status: 'scheduled',
+      departure_terminal: 'Arena Terminal',
+      arrival_terminal: 'East Terminal',
       ...overrides,
     };
   },

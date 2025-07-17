@@ -84,6 +84,14 @@ Trip.init(
       type: DataTypes.ENUM('scheduled', 'ongoing', 'completed', 'cancelled'),
       defaultValue: 'scheduled',
     },
+    departure_terminal: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    arrival_terminal: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   },
   {
     sequelize,

@@ -1,4 +1,5 @@
 const { body, param, query } = require('express-validator');
+const db = require('../../models');
 const moment = require('moment');
 
 const createTripValidator = [
@@ -72,55 +73,80 @@ const searchTripValidator = [
 ];
 
 const getAllTripValidator = [
-  // Validate 'status' parameter
+  // Validate 'status' parameter - optional
   query('status')
     .optional()
     .isIn(['scheduled', 'departed', 'arrived', 'cancelled'])
     .withMessage('Invalid trip status. Valid values: scheduled, departed, arrived, cancelled'),
 
-  // Validate 'from' parameter
+  // Validate 'from' parameter - optional
   query('from')
     .optional()
     .trim()
     .notEmpty()
     .withMessage('Departure location cannot be empty')
+    .bail() // Stop validation chain if previous check failed
     .custom(async (value, { req }) => {
-      const location = await db.Location.findOne({ where: { name: value } });
-      if (!location) throw new Error(`Departure location '${value}' not found`);
+      try {
+        const location = await db.Location.findOne({ where: { name: value } });
+        if (!location) throw new Error(`Departure location '${value}' not found`);
 
-      // Store found location for later use in controller
-      req.validatedLocations = req.validatedLocations || {};
-      req.validatedLocations.from = location;
-      return true;
+        // Store location for later use in controller
+        req.validatedLocations = req.validatedLocations || {};
+        req.validatedLocations.from = location;
+        return true;
+      } catch (error) {
+        throw new Error('Error validating departure location');
+      }
     }),
 
-  // Validate 'to' parameter
+  // Validate 'to' parameter - optional
   query('to')
     .optional()
     .trim()
     .notEmpty()
     .withMessage('Arrival location cannot be empty')
+    .bail() // Stop validation chain if previous check failed
     .custom(async (value, { req }) => {
-      const location = await db.Location.findOne({ where: { name: value } });
-      if (!location) throw new Error(`Arrival location '${value}' not found`);
+      try {
+        const location = await db.Location.findOne({ where: { name: value } });
+        if (!location) throw new Error(`Arrival location '${value}' not found`);
 
-      // Store found location for later use in controller
-      req.validatedLocations = req.validatedLocations || {};
-      req.validatedLocations.to = location;
-      return true;
+        // Store location for later use in controller
+        req.validatedLocations = req.validatedLocations || {};
+        req.validatedLocations.to = location;
+        return true;
+      } catch (error) {
+        throw new Error('Error validating arrival location');
+      }
     }),
 
-  // Validate 'date' parameter
+  // Validate 'date' parameter - optional
   query('date')
     .optional()
     .isISO8601()
     .withMessage('Invalid date format. Use ISO format (YYYY-MM-DD)')
+    .bail() // Stop validation chain if previous check failed
     .custom(value => {
-      const date = new Date(value);
-      if (isNaN(date.getTime())) throw new Error('Invalid date value');
-      return true;
+      try {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) throw new Error('Invalid date value');
+        return true;
+      } catch (error) {
+        throw new Error('Error validating date');
+      }
     }),
+
+  // Validate pagination parameters
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100')
+    .toInt(),
 ];
+
 
 module.exports = {
   createTripValidator,

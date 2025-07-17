@@ -3,6 +3,7 @@ const { Router } = require('express');
 const {
   createTrip,
   getAllTrips,
+  getAllScheduledTrips,
   getTripById,
   updateTrip,
   deleteTrip,
@@ -23,6 +24,7 @@ router.get('/search', searchTripValidator, validateRequest, searchTrips);
 
 router.post('/create', createTripValidator, validateRequest, createTrip);
 router.get('/all', getAllTripValidator, validateRequest, getAllTrips);
+router.get('/all-scheduled', getAllScheduledTrips);
 router.get('/show-one/:id', getTripById);
 router.put('/update/:id', updateTripValidator, validateRequest, updateTrip);
 router.delete('/delete/:id', deleteTrip);

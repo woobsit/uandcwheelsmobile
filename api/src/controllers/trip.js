@@ -163,7 +163,100 @@ const getAllTrips = async (req, res) => {
   }
 };
 
-// controllers/tripController.js
+const getAllScheduledTrips = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const offset = (page - 1) * limit;
+    const now = new Date();
+
+    const where = {
+      status: 'scheduled',
+      departure_time: { [db.Sequelize.Op.gte]: now },
+    };
+
+    const total = await db.Trip.count({ where });
+
+    // Fetch trips with correct aliases
+    const trips = await db.Trip.findAll({
+      where,
+      include: [
+        {
+          model: db.Bus,
+          as: 'Bus', // Add alias to match association
+          attributes: ['plate_number', 'brand', 'capacity'],
+        },
+        {
+          model: db.Driver,
+          as: 'Driver', // Add alias to match association
+          attributes: ['name', 'license_number'],
+        },
+        {
+          model: db.Location,
+          as: 'departureLocation',
+          attributes: ['name', 'city', 'terminal'],
+        },
+        {
+          model: db.Location,
+          as: 'arrivalLocation',
+          attributes: ['name', 'city', 'terminal'],
+        },
+      ],
+      order: [['departure_time', 'ASC']],
+      offset,
+      limit,
+      // Remove raw and nest options - we'll use get({ plain: true })
+    });
+
+    // Transform trips safely
+    const items = trips.map(trip => {
+      const tripData = trip.get({ plain: true });
+
+      return {
+        id: tripData.id,
+        departure_time: tripData.departure_time,
+        estimated_arrival: tripData.estimated_arrival,
+        fare: tripData.fare,
+        departure_location: tripData.departureLocation?.name || 'Unknown',
+        departure_state: tripData.departureLocation?.state || '',
+        departure_terminal: tripData.departureLocation?.terminal || '',
+        arrival_location: tripData.arrivalLocation?.name || 'Unknown',
+        arrival_state: tripData.arrivalLocation?.state || '',
+        arrival_terminal: tripData.arrivalLocation?.terminal || '',
+        bus: {
+          plate_number: tripData.Bus?.plate_number || 'N/A',
+          brand: tripData.Bus?.brand || 'Unknown',
+          capacity: tripData.Bus?.capacity || 0,
+        },
+        driver: {
+          name: tripData.Driver?.name || 'Driver not assigned',
+          license_number: tripData.Driver?.license_number || 'N/A',
+        },
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        items,
+        total,
+        page,
+        limit,
+        hasNext: offset + limit < total,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to fetch trips:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && {
+        error: error.message,
+        stack: error.stack,
+      }),
+    });
+  }
+};
 const getAvailableSeats = async (req, res) => {
   try {
     const { tripId } = req.params;
@@ -401,6 +494,7 @@ const searchTrips = async (req, res) => {
 module.exports = {
   createTrip,
   getAllTrips,
+  getAllScheduledTrips,
   getTripById,
   updateTrip,
   deleteTrip,
