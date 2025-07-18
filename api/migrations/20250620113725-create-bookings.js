@@ -11,7 +11,7 @@ module.exports = {
       },
       user_id: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: 'users',
           key: 'id',
@@ -50,6 +50,14 @@ module.exports = {
           isIn: [['credit_card', 'bank_transfer', 'cash', 'mobile_money', null]],
         },
       },
+      total_amount: {
+        // ADDED for total booking cost
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        validate: {
+          min: 0,
+        },
+      },
       amount_paid: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
@@ -62,23 +70,6 @@ module.exports = {
         defaultValue: 'individual',
         allowNull: false,
       },
-      seats: {
-        type: Sequelize.JSON, // Store seat numbers or quantity
-        allowNull: false,
-        validate: {
-          isValid(value) {
-            if (this.booking_type === 'individual') {
-              if (!Array.isArray(value) || value.length === 0) {
-                throw new Error('Must provide seat numbers for individual booking');
-              }
-            } else {
-              if (typeof value !== 'number' || value < 1) {
-                throw new Error('Must provide valid seat count for group booking');
-              }
-            }
-          },
-        },
-      },
       status: {
         type: Sequelize.ENUM('confirmed', 'cancelled', 'completed'),
         defaultValue: 'confirmed',
@@ -87,17 +78,31 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       },
-      created_at: {
+      passenger_count: {
+        // ADDED for quick access
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+        validate: {
+          min: 1,
+        },
+      },
+      is_guest: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+      createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
-      updated_at: {
+      updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
       },
-      deleted_at: {
+      deletedAt: {
         type: Sequelize.DATE,
         allowNull: true,
       },
@@ -105,7 +110,7 @@ module.exports = {
 
     // Add composite unique constraint for seat allocation
     await queryInterface.addConstraint('bookings', {
-      fields: ['trip_id', 'seat_number'],
+      fields: ['trip_id'],
       type: 'unique',
       name: 'unique_seat_allocation',
     });

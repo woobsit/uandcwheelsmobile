@@ -18,16 +18,16 @@ const db = {
   sequelize, // The Sequelize instance
   Sequelize, // Sequelize class
   Setting,
-  RefreshToken,
-  User, // Your User model
-  Passenger,
-  PasswordResetToken,
-  RevokedToken,
+  Location,
   Driver,
   Bus,
+  RefreshToken,
+  User, // Your User model
+  PasswordResetToken,
+  RevokedToken,
   Trip,
   Booking,
-  Location,
+  Passenger,
 };
 
 // Add this after initializing all models

@@ -1,4 +1,3 @@
-// models/booking.model.js
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/config');
 const { generateBookingRef } = require('../utils/bookingHelpers');
@@ -14,12 +13,25 @@ class Booking extends Model {
   static async getBookingsByUser(userId) {
     return await this.findAll({
       where: { user_id: userId },
-      include: ['trip', 'user'],
+      include: [
+        'trip',
+        'user',
+        {
+          association: 'passengers',
+          attributes: ['name', 'seat_number', 'is_primary'],
+        },
+      ],
     });
   }
 
   static async cancelBooking(bookingId) {
-    return await this.update({ status: 'cancelled' }, { where: { id: bookingId } });
+    return await this.update(
+      { status: 'cancelled' },
+      {
+        where: { id: bookingId },
+        individualHooks: true, // Needed if using paranoid
+      },
+    );
   }
 }
 
@@ -32,7 +44,7 @@ Booking.init(
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'users',
         key: 'id',
@@ -51,23 +63,7 @@ Booking.init(
       defaultValue: 'individual',
       allowNull: false,
     },
-    seats: {
-      type: DataTypes.JSON, // Store seat numbers or quantity
-      allowNull: false,
-      validate: {
-        isValid(value) {
-          if (this.booking_type === 'individual') {
-            if (!Array.isArray(value) || value.length === 0) {
-              throw new Error('Must provide seat numbers for individual booking');
-            }
-          } else {
-            if (typeof value !== 'number' || value < 1) {
-              throw new Error('Must provide valid seat count for group booking');
-            }
-          }
-        },
-      },
-    },
+    // REMOVED seats field - now handled by Passenger model
     booking_reference: {
       type: DataTypes.STRING(20),
       allowNull: false,
@@ -89,9 +85,18 @@ Booking.init(
         isIn: [['credit_card', 'bank_transfer', 'cash', 'mobile_money', null]],
       },
     },
+    total_amount: {
+      // ADDED for total booking cost
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0,
+      },
+    },
     amount_paid: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      defaultValue: 0,
       validate: {
         min: 0,
       },
@@ -104,32 +109,68 @@ Booking.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    passenger_count: {
+      // ADDED for quick access
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      validate: {
+        min: 1,
+      },
+    },
+    is_guest: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
   },
   {
     sequelize,
     modelName: 'booking',
     tableName: 'bookings',
     timestamps: true,
-    paranoid: true, // Enables soft deletion
+    paranoid: true,
+    hooks: {
+      beforeValidate: booking => {
+        if (booking.notes) booking.notes = booking.notes.trim();
+      },
+      afterCreate: async booking => {
+        // Update trip availability if needed
+      },
+      afterUpdate: async booking => {
+        if (booking.changed('status') && booking.status === 'cancelled') {
+          // Handle cancellation logic
+        }
+      },
+    },
     indexes: [
-      {
-        fields: ['user_id'],
-      },
-      {
-        fields: ['trip_id'],
-      },
-      {
-        fields: ['booking_reference'],
-        unique: true,
-      },
-      {
-        fields: ['payment_status'],
-      },
-      {
-        fields: ['status'],
-      },
+      { fields: ['user_id'] },
+      { fields: ['trip_id'] },
+      { fields: ['booking_reference'], unique: true },
+      { fields: ['payment_status'] },
+      { fields: ['status'] },
+      { fields: ['createdAt'] }, // For reporting
     ],
   },
 );
+
+// Define associations in separate file or after init
+Booking.associate = models => {
+  Booking.hasMany(models.Passenger, {
+    foreignKey: 'booking_id',
+    as: 'passengers',
+    onDelete: 'CASCADE',
+  });
+
+  Booking.belongsTo(models.User, {
+    foreignKey: 'user_id',
+    as: 'user',
+  });
+
+  Booking.belongsTo(models.Trip, {
+    foreignKey: 'trip_id',
+    as: 'trip',
+  });
+};
 
 module.exports = Booking;

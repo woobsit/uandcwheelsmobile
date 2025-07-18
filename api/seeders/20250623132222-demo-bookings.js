@@ -6,7 +6,6 @@ const { faker } = require('@faker-js/faker');
 
 module.exports = {
   async up(queryInterface) {
-    // Eager load trips with bus information
     const trips = await db.Trip.findAll({
       include: [
         {
@@ -21,14 +20,12 @@ module.exports = {
     const bookings = [];
 
     trips.forEach(trip => {
-      // Ensure bus is loaded
       if (!trip.bus) {
         console.error(`Bus not found for trip ${trip.id}`);
         return;
       }
 
-      const seats = new Set();
-      const maxBookings = Math.min(trip.bus.capacity, 50); // Safety cap
+      const maxBookings = Math.min(trip.bus.capacity, 50);
       const bookingsCount = faker.number.int({
         min: Math.floor(trip.bus.capacity * 0.3),
         max: maxBookings,
@@ -36,18 +33,27 @@ module.exports = {
 
       for (let i = 0; i < bookingsCount; i++) {
         const user = faker.helpers.arrayElement(users);
-        let seat;
-
-        // Generate unique seat number
-        do {
-          seat = `${String.fromCharCode(65 + Math.floor(Math.random() * 5))}${Math.floor(Math.random() * 20) + 1}`;
-        } while (seats.has(seat));
-
-        seats.add(seat);
+        const passengerCount = faker.number.int({ min: 1, max: 4 });
+        const isGuest = faker.datatype.boolean({ probability: 0.3 });
+        const userId = isGuest ? null : faker.helpers.arrayElement(users).id;
 
         bookings.push(
-          factory.createBooking(user.id, trip.id, {
-            seat_number: seat,
+          factory.createBooking(userId, trip.id, {
+            is_guest: isGuest,
+            booking_type: passengerCount > 1 ? 'group' : 'individual',
+            passenger_count: passengerCount,
+            total_amount: faker.number.float({
+              min: trip.fare * passengerCount * 0.8,
+              max: trip.fare * passengerCount * 1.2,
+              precision: 2,
+            }),
+            amount_paid: faker.number.float({
+              min: trip.fare * passengerCount * 0.8,
+              max: trip.fare * passengerCount * 1.2,
+              precision: 2,
+            }),
+            status: faker.helpers.arrayElement(['confirmed', 'cancelled']),
+            payment_status: faker.helpers.arrayElement(['paid', 'pending']),
           }),
         );
       }

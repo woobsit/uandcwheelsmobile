@@ -10,8 +10,13 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.createTable('passengers', {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
       booking_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false, // Should never be null
         references: {
           model: 'bookings', // Ensure this matches your booking table name
@@ -67,7 +72,7 @@ module.exports = {
       },
       // Add relationship to user if passenger is a registered user
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: 'users',
