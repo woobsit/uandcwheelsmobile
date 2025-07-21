@@ -5,7 +5,7 @@ export const AuthService = {
     name: string;
     email: string;
     password: string;
-    confirmPassword: String;
+    confirmPassword: string;
   }) => {
     return await api.post('/auth/register', data);
   },

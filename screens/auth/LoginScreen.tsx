@@ -119,35 +119,33 @@ export default function LoginScreen({ navigation }: any) {
     try {
       setIsLoading(true);
 
-      // const response = await AuthService.login({
-      //   email: formData.email,
-      //   password: formData.password,
-      //   remember_token: formData.rememberMe, // Send rememberMe as remember_token
-      // });
+      const response = await AuthService.login({
+        email: formData.email,
+        password: formData.password,
+        remember_token: formData.rememberMe, // Send rememberMe as remember_token
+      });
 
-      //console.log(response);
-      // if (!response.data.data.accessToken || !response.data.data.refreshToken) {
-      //   throw new Error('Tokens not found in response');
-      // }
+      if (!response.data.data.accessToken || !response.data.data.refreshToken) {
+        throw new Error('Tokens not found in response');
+      }
 
       //Save tokens to secure storage
-      // await saveTokens(
-      //   response.data.data.accessToken,
-      //   response.data.data.refreshToken,
-      //   formData.rememberMe,
-      //   formData.email,
-      // );
+      await saveTokens(
+        response.data.data.accessToken,
+        response.data.data.refreshToken,
+        formData.rememberMe,
+        formData.email,
+      );
 
-      // Redirect to main app
-      navigation.navigate('Dashboard');
-    } catch (error: any) {
-      // Handle specific error cases
-      if (error.response?.status === 401) {
+      if (response.status === 200) {
+        // Redirect to main app
+        navigation.navigate('Dashboard');
+      } else if (response.status === 401) {
         setErrors(prev => ({
           ...prev,
           password: 'Invalid email or password',
         }));
-      } else if (error.response?.status === 403) {
+      } else {
         Alert.alert('Email Not Verified', 'Please verify your email before logging in', [
           {
             text: 'Resend Verification',
@@ -159,11 +157,10 @@ export default function LoginScreen({ navigation }: any) {
           },
           { text: 'OK' },
         ]);
-      } else if (error.message === 'Tokens not found in response') {
-        Alert.alert('Login Error', 'Authentication tokens not received');
-      } else {
-        showApiErrorAlert(error, 'Login failed');
       }
+    } catch (error: any) {
+      // Handle specific error cases
+      showApiErrorAlert(error, 'Login failed');
     } finally {
       setIsLoading(false);
     }

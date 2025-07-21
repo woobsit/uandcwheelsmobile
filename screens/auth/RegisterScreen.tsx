@@ -131,16 +131,18 @@ export default function RegisterScreen({ navigation }: any) {
         confirmPassword: formData.confirmPassword,
       });
 
-      navigation.navigate('EmailVerification', { email: formData.email });
-    } catch (error: any) {
-      if (error.response?.status === 409) {
+      if (response.status === 201) {
+        navigation.navigate('EmailVerification', { email: formData.email });
+      }
+
+      if (response.status === 409) {
         setErrors(prev => ({
           ...prev,
           email: 'Email is already registered',
         }));
-      } else {
-        showApiErrorAlert(error, 'Failed to create account');
       }
+    } catch (error: any) {
+      showApiErrorAlert(error, 'Failed to create account');
     } finally {
       setIsLoading(false);
     }
