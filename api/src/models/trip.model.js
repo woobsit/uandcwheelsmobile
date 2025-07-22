@@ -3,16 +3,6 @@ const sequelize = require('../config/config');
 
 class Trip extends Model {
   static associate(models) {
-    this.belongsTo(models.Bus, {
-      foreignKey: 'bus_id',
-      as: 'bus',
-    });
-
-    this.belongsTo(models.Driver, {
-      foreignKey: 'driver_id',
-      as: 'driver',
-    });
-
     //Add associations for locations
     this.belongsTo(models.Location, {
       foreignKey: 'departure_location_id',
@@ -32,22 +22,6 @@ Trip.init(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-    },
-    bus_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'buses',
-        key: 'id',
-      },
-    },
-    driver_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'drivers',
-        key: 'id',
-      },
     },
     departure_location_id: {
       type: DataTypes.INTEGER,
@@ -98,12 +72,7 @@ Trip.init(
     modelName: 'trip',
     timestamps: true,
     indexes: [
-      {
-        fields: ['bus_id'],
-      },
-      {
-        fields: ['driver_id'],
-      },
+     
       {
         fields: ['departure_time'],
       },

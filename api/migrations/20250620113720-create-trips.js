@@ -17,22 +17,6 @@ module.exports = {
           primaryKey: true,
           autoIncrement: true,
         },
-        bus_id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'buses',
-            key: 'id',
-          },
-        },
-        driver_id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'drivers',
-            key: 'id',
-          },
-        },
         departure_location: {
           type: Sequelize.STRING,
           allowNull: false,
@@ -74,7 +58,7 @@ module.exports = {
         indexes: [
           // Now add indexes here
           {
-            fields: ['bus_id'],
+            fields: ['status'],
           },
           {
             fields: ['departure_time'],

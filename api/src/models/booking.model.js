@@ -50,7 +50,7 @@ Booking.init(
         key: 'id',
       },
     },
-    trip_id: {
+    bus_trip_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -145,7 +145,7 @@ Booking.init(
     },
     indexes: [
       { fields: ['user_id'] },
-      { fields: ['trip_id'] },
+      { fields: ['bus_trip_id'] },
       { fields: ['booking_reference'], unique: true },
       { fields: ['payment_status'] },
       { fields: ['status'] },
