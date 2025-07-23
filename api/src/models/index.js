@@ -11,6 +11,7 @@ const Location = require('./location.model');
 const Setting = require('./setting.model');
 const RefreshToken = require('./refreshToken.model');
 const Passenger = require('./passenger.model');
+const BusTrip = require('./busTrip.model');
 
 // No need to call initialize here since it's done in user.model.js
 
@@ -26,6 +27,7 @@ const db = {
   PasswordResetToken,
   RevokedToken,
   Trip,
+  BusTrip,
   Booking,
   Passenger,
 };

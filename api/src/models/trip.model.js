@@ -39,10 +39,6 @@ Trip.init(
         key: 'id',
       },
     },
-    departure_time: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
     estimated_arrival: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -72,10 +68,6 @@ Trip.init(
     modelName: 'trip',
     timestamps: true,
     indexes: [
-     
-      {
-        fields: ['departure_time'],
-      },
       {
         fields: ['status'],
       },

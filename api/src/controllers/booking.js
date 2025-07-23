@@ -2,10 +2,23 @@ const db = require('../models/index');
 const logger = require('../config/logger');
 const EmailService = require('../email/email.service');
 
+//const { Booking, BusTrip, Passenger } = require('../models');
+//const { calculateGroupFare } = require('../utils/priceCalculator');
+
+
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
-    const { bus_trip_id, return_bus_trip_id, passengers, payment_method, user_email } = req.body;
+    const { 
+      outbound_bus_trip_id, 
+      return_bus_trip_id, 
+      passengers, 
+      payment_method, 
+      user_email,
+      emergency_contact_name,
+      emergency_contact_phone
+    } = req.body;
+    
     const userId = req.user ? req.user.id : null;
 
     // Validate passengers
@@ -18,119 +31,110 @@ const createBooking = async (req, res) => {
     if (lapChildren > adults) {
       return res.status(400).json({ message: 'Maximum 1 lap child per adult' });
     }
+    
+    // Calculate seats needed
+    const seatsNeeded = adults + seatedChildren + Math.ceil(lapChildren / 2);
 
-    // 1. Fetch bus trip with related data
-    const busTrip = await db.BusTrip.findByPk(bus_trip_id, {
+    // 1. Fetch bus trips
+    const outboundBusTrip = await BusTrip.findByPk(outbound_bus_trip_id, {
       transaction,
       include: [
-        {
-          model: db.Bus,
-          attributes: ['id', 'brand', 'plate_number', 'capacity'],
-        },
-        {
-          model: db.Trip,
+        { association: 'bus' },
+        { 
+          association: 'trip',
           include: [
-            { model: db.Location, as: 'departureLocation' },
-            { model: db.Location, as: 'arrivalLocation' }
+            { association: 'departureLocation', as: 'departureLocation' },
+            { association: 'arrivalLocation', as: 'arrivalLocation' }
           ]
         }
       ]
     });
 
-    // Check if bus trip exists
-    if (!busTrip) {
+    if (!outboundBusTrip || outboundBusTrip.status !== 'scheduled') {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Bus trip not found' });
+      return res.status(400).json({ message: 'Outbound trip not available' });
     }
 
-    // 2. Calculate needed seats
-    const seatsNeeded = adults + seatedChildren + Math.ceil(lapChildren / 2);
-    
-    // Check seat availability
-    if (busTrip.available_seats < seatsNeeded) {
+    if (outboundBusTrip.available_seats < seatsNeeded) {
       await transaction.rollback();
       return res.status(400).json({ 
-        message: `Only ${busTrip.available_seats} seats available, needed: ${seatsNeeded}` 
+        message: `Only ${outboundBusTrip.available_seats} seats available on outbound trip` 
       });
     }
 
-    // 3. Calculate pricing
-    let totalAmount = calculateGroupFare(adults, totalChildren, busTrip.trip.fare);
-    
-    // Handle return trip if exists
     let returnBusTrip = null;
     if (return_bus_trip_id) {
-      returnBusTrip = await db.BusTrip.findByPk(return_bus_trip_id, {
+      returnBusTrip = await BusTrip.findByPk(return_bus_trip_id, {
         transaction,
-        include: [db.Bus, db.Trip]
+        include: [
+          { association: 'bus' },
+          { association: 'trip' }
+        ]
       });
-      
-      if (!returnBusTrip) {
+
+      if (!returnBusTrip || returnBusTrip.status !== 'scheduled') {
         await transaction.rollback();
-        return res.status(404).json({ message: 'Return bus trip not found' });
+        return res.status(400).json({ message: 'Return trip not available' });
       }
-      
-      // Check return trip availability
+
       if (returnBusTrip.available_seats < seatsNeeded) {
         await transaction.rollback();
         return res.status(400).json({ 
-          message: `Only ${returnBusTrip.available_seats} return seats available, needed: ${seatsNeeded}` 
+          message: `Only ${returnBusTrip.available_seats} seats available on return trip` 
         });
       }
-      
-      totalAmount += calculateGroupFare(adults, totalChildren, returnBusTrip.trip.fare);
     }
 
-    // 4. Create booking
-    const booking = await db.Booking.create(
-      {
-        user_id: userId,
-        bus_trip_id,
-        return_bus_trip_id: return_bus_trip_id || null,
-        adult_count: adults,
-        lap_child_count: lapChildren,
-        seated_child_count: seatedChildren,
-        total_amount: totalAmount,
-        payment_status: 'pending',
-        guest_email: userId ? null : user_email,
-      },
-      { transaction },
+    // 2. Calculate pricing
+    const outboundFare = calculateGroupFare(
+      adults, 
+      totalChildren, 
+      outboundBusTrip.trip.fare
     );
 
-    // 5. Create passengers
-    const passengerRecords = passengers.map(passenger => {
-      let farePaid = 0;
-      
-      switch(passenger.type) {
-        case 'adult':
-          farePaid = busTrip.trip.fare;
-          break;
-        case 'lap-child':
-          farePaid = busTrip.trip.fare * 0.5;
-          break;
-        case 'seated-child':
-          farePaid = busTrip.trip.fare;
-          break;
-      }
-      
-      if (return_bus_trip_id) {
-        farePaid += returnBusTrip.trip.fare * (passenger.type === 'lap-child' ? 0.5 : 1);
-      }
+    let returnFare = 0;
+    if (returnBusTrip) {
+      returnFare = calculateGroupFare(
+        adults, 
+        totalChildren, 
+        returnBusTrip.trip.fare
+      );
+    }
 
+    const totalAmount = outboundFare + returnFare;
+
+    // 3. Create booking
+    const booking = await Booking.create({
+      user_id: userId,
+      outbound_bus_trip_id,
+      return_bus_trip_id: returnBusTrip ? returnBusTrip.id : null,
+      adult_count: adults,
+      lap_child_count: lapChildren,
+      seated_child_count: seatedChildren,
+      total_amount: totalAmount,
+      payment_status: 'pending',
+      is_guest: !userId,
+      guest_email: userId ? null : user_email,
+      emergency_contact_name,
+      emergency_contact_phone,
+      total_seats: seatsNeeded
+    }, { transaction });
+
+    // 4. Create passengers
+    const passengerRecords = passengers.map(passenger => {
       return {
         booking_id: booking.id,
         ...passenger,
         requires_seat: passenger.type !== 'lap-child',
         is_on_lap: passenger.type === 'lap-child',
-        fare_paid: farePaid,
       };
     });
 
-    await db.Passenger.bulkCreate(passengerRecords, { transaction });
+    await Passenger.bulkCreate(passengerRecords, { transaction });
 
-    // 6. Update available seats
-    await busTrip.update({
-      available_seats: busTrip.available_seats - seatsNeeded
+    // 5. Update bus trip seat availability
+    await outboundBusTrip.update({
+      available_seats: outboundBusTrip.available_seats - seatsNeeded
     }, { transaction });
 
     if (returnBusTrip) {
@@ -139,16 +143,16 @@ const createBooking = async (req, res) => {
       }, { transaction });
     }
 
-    // 7. Process payment
+    // 6. Process payment
     await processPaymentMock(booking, payment_method);
 
-    // 8. Send confirmation email
+    // 7. Send confirmation
     const email = userId ? req.user.email : user_email;
     if (email) {
       await sendBookingConfirmation(
         email, 
         booking, 
-        busTrip, 
+        outboundBusTrip, 
         returnBusTrip, 
         passengerRecords
       );
@@ -157,10 +161,7 @@ const createBooking = async (req, res) => {
     await transaction.commit();
     return res.status(201).json({ 
       success: true, 
-      data: {
-        ...booking.toJSON(),
-        passengers: passengerRecords
-      }
+      data: booking 
     });
     
   } catch (error) {
@@ -172,6 +173,38 @@ const createBooking = async (req, res) => {
     });
   }
 };
+
+async function sendBookingConfirmation(email, booking, outboundBusTrip, returnBusTrip, passengers) {
+  const tripData = {
+    departure: outboundBusTrip.trip.departureLocation.name,
+    arrival: outboundBusTrip.trip.arrivalLocation.name,
+    departure_time: outboundBusTrip.departure_time,
+    bus: outboundBusTrip.bus,
+  };
+
+  const returnData = returnBusTrip ? {
+    departure: returnBusTrip.trip.departureLocation.name,
+    arrival: returnBusTrip.trip.arrivalLocation.name,
+    departure_time: returnBusTrip.departure_time,
+    bus: returnBusTrip.bus,
+  } : null;
+
+  await EmailService.sendBookingConfirmation(
+    email,
+    'Guest',
+    {
+      reference: booking.booking_reference,
+      total_amount: booking.total_amount,
+      outbound: tripData,
+      return: returnData,
+      passengers: passengers.map(p => ({
+        name: p.name,
+        type: p.type,
+        seat: p.seat_number
+      }))
+    }
+  );
+}
 
 // Helper function to send booking confirmation
 async function sendBookingConfirmation(email, booking, busTrip, returnBusTrip, passengers) {

@@ -1,7 +1,8 @@
 // models/bus_trip.model.js
 const { Model, DataTypes } = require('sequelize');
+const sequelize = require('../config/config');
 
-class BusTypeTrip extends Model {
+class BusTrip extends Model {
   static associate(models) {
     this.belongsTo(models.Bus, {
       foreignKey: 'bus_id',
@@ -22,11 +23,21 @@ class BusTypeTrip extends Model {
       foreignKey: 'bus_trip_id',
       as: 'bookings',
     });
+
+    this.hasMany(models.Booking, {
+      foreignKey: 'return_bus_trip_id',
+      as: 'return_bookings',
+    });
   }
 }
 
-BusTypeTrip.init(
+BusTrip.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     bus_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -43,20 +54,28 @@ BusTypeTrip.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    departure_time: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM('scheduled', 'boarding', 'departed', 'arrived', 'cancelled'),
+      defaultValue: 'scheduled',
+    },
   },
   {
     sequelize,
-    modelName: 'bus_type_trip',
-    tableName: 'bus_type_trips',
+    modelName: 'bus_trip',
+    tableName: 'bus_trips',
     timestamps: true,
     paranoid: true,
     indexes: [
       {
         unique: true,
-        fields: ['bus_id', 'trip_id', 'driver_id'],
+        fields: ['bus_id', 'trip_id', 'departure_time'],
       },
     ],
   },
 );
 
-module.exports = BusTypeTrip;
+module.exports = BusTrip;

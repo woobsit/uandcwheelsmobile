@@ -1,6 +1,9 @@
+// models/booking.model.js
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/config');
 const { generateBookingRef } = require('../utils/bookingHelpers');
+const db = require('../models');
+
 
 class Booking extends Model {
   static async createBooking(bookingData) {
@@ -14,11 +17,42 @@ class Booking extends Model {
     return await this.findAll({
       where: { user_id: userId },
       include: [
-        'trip',
+        {
+          association: 'outbound_bus_trip',
+          include: [
+            { association: 'bus' },
+            {
+              association: 'trip',
+              include: [
+                { association: 'departureLocation', as: 'departureLocation' },
+                { association: 'arrivalLocation', as: 'arrivalLocation' },
+              ],
+            },
+          ],
+        },
+        {
+          association: 'return_bus_trip',
+          include: [
+            { association: 'bus' },
+            {
+              association: 'trip',
+              include: [
+                { association: 'departureLocation', as: 'departureLocation' },
+                { association: 'arrivalLocation', as: 'arrivalLocation' },
+              ],
+            },
+          ],
+        },
         'user',
         {
           association: 'passengers',
-          attributes: ['name', 'seat_number', 'is_primary'],
+          attributes: [
+            'name',
+            'seat_number',
+            'is_primary',
+            'next_of_kin_name',
+            'next_of_kin_phone',
+          ],
         },
       ],
     });
@@ -29,7 +63,7 @@ class Booking extends Model {
       { status: 'cancelled' },
       {
         where: { id: bookingId },
-        individualHooks: true, // Needed if using paranoid
+        individualHooks: true,
       },
     );
   }
@@ -50,20 +84,22 @@ Booking.init(
         key: 'id',
       },
     },
-    bus_trip_id: {
+    outbound_bus_trip_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'trips',
+        model: 'bus_trips',
         key: 'id',
       },
     },
-    booking_type: {
-      type: DataTypes.ENUM('individual', 'group'),
-      defaultValue: 'individual',
-      allowNull: false,
+    return_bus_trip_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'bus_trips',
+        key: 'id',
+      },
     },
-    // REMOVED seats field - now handled by Passenger model
     booking_reference: {
       type: DataTypes.STRING(20),
       allowNull: false,
@@ -86,7 +122,6 @@ Booking.init(
       },
     },
     total_amount: {
-      // ADDED for total booking cost
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       validate: {
@@ -109,19 +144,40 @@ Booking.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    passenger_count: {
-      // ADDED for quick access
+    adult_count: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 1,
-      validate: {
-        min: 1,
-      },
+      defaultValue: 0,
+    },
+    lap_child_count: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    seated_child_count: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     is_guest: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false,
+    },
+    guest_email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    emergency_contact_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    emergency_contact_phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {
@@ -135,26 +191,44 @@ Booking.init(
         if (booking.notes) booking.notes = booking.notes.trim();
       },
       afterCreate: async booking => {
-        // Update trip availability if needed
+        // Update trip availability
+        await updateBusTripSeats(booking.outbound_bus_trip_id, -booking.total_seats);
+        if (booking.return_bus_trip_id) {
+          await updateBusTripSeats(booking.return_bus_trip_id, -booking.total_seats);
+        }
       },
       afterUpdate: async booking => {
         if (booking.changed('status') && booking.status === 'cancelled') {
-          // Handle cancellation logic
+          // Restore seats when cancelled
+          await updateBusTripSeats(booking.outbound_bus_trip_id, booking.total_seats);
+          if (booking.return_bus_trip_id) {
+            await updateBusTripSeats(booking.return_bus_trip_id, booking.total_seats);
+          }
         }
       },
     },
     indexes: [
       { fields: ['user_id'] },
-      { fields: ['bus_trip_id'] },
+      { fields: ['outbound_bus_trip_id'] },
+      { fields: ['return_bus_trip_id'] },
       { fields: ['booking_reference'], unique: true },
       { fields: ['payment_status'] },
       { fields: ['status'] },
-      { fields: ['createdAt'] }, // For reporting
+      { fields: ['createdAt'] },
     ],
   },
 );
 
-// Define associations in separate file or after init
+async function updateBusTripSeats(busTripId, seatDelta) {
+  const busTrip = await db.BusTrip.findByPk(busTripId);
+  if (busTrip) {
+    await busTrip.update({
+      available_seats: busTrip.available_seats + seatDelta,
+    });
+  }
+}
+
+// Define associations
 Booking.associate = models => {
   Booking.hasMany(models.Passenger, {
     foreignKey: 'booking_id',
@@ -167,9 +241,14 @@ Booking.associate = models => {
     as: 'user',
   });
 
-  Booking.belongsTo(models.Trip, {
-    foreignKey: 'trip_id',
-    as: 'trip',
+  Booking.belongsTo(models.BusTrip, {
+    foreignKey: 'outbound_bus_trip_id',
+    as: 'outbound_bus_trip',
+  });
+
+  Booking.belongsTo(models.BusTrip, {
+    foreignKey: 'return_bus_trip_id',
+    as: 'return_bus_trip',
   });
 };
 
