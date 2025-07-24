@@ -19,14 +19,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      code: {
-        type: Sequelize.STRING(3),
+      state: {
+        type: Sequelize.STRING(),
         allowNull: true,
         unique: true,
-      },
-      timezone: {
-        type: Sequelize.STRING,
-        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,

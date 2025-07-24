@@ -118,7 +118,7 @@ Booking.init(
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        isIn: [['credit_card', 'bank_transfer', 'cash', 'mobile_money', null]],
+        isIn: [['credit_card', 'bank_transfer', 'cash', null]],
       },
     },
     total_amount: {

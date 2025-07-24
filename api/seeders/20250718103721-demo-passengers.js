@@ -1,4 +1,4 @@
-// seeders/XXXXXXXXXXXXXX-demo-passengers.js
+// seeders/XXXXXXXXXXXXXX-demo-passengers.js (Final)
 'use strict';
 const factory = require('../src/database/factories');
 const db = require('../src/models');
@@ -6,12 +6,13 @@ const { faker } = require('@faker-js/faker');
 
 module.exports = {
   async up(queryInterface) {
-    // Get all bookings with their trips
+    // Get all bookings with their associated bus_trip and bus,
+    // which holds the capacity
     const bookings = await db.Booking.findAll({
       include: [
         {
-          model: db.Trip,
-          as: 'trip',
+          model: db.BusTrip, // Assuming Booking has a belongsTo relationship with BusTrip
+          as: 'bus_trip',
           include: [
             {
               model: db.Bus,
@@ -24,36 +25,39 @@ module.exports = {
     });
 
     const passengers = [];
-    const seatMaps = new Map(); // Track seat assignments per trip
+    const seatMaps = new Map(); // Track seat assignments per bus_trip
 
     for (const booking of bookings) {
-      // Initialize seat map for trip if not exists
-      if (!seatMaps.has(booking.trip.id)) {
-        const capacity = booking.trip.bus.capacity;
+      if (!booking.bus_trip) {
+        continue;
+      }
+      
+      const busTripId = booking.bus_trip.id;
+      
+      // Initialize seat map for bus trip if not exists
+      if (!seatMaps.has(busTripId)) {
+        const capacity = booking.bus_trip.bus.capacity;
         const seats = Array(capacity)
           .fill()
           .map((_, i) => `${String.fromCharCode(65 + Math.floor(i / 10))}${(i % 10) + 1}`);
         faker.helpers.shuffle(seats); // Randomize seat order
-        seatMaps.set(booking.trip.id, seats);
+        seatMaps.set(busTripId, seats);
       }
 
-      const availableSeats = seatMaps.get(booking.trip.id);
+      const availableSeats = seatMaps.get(busTripId);
       const passengerCount = booking.passenger_count;
 
-      // Take seats from available pool
-      const assignedSeats = availableSeats.splice(0, passengerCount);
+      if (availableSeats.length < passengerCount) {
+          console.warn(`Not enough seats for booking ${booking.id}. Skipping.`);
+          continue;
+      }
 
       // Create primary passenger
       passengers.push(
         factory.createPassenger({
           booking_id: booking.id,
-          user_id: booking.is_guest ? null : booking.user_id,
           is_primary: true,
-          seat_number: assignedSeats[0],
-          name: faker.person.fullName(),
-          email: booking.is_guest ? faker.internet.email() : null,
-          phone: booking.is_guest ? `0${faker.string.numeric(10)}` : null,
-          age: faker.number.int({ min: 18, max: 65 }),
+          seat_number: availableSeats.splice(0, 1)[0],
         }),
       );
 
@@ -63,9 +67,7 @@ module.exports = {
           factory.createPassenger({
             booking_id: booking.id,
             is_primary: false,
-            seat_number: assignedSeats[i],
-            name: faker.person.fullName(),
-            age: faker.number.int({ min: 1, max: 100 }),
+            seat_number: availableSeats.splice(0, 1)[0],
           }),
         );
       }

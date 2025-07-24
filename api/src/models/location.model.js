@@ -27,14 +27,10 @@ Location.init(
       allowNull: false,
       unique: true,
     },
-    code: {
-      type: DataTypes.STRING(3),
+    state: {
+      type: DataTypes.STRING(),
       allowNull: true,
       unique: true,
-    },
-    timezone: {
-      type: DataTypes.STRING,
-      allowNull: true,
     },
   },
   {

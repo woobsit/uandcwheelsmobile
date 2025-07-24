@@ -64,9 +64,6 @@ module.exports = {
           {
             fields: ['status'],
           },
-          {
-            fields: ['departure_time'],
-          },
         ],
       },
     );

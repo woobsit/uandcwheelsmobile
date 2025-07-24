@@ -4,12 +4,11 @@ const logger = require('../config/logger');
 
 const createLocation = async (req, res) => {
   try {
-    const { name, code, timezone } = req.body;
+    const { name, state } = req.body;
 
     const location = await db.Location.create({
       name,
-      code,
-      timezone,
+      state,
     });
 
     return res.status(201).json({
@@ -71,7 +70,7 @@ const updateLocation = async (req, res) => {
 const getLocationById = async (req, res) => {
   try {
     const location = await db.Location.findByPk(req.params.id, {
-      attributes: ['id', 'name', 'code', 'timezone', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'name', 'state', 'createdAt', 'updatedAt'],
     });
 
     if (!location) {

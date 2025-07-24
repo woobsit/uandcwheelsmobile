@@ -1,4 +1,4 @@
-// seeders/XXXXXXXXXXXXXX-demo-bookings.js
+// seeders/XXXXXXXXXXXXXX-demo-bookings.js (Final)
 'use strict';
 const factory = require('../src/database/factories');
 const db = require('../src/models');
@@ -6,58 +6,59 @@ const { faker } = require('@faker-js/faker');
 
 module.exports = {
   async up(queryInterface) {
-    const trips = await db.Trip.findAll({
-      include: [
-        {
-          model: db.Bus,
-          as: 'bus',
-          attributes: ['id', 'capacity'],
-        },
-      ],
+    // Get all BusTrips and Users
+    const busTrips = await db.BusTrip.findAll({
+      // We need the Bus model to get the capacity
+      include: [{ model: db.Bus, as: 'bus', attributes: ['capacity'] }],
     });
-
     const users = await db.User.findAll();
-    const bookings = [];
+    
+    // Ensure we have data to work with
+    if (busTrips.length === 0 || users.length === 0) {
+      console.warn('BusTrips or Users not found. Skipping booking seeding.');
+      return;
+    }
 
-    trips.forEach(trip => {
-      if (!trip.bus) {
-        console.error(`Bus not found for trip ${trip.id}`);
-        return;
+    const bookings = [];
+    const busTripSeatMap = new Map(); // To track occupied seats per bus_trip
+
+    for (const busTrip of busTrips) {
+      const occupiedSeats = busTripSeatMap.get(busTrip.id) || 0;
+      const remainingCapacity = busTrip.bus.capacity - occupiedSeats;
+
+      if (remainingCapacity <= 0) {
+        continue;
       }
 
-      const maxBookings = Math.min(trip.bus.capacity, 50);
-      const bookingsCount = faker.number.int({
-        min: Math.floor(trip.bus.capacity * 0.3),
-        max: maxBookings,
-      });
+      // Generate a random number of bookings for this bus trip
+      const numBookings = faker.number.int({ min: 1, max: Math.min(5, remainingCapacity) });
 
-      for (let i = 0; i < bookingsCount; i++) {
-        const user = faker.helpers.arrayElement(users);
-        const passengerCount = faker.number.int({ min: 1, max: 4 });
+      for (let i = 0; i < numBookings; i++) {
         const isGuest = faker.datatype.boolean({ probability: 0.3 });
         const userId = isGuest ? null : faker.helpers.arrayElement(users).id;
 
-        bookings.push(
-          factory.createBooking(userId, trip.id, {
-            is_guest: isGuest,
-            booking_type: passengerCount > 1 ? 'group' : 'individual',
-            passenger_count: passengerCount,
-            total_amount: faker.number.float({
-              min: trip.fare * passengerCount * 0.8,
-              max: trip.fare * passengerCount * 1.2,
-              precision: 2,
-            }),
-            amount_paid: faker.number.float({
-              min: trip.fare * passengerCount * 0.8,
-              max: trip.fare * passengerCount * 1.2,
-              precision: 2,
-            }),
-            status: faker.helpers.arrayElement(['confirmed', 'cancelled']),
-            payment_status: faker.helpers.arrayElement(['paid', 'pending']),
-          }),
+        // Create a booking with random passenger counts
+        const passengerCount = faker.number.int({ min: 1, max: Math.min(4, remainingCapacity) });
+        const adultCount = faker.number.int({ min: 1, max: passengerCount });
+        const seatedChildCount = faker.number.int({ min: 0, max: passengerCount - adultCount });
+        const lapChildCount = passengerCount - adultCount - seatedChildCount;
+
+        const bookingData = factory.createBooking(
+          userId,
+          busTrip.id,
+          null, // Assuming no return trip for simplicity
+          {
+            adult_count: adultCount,
+            seated_child_count: seatedChildCount,
+            lap_child_count: lapChildCount,
+          }
         );
+        bookings.push(bookingData);
+
+        // Update the occupied seat count for this bus trip
+        busTripSeatMap.set(busTrip.id, occupiedSeats + passengerCount);
       }
-    });
+    }
 
     await queryInterface.bulkInsert('bookings', bookings);
   },

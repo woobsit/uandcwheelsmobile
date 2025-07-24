@@ -1,67 +1,39 @@
-// src/factories/passengerFactory.js
+// src/database/factories/passengerFactory.js (Updated)
 const faker = require('@faker-js/faker').faker;
 
 module.exports = {
+  /**
+   * Creates a fake passenger object.
+   * @param {Object} overrides - Properties to override the default values.
+   */
   createPassenger: (overrides = {}) => {
-    // Determine if primary (override or random)
-    const isPrimary = overrides.is_primary ?? faker.datatype.boolean({ probability: 0.3 });
+    const age = faker.number.int({ min: 1, max: 100 });
     
-    // Generate Nigerian phone number that matches validation regex
-    const nigerianPhone = '0' + 
-      faker.string.numeric({ length: 10, exclude: ['0'] }) // Ensure no leading zero after first
-        .replace(/(\d{3})(\d{3})(\d{4})/, '$1$2$3'); // Format as 08123456789
-    
-    // Generate valid seat number (A1-Z99 format)
-    const row = faker.string.alpha({ length: 1, casing: 'upper', exclude: ['I', 'O'] }); // Skip I/O for clarity
-    const seatNum = faker.number.int({ min: 1, max: 99 });
+    // Determine passenger type based on age
+    let type = 'adult';
+    if (age < 18) {
+      type = faker.helpers.arrayElement(['lap-child', 'seated-child']);
+    }
+
+    // Generate a valid Nigerian phone number
+    const nextOfKinPhone = `0${faker.string.numeric({ length: 10, exclude: ['0'] })}`;
     
     // Base passenger data
     const passengerData = {
+      booking_id: faker.number.int({ min: 1, max: 1000 }), // Default, but will be overridden
       name: faker.person.fullName(),
-      email: isPrimary ? faker.internet.email() : null,
-      phone: isPrimary ? nigerianPhone : null,
-      age: isPrimary 
-        ? faker.number.int({ min: 18, max: 65 })  // Primary passengers are adults
-        : faker.number.int({ min: 1, max: 100 }), // Companions can be any age
-      gender: faker.helpers.arrayElement(['male', 'female']),
-      seat_number: `${row}${seatNum}`,
-      is_primary: isPrimary,
-      user_id: isPrimary ? faker.string.uuid() : null,
-      booking_id: faker.string.uuid(), // Will typically be overridden
+      age: age,
+      type: type,
+      requires_seat: type !== 'lap-child',
+      is_on_lap: type === 'lap-child',
+      next_of_kin_name: faker.person.fullName(),
+      next_of_kin_phone: nextOfKinPhone,
+      next_of_kin_relationship: faker.helpers.arrayElement(['parent', 'sibling', 'guardian']),
+      seat_number: null, // Let the seeder handle assigning a real seat number
+      is_primary: false, // Let the seeder handle this flag
       ...overrides,
     };
     
-    // Ensure phone matches regex if provided
-    if (passengerData.phone && !/^(0)[0-9]{10}$/.test(passengerData.phone)) {
-      passengerData.phone = nigerianPhone;
-    }
-    
     return passengerData;
   },
-  
-  createPrimaryPassenger: (bookingId, userId, overrides = {}) => {
-    return this.createPassenger({
-      booking_id: bookingId,
-      user_id: userId,
-      is_primary: true,
-      ...overrides
-    });
-  },
-  
-  createCompanionPassenger: (bookingId, overrides = {}) => {
-    return this.createPassenger({
-      booking_id: bookingId,
-      is_primary: false,
-      user_id: null,
-      ...overrides
-    });
-  },
-  
-  createPassengerForBooking: (bookingId, isPrimary = false, userId = null) => {
-    return this.createPassenger({
-      booking_id: bookingId,
-      is_primary: isPrimary,
-      user_id: isPrimary ? userId : null
-    });
-  }
 };
