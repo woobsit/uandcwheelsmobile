@@ -4,9 +4,9 @@ const sequelize = require('../config/config');
 
 class Driver extends Model {
   static associate(models) {
-    this.hasMany(models.Trip, {
+    this.hasMany(models.BusTrip, {
       foreignKey: 'driver_id',
-      as: 'trips',
+      as: 'driver',
     });
   }
 }

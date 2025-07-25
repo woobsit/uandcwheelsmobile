@@ -2,7 +2,6 @@ const db = require('../models');
 const logger = require('../config/logger');
 const { Op } = require('sequelize'); // Import Op for Sequelize operators
 
-
 const createTrip = async (req, res) => {
   try {
     const {
@@ -198,18 +197,18 @@ const getAllScheduledTrips = async (req, res) => {
             'estimated_arrival', // From Trip
             'fare', // From Trip
             'departure_terminal', // From Trip
-            'arrival_terminal' // From Trip
+            'arrival_terminal', // From Trip
           ],
           include: [
             {
               model: db.Location,
               as: 'departureLocation', // Alias from Trip.belongsTo(models.Location, { as: 'departureLocation' })
-              attributes: ['id', 'name', 'city', 'state'], // Removed terminal as it's on Trip
+              attributes: ['id', 'name', 'state'], // Removed terminal as it's on Trip
             },
             {
               model: db.Location,
               as: 'arrivalLocation', // Alias from Trip.belongsTo(models.Location, { as: 'arrivalLocation' })
-              attributes: ['id', 'name', 'city', 'state'], // Removed terminal as it's on Trip
+              attributes: ['id', 'name', 'state'], // Removed terminal as it's on Trip
             },
           ],
         },
@@ -235,14 +234,38 @@ const getAllScheduledTrips = async (req, res) => {
       // However, we need to recalculate or verify it based on actual bookings,
       // as `available_seats` on the model might not be real-time if not updated on booking.
       // It's safer to always calculate from confirmed/pending/paid bookings.
-      const bookedSeats = await db.Booking.sum(db.Sequelize.literal('adult_count + lap_child_count + seated_child_count'), {
+
+      const adultBooked = await db.Booking.sum('adult_count', {
         where: {
           outbound_bus_trip_id: busTripData.id,
           status: {
-            [Op.in]: ['confirmed', 'pending', 'paid'] // Consider all these as 'taken' seats
+            [Op.in]: ['confirmed', 'pending', 'paid'],
           },
         },
       });
+
+      const lapChildBooked = await db.Booking.sum('lap_child_count', {
+        where: {
+          outbound_bus_trip_id: busTripData.id,
+          status: {
+            [Op.in]: ['confirmed', 'pending', 'paid'],
+          },
+        },
+      });
+
+      const seatedChildBooked = await db.Booking.sum('seated_child_count', {
+        where: {
+          outbound_bus_trip_id: busTripData.id,
+          status: {
+            [Op.in]: ['confirmed', 'pending', 'paid'],
+          },
+        },
+      });
+
+      // Sum the results in JavaScript, handling nulls (if no bookings)
+      const bookedSeats = (adultBooked || 0) + (lapChildBooked || 0) + (seatedChildBooked || 0);
+
+      console.log(bookedSeats);
 
       const busCapacity = busTripData.bus.capacity || 0;
       const actualAvailableSeats = Math.max(0, busCapacity - (bookedSeats || 0));
@@ -266,13 +289,15 @@ const getAllScheduledTrips = async (req, res) => {
           arrival_terminal: busTripData.trip.arrival_terminal || '', // From Trip
 
           // Bus details (from BusTrip -> Bus)
-          Bus: { // Keep PascalCase 'Bus' to match frontend expectation
+          Bus: {
+            // Keep PascalCase 'Bus' to match frontend expectation
             plate_number: busTripData.bus?.plate_number || 'N/A',
             brand: busTripData.bus?.brand || 'Unknown',
             capacity: busTripData.bus?.capacity || 0,
           },
           // Driver details (from BusTrip -> Driver)
-          Driver: { // Keep PascalCase 'Driver' to match frontend expectation
+          Driver: {
+            // Keep PascalCase 'Driver' to match frontend expectation
             name: busTripData.driver?.name || 'Driver not assigned',
             license_number: busTripData.driver?.license_number || 'N/A',
           },
@@ -309,7 +334,6 @@ const getAllScheduledTrips = async (req, res) => {
     });
   }
 };
-
 
 const getAvailableSeats = async (req, res) => {
   try {
