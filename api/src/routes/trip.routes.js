@@ -1,33 +1,35 @@
 // src/routes/trip.routes.js
 const { Router } = require('express');
 const {
-  createTrip,
-  getAllTrips,
-  getAllScheduledTrips,
-  getTripById,
-  updateTrip,
-  deleteTrip,
-  searchTrips,
+  createTripRoute,
+  createBusTrip,
+  getAllBusTrips,
+  getScheduledBusTrips,
+  getBusTripById,
+  updateBusTrip,
+  deleteBusTrip,
+  //searchTrips,
 } = require('../controllers/trip');
 const { validateRequest } = require('../middlewares/validate-request');
 const {
   createTripValidator,
   updateTripValidator,
-  searchTripValidator,
+  //searchTripValidator,
   getAllTripValidator,
 } = require('../middlewares/validators/trip.validator');
 
 const router = Router();
 
 // Public routes
-router.get('/search', searchTripValidator, validateRequest, searchTrips);
+//router.get('/search', searchTripValidator, validateRequest, searchTrips);
 
-router.post('/create', createTripValidator, validateRequest, createTrip);
-router.get('/all', getAllTripValidator, validateRequest, getAllTrips);
-router.get('/all-scheduled', getAllScheduledTrips);
-router.get('/show-one/:id', getTripById);
-router.put('/update/:id', updateTripValidator, validateRequest, updateTrip);
-router.delete('/delete/:id', deleteTrip);
+router.post('/create', createTripValidator, validateRequest, createTripRoute);
+router.post('/create-scheduled', createTripValidator, validateRequest, createBusTrip);
+router.get('/all', getAllTripValidator, validateRequest, getAllBusTrips);
+router.get('/all-scheduled', getScheduledBusTrips);
+router.get('/show-one/:id', getBusTripById);
+router.put('/update/:id', updateTripValidator, validateRequest, updateBusTrip);
+router.delete('/delete/:id', deleteBusTrip);
 
 const tripRouter = router;
 module.exports = { tripRouter };

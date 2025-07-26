@@ -1,30 +1,20 @@
 // Correct Trip interface to match backend response
-export interface Trip {
-  id: string;
-  busId: string;
-  driverId: string;
-  departure_location_id: string; // Match database column
-  arrival_location_id: string; // Match database column
-  departure_time: string; // Match database column
-  estimated_arrival: string; // Match database column
+export interface TripBase {
+  id: string; // The ID of the route/template trip
+  departure_location_id: string;
+  arrival_location_id: string;
+  estimated_arrival: string; // This is the estimated arrival for the *route*
   fare: number;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled'; // Status of the route, perhaps less relevant for frontend display
+  departure_terminal: string;
+  arrival_terminal: string;
   createdAt: string;
   updatedAt: string;
-
-  // Added from backend formatting
-  departure_location?: string;
-  arrival_location?: string;
-  Bus?: {
-    plate_number: string;
-    brand: string;
-    capacity: number;
-  };
-  Driver?: {
-    name: string;
-    license_number: string;
-  };
+  // Optional associations, if you ever fetch a 'Trip' directly for admin purposes
+  departureLocation?: { name: string; id: string; state: string };
+  arrivalLocation?: { name: string; id: string; state: string };
 }
+
 
 export interface TripFilters {
   from?: string;

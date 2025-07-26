@@ -1,131 +1,152 @@
 const db = require('../models');
 const logger = require('../config/logger');
-const { Op } = require('sequelize'); // Import Op for Sequelize operators
+const { Op } = require('sequelize');
 
-const createTrip = async (req, res) => {
+// --- Controller Functions ---
+
+// 1. Create a Trip (Route Definition - for admin)
+// This function will now create a 'Trip' (the route template)
+const createTripRoute = async (req, res) => {
   try {
     const {
       departure_location_id,
       arrival_location_id,
-      departure_time,
-      estimated_arrival,
+      estimated_arrival, // This is estimated for the route itself
       fare,
-      bus_id,
-      driver_id,
+      departure_terminal, // Add these from your model
+      arrival_terminal,   // Add these from your model
     } = req.body;
 
-    // Check if locations exist
+    // Validate locations
     const departureLocation = await db.Location.findByPk(departure_location_id);
     const arrivalLocation = await db.Location.findByPk(arrival_location_id);
 
     if (!departureLocation) {
-      return res.status(404).json({
-        success: false,
-        message: 'Departure location not found',
-      });
+      return res.status(404).json({ success: false, message: 'Departure location not found' });
     }
-
     if (!arrivalLocation) {
-      return res.status(404).json({
-        success: false,
-        message: 'Arrival location not found',
-      });
-    }
-
-    // Check if bus exists
-    const bus = await db.Bus.findByPk(bus_id);
-    if (!bus) {
-      return res.status(404).json({
-        success: false,
-        message: 'Bus not found',
-      });
-    }
-
-    // Check if driver exists
-    const driver = await db.Driver.findByPk(driver_id);
-    if (!driver) {
-      return res.status(404).json({
-        success: false,
-        message: 'Driver not found',
-      });
+      return res.status(404).json({ success: false, message: 'Arrival location not found' });
     }
 
     const trip = await db.Trip.create({
       departure_location_id,
       arrival_location_id,
-      departure_time: new Date(departure_time),
       estimated_arrival: new Date(estimated_arrival),
       fare,
-      bus_id,
-      driver_id,
-      status: 'scheduled',
+      departure_terminal,
+      arrival_terminal,
+      status: 'scheduled', // A route can be 'scheduled', 'inactive', etc.
     });
 
-    return res.status(201).json({
-      success: true,
-      data: trip,
-    });
+    return res.status(201).json({ success: true, data: trip });
   } catch (error) {
-    logger.error('Failed to create trip', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    logger.error('Failed to create trip route', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-const getAllTrips = async (req, res) => {
+// 2. Create a Bus Trip (Actual Scheduled Trip - for admin)
+// This will be the primary "create a trip" for booking purposes
+const createBusTrip = async (req, res) => {
   try {
-    const { status, from, to, date, page = 1, limit = 10 } = req.query;
+    const {
+      trip_id, // The ID of the Trip (route) this BusTrip belongs to
+      bus_id,
+      driver_id,
+      departure_time,
+      available_seats, // Initial available seats
+    } = req.body;
+
+    // Validate the associated Trip (route)
+    const tripRoute = await db.Trip.findByPk(trip_id);
+    if (!tripRoute) {
+      return res.status(404).json({ success: false, message: 'Associated trip route not found' });
+    }
+
+    // Validate bus and driver
+    const bus = await db.Bus.findByPk(bus_id);
+    if (!bus) {
+      return res.status(404).json({ success: false, message: 'Bus not found' });
+    }
+    const driver = await db.Driver.findByPk(driver_id);
+    if (!driver) {
+      return res.status(404).json({ success: false, message: 'Driver not found' });
+    }
+
+    // Create the BusTrip
+    const busTrip = await db.BusTrip.create({
+      trip_id,
+      bus_id,
+      driver_id,
+      departure_time: new Date(departure_time),
+      available_seats: available_seats || bus.capacity, // Default to bus capacity
+      status: 'scheduled',
+    });
+
+    return res.status(201).json({ success: true, data: busTrip });
+  } catch (error) {
+    logger.error('Failed to create bus trip', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// 3. Get All Bus Trips (for Admin - scheduled or not)
+const getAllBusTrips = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10, from, to, date } = req.query;
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
     const offset = (pageNumber - 1) * limitNumber;
 
-    const where = {};
+    const busTripWhere = {};
+    const tripWhere = {};
+    const departureLocationWhere = {};
+    const arrivalLocationWhere = {};
 
-    if (status) where.status = status;
-
-    // Location-based filtering
-    if (from) {
-      const location = await db.Location.findOne({ where: { name: from } });
-      if (location) where.departure_location_id = location.id;
-    }
-
-    if (to) {
-      const location = await db.Location.findOne({ where: { name: to } });
-      if (location) where.arrival_location_id = location.id;
-    }
+    if (status) busTripWhere.status = status;
 
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() + 1);
-
-      where.departure_time = {
-        [db.Sequelize.Op.between]: [startDate, endDate],
+      busTripWhere.departure_time = {
+        [Op.between]: [startDate, endDate],
       };
     }
 
-    // Get total count for pagination
-    const total = await db.Trip.count({ where });
+    if (from) {
+      const location = await db.Location.findOne({ where: { name: from } });
+      if (location) tripWhere.departure_location_id = location.id;
+    }
 
-    // Get paginated trips
-    const trips = await db.Trip.findAll({
-      where,
+    if (to) {
+      const location = await db.Location.findOne({ where: { name: to } });
+      if (location) tripWhere.arrival_location_id = location.id;
+    }
+
+
+    const { count, rows: busTrips } = await db.BusTrip.findAndCountAll({
+      where: busTripWhere,
       include: [
-        { model: db.Bus, attributes: ['plate_number', 'brand', 'capacity'] },
-        { model: db.Driver, attributes: ['name', 'license_number'] },
+        { model: db.Bus, as: 'bus', attributes: ['id', 'plate_number', 'brand', 'capacity'] },
+        { model: db.Driver, as: 'driver', attributes: ['id', 'name', 'license_number', 'phone'] },
         {
-          model: db.Location,
-          as: 'departureLocation',
-          attributes: ['name'],
-        },
-        {
-          model: db.Location,
-          as: 'arrivalLocation',
-          attributes: ['name'],
+          model: db.Trip,
+          as: 'trip',
+          where: Object.keys(tripWhere).length > 0 ? tripWhere : undefined, // Apply trip route filters
+          attributes: [
+            'id',
+            'estimated_arrival',
+            'fare',
+            'departure_terminal',
+            'arrival_terminal',
+            'departure_location_id',
+            'arrival_location_id',
+          ],
+          include: [
+            { model: db.Location, as: 'departureLocation', attributes: ['id', 'name', 'state'] },
+            { model: db.Location, as: 'arrivalLocation', attributes: ['id', 'name', 'state'] },
+          ],
         },
       ],
       order: [['departure_time', 'ASC']],
@@ -133,13 +154,17 @@ const getAllTrips = async (req, res) => {
       limit: limitNumber,
     });
 
-    // Format response with location names
-    const items = trips.map(trip => {
-      const tripData = trip.get({ plain: true });
+    const items = busTrips.map(busTrip => {
+      const busTripData = busTrip.get({ plain: true });
       return {
-        ...tripData,
-        departure_location: tripData.departureLocation.name,
-        arrival_location: tripData.arrivalLocation.name,
+        ...busTripData,
+        departure_location: busTripData.trip?.departureLocation?.name || 'N/A',
+        arrival_location: busTripData.trip?.arrivalLocation?.name || 'N/A',
+        // Flatten nested properties for easier frontend consumption
+        estimated_arrival: busTripData.trip?.estimated_arrival,
+        fare: busTripData.trip?.fare,
+        departure_terminal: busTripData.trip?.departure_terminal,
+        arrival_terminal: busTripData.trip?.arrival_terminal,
       };
     });
 
@@ -147,166 +172,167 @@ const getAllTrips = async (req, res) => {
       success: true,
       data: {
         items,
-        total,
+        total: count,
         page: pageNumber,
         limit: limitNumber,
-        hasNext: offset + limitNumber < total,
+        hasNext: offset + limitNumber < count,
       },
     });
   } catch (error) {
-    logger.error('Failed to fetch trips', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    logger.error('Failed to fetch all bus trips', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-const getAllScheduledTrips = async (req, res) => {
+// 4. Get All Scheduled Bus Trips (for Users/Booking)
+// This is your current getAllScheduledTrips, renamed for clarity.
+const getScheduledBusTrips = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const now = new Date();
 
-    // 1. Fetch ALL scheduled BusTrips that are in the future,
-    //    and include all necessary associated data.
-    //    We need to fetch them all first to accurately filter by available_seats.
-    const scheduledBusTrips = await db.BusTrip.findAll({
-      where: {
-        status: 'scheduled',
-        departure_time: { [Op.gte]: now }, // BusTrip has departure_time
-      },
+    const {
+      departureLocationName,
+      departureLocationState,
+      arrivalLocationName,
+      arrivalLocationState,
+      date, // New: filter by specific date
+    } = req.query;
+
+    const busTripWhereConditions = {
+      status: 'scheduled',
+      departure_time: { [Op.gte]: now }, // Only future scheduled trips
+    };
+
+    const tripWhereConditions = {};
+    const departureLocationWhereConditions = {};
+    const arrivalLocationWhereConditions = {};
+
+    // Apply date filter if provided
+    if (date) {
+      const searchDate = new Date(date);
+      const startOfDay = new Date(searchDate.getFullYear(), searchDate.getMonth(), searchDate.getDate());
+      const endOfDay = new Date(searchDate.getFullYear(), searchDate.getMonth(), searchDate.getDate() + 1);
+
+      busTripWhereConditions.departure_time = {
+        [Op.between]: [startOfDay, endOfDay],
+      };
+    }
+
+    if (departureLocationName) {
+      departureLocationWhereConditions.name = { [Op.like]: `%${departureLocationName}%` };
+    }
+    if (departureLocationState) {
+      departureLocationWhereConditions.state = { [Op.like]: `%${departureLocationState}%` };
+    }
+    if (arrivalLocationName) {
+      arrivalLocationWhereConditions.name = { [Op.like]: `%${arrivalLocationName}%` };
+    }
+    if (arrivalLocationState) {
+      arrivalLocationWhereConditions.state = { [Op.like]: `%${arrivalLocationState}%` };
+    }
+
+    const { count, rows: scheduledBusTrips } = await db.BusTrip.findAndCountAll({
+      where: busTripWhereConditions,
       include: [
         {
           model: db.Bus,
-          as: 'bus', // Alias from BusTrip.belongsTo(models.Bus, { as: 'bus' })
+          as: 'bus',
           attributes: ['id', 'plate_number', 'brand', 'capacity'],
         },
         {
           model: db.Driver,
-          as: 'driver', // Alias from BusTrip.belongsTo(models.Driver, { as: 'driver' })
+          as: 'driver',
           attributes: ['id', 'name', 'license_number'],
         },
         {
           model: db.Trip,
-          as: 'trip', // Alias from BusTrip.belongsTo(models.Trip, { as: 'trip' })
+          as: 'trip',
+          where: Object.keys(tripWhereConditions).length > 0 ? tripWhereConditions : undefined,
           attributes: [
             'id',
-            'estimated_arrival', // From Trip
-            'fare', // From Trip
-            'departure_terminal', // From Trip
-            'arrival_terminal', // From Trip
+            'estimated_arrival',
+            'fare',
+            'departure_terminal',
+            'arrival_terminal',
           ],
           include: [
             {
               model: db.Location,
-              as: 'departureLocation', // Alias from Trip.belongsTo(models.Location, { as: 'departureLocation' })
-              attributes: ['id', 'name', 'state'], // Removed terminal as it's on Trip
+              as: 'departureLocation',
+              attributes: ['id', 'name', 'state'],
+              where: Object.keys(departureLocationWhereConditions).length > 0 ? departureLocationWhereConditions : undefined,
+              required: Object.keys(departureLocationWhereConditions).length > 0, // Inner join if filtering
             },
             {
               model: db.Location,
-              as: 'arrivalLocation', // Alias from Trip.belongsTo(models.Location, { as: 'arrivalLocation' })
-              attributes: ['id', 'name', 'state'], // Removed terminal as it's on Trip
+              as: 'arrivalLocation',
+              attributes: ['id', 'name', 'state'],
+              where: Object.keys(arrivalLocationWhereConditions).length > 0 ? arrivalLocationWhereConditions : undefined,
+              required: Object.keys(arrivalLocationWhereConditions).length > 0, // Inner join if filtering
             },
           ],
         },
       ],
       order: [['departure_time', 'ASC']],
-      // NO offset or limit here yet, as we need to filter by availability first
+      offset: (page - 1) * limit,
+      limit,
     });
 
     const tripsWithAvailability = [];
 
-    // 2. Iterate through fetched BusTrips to calculate (or verify) available seats
-    //    and filter out those with no seats.
     for (const busTrip of scheduledBusTrips) {
       const busTripData = busTrip.get({ plain: true });
 
-      // Ensure bus, driver, and trip data exists
-      if (!busTripData.bus || !busTripData.driver || !busTripData.trip) {
-        console.warn(`Skipping BusTrip ${busTripData.id} due to missing associated data.`);
+      if (!busTripData.bus || !busTripData.driver || !busTripData.trip || !busTripData.trip.departureLocation || !busTripData.trip.arrivalLocation) {
+        logger.warn(`Skipping BusTrip ${busTripData.id} due to missing associated data.`);
         continue;
       }
 
-      // We have available_seats directly on BusTrip.
-      // However, we need to recalculate or verify it based on actual bookings,
-      // as `available_seats` on the model might not be real-time if not updated on booking.
-      // It's safer to always calculate from confirmed/pending/paid bookings.
-
       const adultBooked = await db.Booking.sum('adult_count', {
-        where: {
-          outbound_bus_trip_id: busTripData.id,
-          status: {
-            [Op.in]: ['confirmed', 'pending', 'paid'],
-          },
-        },
+        where: { outbound_bus_trip_id: busTripData.id, status: { [Op.in]: ['confirmed', 'pending', 'paid'] } },
       });
-
       const lapChildBooked = await db.Booking.sum('lap_child_count', {
-        where: {
-          outbound_bus_trip_id: busTripData.id,
-          status: {
-            [Op.in]: ['confirmed', 'pending', 'paid'],
-          },
-        },
+        where: { outbound_bus_trip_id: busTripData.id, status: { [Op.in]: ['confirmed', 'pending', 'paid'] } },
       });
-
       const seatedChildBooked = await db.Booking.sum('seated_child_count', {
-        where: {
-          outbound_bus_trip_id: busTripData.id,
-          status: {
-            [Op.in]: ['confirmed', 'pending', 'paid'],
-          },
-        },
+        where: { outbound_bus_trip_id: busTripData.id, status: { [Op.in]: ['confirmed', 'pending', 'paid'] } },
       });
 
-      // Sum the results in JavaScript, handling nulls (if no bookings)
       const bookedSeats = (adultBooked || 0) + (lapChildBooked || 0) + (seatedChildBooked || 0);
-
-      console.log(bookedSeats);
-
       const busCapacity = busTripData.bus.capacity || 0;
-      const actualAvailableSeats = Math.max(0, busCapacity - (bookedSeats || 0));
+      const actualAvailableSeats = Math.max(0, busCapacity - bookedSeats);
 
-      // Only include the BusTrip if there are available seats.
-      // We will use the calculated actualAvailableSeats for filtering and display.
       if (actualAvailableSeats > 0) {
         tripsWithAvailability.push({
-          id: busTripData.id, // This is the BusTrip ID, which is what the frontend needs to book
+          id: busTripData.id,
           departure_time: busTripData.departure_time,
-          estimated_arrival: busTripData.trip.estimated_arrival, // From Trip
-          fare: parseFloat(busTripData.trip.fare), // From Trip, ensure it's a number
-          status: busTripData.status, // Status of the BusTrip itself
+          estimated_arrival: busTripData.trip.estimated_arrival,
+          fare: parseFloat(busTripData.trip.fare),
+          status: busTripData.status,
 
-          // Location details (from Trip -> Location)
-          departure_location: busTripData.trip.departureLocation?.name || 'Unknown',
-          departure_state: busTripData.trip.departureLocation?.state || '',
-          departure_terminal: busTripData.trip.departure_terminal || '', // From Trip
-          arrival_location: busTripData.trip.arrivalLocation?.name || 'Unknown',
-          arrival_state: busTripData.trip.arrivalLocation?.state || '',
-          arrival_terminal: busTripData.trip.arrival_terminal || '', // From Trip
+          departure_location: busTripData.trip.departureLocation.name,
+          departure_state: busTripData.trip.departureLocation.state,
+          departure_terminal: busTripData.trip.departure_terminal,
+          arrival_location: busTripData.trip.arrivalLocation.name,
+          arrival_state: busTripData.trip.arrivalLocation.state,
+          arrival_terminal: busTripData.trip.arrival_terminal,
 
-          // Bus details (from BusTrip -> Bus)
-          Bus: {
-            // Keep PascalCase 'Bus' to match frontend expectation
-            plate_number: busTripData.bus?.plate_number || 'N/A',
-            brand: busTripData.bus?.brand || 'Unknown',
-            capacity: busTripData.bus?.capacity || 0,
+          bus: {
+            plate_number: busTripData.bus.plate_number,
+            brand: busTripData.bus.brand,
+            capacity: busTripData.bus.capacity,
           },
-          // Driver details (from BusTrip -> Driver)
-          Driver: {
-            // Keep PascalCase 'Driver' to match frontend expectation
-            name: busTripData.driver?.name || 'Driver not assigned',
-            license_number: busTripData.driver?.license_number || 'N/A',
+          driver: {
+            name: busTripData.driver.name,
+            license_number: busTripData.driver.license_number,
           },
-          available_seats: actualAvailableSeats, // The truly available seats
+          available_seats: actualAvailableSeats,
         });
       }
     }
 
-    // 3. Implement Precise Pagination on the filtered results (tripsWithAvailability)
     const totalAvailableTrips = tripsWithAvailability.length;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
@@ -319,263 +345,139 @@ const getAllScheduledTrips = async (req, res) => {
         total: totalAvailableTrips,
         page,
         limit,
-        hasNext: endIndex < totalAvailableTrips, // True if there are more items beyond the current page
+        hasNext: endIndex < totalAvailableTrips,
       },
     });
   } catch (error) {
-    console.error('Failed to fetch scheduled bus trips with availability:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      ...(process.env.NODE_ENV === 'development' && {
-        error: error.message,
-        stack: error.stack,
-      }),
-    });
+    logger.error('Failed to fetch scheduled bus trips with availability:', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-const getAvailableSeats = async (req, res) => {
+// 5. Get Bus Trip by ID
+const getBusTripById = async (req, res) => {
   try {
-    const { tripId } = req.params;
-
-    // Get trip with bus information
-    const trip = await db.Trip.findByPk(tripId, {
+    const busTrip = await db.BusTrip.findByPk(req.params.id, {
       include: [
+        { model: db.Bus, as: 'bus', attributes: ['id', 'plate_number', 'brand', 'capacity'] },
+        { model: db.Driver, as: 'driver', attributes: ['id', 'name', 'license_number', 'phone'] },
         {
-          model: db.Bus,
-          attributes: ['capacity'],
+          model: db.Trip,
+          as: 'trip',
+          attributes: [
+            'id',
+            'estimated_arrival',
+            'fare',
+            'departure_terminal',
+            'arrival_terminal',
+          ],
+          include: [
+            { model: db.Location, as: 'departureLocation', attributes: ['id', 'name', 'state'] },
+            { model: db.Location, as: 'arrivalLocation', attributes: ['id', 'name', 'state'] },
+          ],
         },
       ],
     });
 
-    if (!trip) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trip not found',
-      });
+    if (!busTrip) {
+      return res.status(404).json({ success: false, message: 'Bus Trip not found' });
     }
 
-    // Get total booked seats for this trip
-    const totalBooked = await db.Booking.sum('numberOfSeats', {
-      where: { tripId },
-    });
+    const busTripData = busTrip.get({ plain: true });
+    // Calculate available seats
+    const adultBooked = await db.Booking.sum('adult_count', { where: { outbound_bus_trip_id: busTripData.id, status: { [Op.in]: ['confirmed', 'pending', 'paid'] } } });
+    const lapChildBooked = await db.Booking.sum('lap_child_count', { where: { outbound_bus_trip_id: busTripData.id, status: { [Op.in]: ['confirmed', 'pending', 'paid'] } } });
+    const seatedChildBooked = await db.Booking.sum('seated_child_count', { where: { outbound_bus_trip_id: busTripData.id, status: { [Op.in]: ['confirmed', 'pending', 'paid'] } } });
+    const bookedSeats = (adultBooked || 0) + (lapChildBooked || 0) + (seatedChildBooked || 0);
+    const busCapacity = busTripData.bus.capacity || 0;
+    const actualAvailableSeats = Math.max(0, busCapacity - bookedSeats);
 
-    const availableSeats = trip.Bus.capacity - (totalBooked || 0);
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        availableSeats: Math.max(availableSeats, 0),
-        capacity: trip.Bus.capacity,
-      },
-    });
-  } catch (error) {
-    logger.error('Failed to get available seats', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
-  }
-};
-
-const getTripById = async (req, res) => {
-  try {
-    const trip = await db.Trip.findByPk(req.params.id, {
-      include: [
-        { model: db.Bus, attributes: ['id', 'plate_number', 'brand', 'capacity'] },
-        { model: db.Driver, attributes: ['id', 'name', 'license_number', 'phone'] },
-        {
-          model: db.Location,
-          as: 'departureLocation',
-          attributes: ['name'],
-        },
-        {
-          model: db.Location,
-          as: 'arrivalLocation',
-          attributes: ['name'],
-        },
-      ],
-    });
-
-    if (!trip) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trip not found',
-      });
-    }
-
-    // Format response with location names
-    const tripData = trip.get({ plain: true });
-    const formattedTrip = {
-      ...tripData,
-      departure_location: tripData.departureLocation.name,
-      arrival_location: tripData.arrivalLocation.name,
+    const formattedBusTrip = {
+      ...busTripData,
+      departure_location: busTripData.trip?.departureLocation?.name || 'N/A',
+      arrival_location: busTripData.trip?.arrivalLocation?.name || 'N/A',
+      departure_state: busTripData.trip?.departureLocation?.state || '',
+      arrival_state: busTripData.trip?.arrivalLocation?.state || '',
+      estimated_arrival: busTripData.trip?.estimated_arrival,
+      fare: busTripData.trip?.fare,
+      departure_terminal: busTripData.trip?.departure_terminal,
+      arrival_terminal: busTripData.trip?.arrival_terminal,
+      available_seats: actualAvailableSeats,
     };
 
-    return res.status(200).json({
-      success: true,
-      data: formattedTrip,
-    });
+    return res.status(200).json({ success: true, data: formattedBusTrip });
   } catch (error) {
-    logger.error('Failed to fetch trip', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    logger.error('Failed to fetch bus trip by ID', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-const updateTrip = async (req, res) => {
+
+// 6. Update Bus Trip (for Admin)
+const updateBusTrip = async (req, res) => {
   try {
-    const trip = await db.Trip.findByPk(req.params.id);
-    if (!trip) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trip not found',
-      });
+    const busTrip = await db.BusTrip.findByPk(req.params.id);
+    if (!busTrip) {
+      return res.status(404).json({ success: false, message: 'Bus Trip not found' });
     }
 
-    // Prevent updating trips that have bookings
-    if (req.body.status === 'canceled') {
-      const bookings = await db.Booking.count({ where: { trip_id: trip.id } });
-      if (bookings > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Cannot cancel trip with existing bookings',
-        });
+    // Prevent direct status changes if bookings exist, especially to 'cancelled'
+    if (req.body.status === 'cancelled') {
+      const bookingsCount = await db.Booking.count({
+        where: {
+          outbound_bus_trip_id: busTrip.id,
+          status: { [Op.in]: ['confirmed', 'pending', 'paid'] },
+        },
+      });
+      if (bookingsCount > 0) {
+        return res.status(400).json({ success: false, message: 'Cannot cancel bus trip with existing bookings. Refunds must be handled.' });
       }
     }
 
-    await trip.update(req.body);
-    return res.status(200).json({
-      success: true,
-      data: trip,
-    });
+    await busTrip.update(req.body);
+    return res.status(200).json({ success: true, data: busTrip });
   } catch (error) {
-    logger.error('Failed to update trip', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    logger.error('Failed to update bus trip', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-const deleteTrip = async (req, res) => {
+// 7. Delete Bus Trip (for Admin)
+const deleteBusTrip = async (req, res) => {
   try {
-    const trip = await db.Trip.findByPk(req.params.id);
-    if (!trip) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trip not found',
-      });
+    const busTrip = await db.BusTrip.findByPk(req.params.id);
+    if (!busTrip) {
+      return res.status(404).json({ success: false, message: 'Bus Trip not found' });
     }
 
-    // Check for existing bookings
-    const bookings = await db.Booking.count({ where: { trip_id: trip.id } });
-    if (bookings > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot delete trip with existing bookings',
-      });
-    }
-
-    await trip.destroy();
-    return res.status(200).json({
-      success: true,
-      message: 'Trip deleted successfully',
-    });
-  } catch (error) {
-    logger.error('Failed to delete trip', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
-  }
-};
-
-const searchTrips = async (req, res) => {
-  try {
-    const { from, to, date } = req.query;
-
-    // Find location IDs
-    const departureLocation = await db.Location.findOne({ where: { name: from } });
-    const arrivalLocation = await db.Location.findOne({ where: { name: to } });
-
-    if (!departureLocation || !arrivalLocation) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid departure or arrival location',
-      });
-    }
-
-    const trips = await db.Trip.findAll({
+    const bookingsCount = await db.Booking.count({
       where: {
-        departure_location_id: departureLocation.id,
-        arrival_location_id: arrivalLocation.id,
-        departure_time: {
-          [db.Sequelize.Op.between]: [
-            new Date(date),
-            new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
-          ],
-        },
-        status: 'scheduled',
+        outbound_bus_trip_id: busTrip.id,
+        status: { [Op.in]: ['confirmed', 'pending', 'paid'] },
       },
-      include: [
-        {
-          model: db.Bus,
-          attributes: ['plate_number', 'brand', 'capacity'],
-        },
-        {
-          model: db.Location,
-          as: 'departureLocation',
-          attributes: ['name'],
-        },
-        {
-          model: db.Location,
-          as: 'arrivalLocation',
-          attributes: ['name'],
-        },
-      ],
     });
 
-    // Format response
-    const formattedTrips = trips.map(trip => {
-      const tripData = trip.get({ plain: true });
-      return {
-        ...tripData,
-        departure_location: tripData.departureLocation.name,
-        arrival_location: tripData.arrivalLocation.name,
-      };
-    });
+    if (bookingsCount > 0) {
+      return res.status(400).json({ success: false, message: 'Cannot delete bus trip with existing bookings. Consider canceling instead.' });
+    }
 
-    return res.status(200).json({ success: true, data: formattedTrips });
+    await busTrip.destroy(); // Soft delete if paranoid is true in model
+    return res.status(200).json({ success: true, message: 'Bus Trip deleted successfully' });
   } catch (error) {
-    logger.error('Failed to get trip', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    logger.error('Failed to delete bus trip', { error: error.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 
 module.exports = {
-  createTrip,
-  getAllTrips,
-  getAllScheduledTrips,
-  getTripById,
-  updateTrip,
-  deleteTrip,
-  searchTrips,
-  getAvailableSeats,
+  createTripRoute, // Renamed from createTrip
+  createBusTrip,   // New function for specific scheduled trips
+  getAllBusTrips,  // Renamed from getAllTrips, now fetches all BusTrips
+  getScheduledBusTrips, // Renamed from getAllScheduledTrips
+  getBusTripById, // Renamed from getTripById
+  updateBusTrip, // Renamed from updateTrip
+  deleteBusTrip, // Renamed from deleteTrip
+  // searchTrips is redundant, getScheduledBusTrips handles it
+  // getAvailableSeats is also covered by getBusTripById and getScheduledBusTrips
 };

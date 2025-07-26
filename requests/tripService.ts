@@ -1,17 +1,33 @@
+// services/BusTripService.ts (or similar)
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { ApiResponse, PaginatedResponse } from '../types/api';
-import type { TripFilters, Trip } from '../types/trip';
+import { BusTrip, BusTripFilters, TripBase } from '../types/trip'; // Import updated types
 
-const TripService = {
-  getAllTrips: async (filters: TripFilters = {}): Promise<ApiResponse<PaginatedResponse<Trip>>> => {
+const BusTripService = {
+  // --- Admin-focused operations for Trip Routes (if needed) ---
+  // Create a new Trip Route (the template)
+  createTripRoute: async (
+    tripRouteData: Omit<TripBase, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'departureLocation' | 'arrivalLocation'>,
+  ): Promise<ApiResponse<TripBase>> => {
     try {
-      // Convert date to ISO string if it's a Date object
+      const response = await api.post<ApiResponse<TripBase>>(ENDPOINTS.TRIPS_ROUTES, tripRouteData); // You'll need a new endpoint for this
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // --- Admin-focused operations for Bus Trips ---
+
+  // Get all Bus Trips (for Admin view - includes all statuses)
+  getAllBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
+    try {
+      // Convert date to ISO string if it's a Date object for backend compatibility
       if (filters.date instanceof Date) {
         filters.date = filters.date.toISOString().split('T')[0];
       }
-
-      const response = await api.get<ApiResponse<PaginatedResponse<Trip>>>(ENDPOINTS.TRIPS, {
+      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.BUS_TRIPS_ADMIN, { // New endpoint
         params: filters,
       });
       return response.data;
@@ -19,19 +35,59 @@ const TripService = {
       throw error;
     }
   },
-  getTripById: async (tripId: string): Promise<ApiResponse<Trip>> => {
+
+  // Create a specific Bus Trip (scheduled instance)
+  createBusTrip: async (
+    busTripData: Omit<BusTrip, 'id' | 'createdAt' | 'updatedAt' | 'bus' | 'driver' | 'trip' | 'available_seats' | 'status'> & { available_seats?: number },
+  ): Promise<ApiResponse<BusTrip>> => {
     try {
-      const response = await api.get<ApiResponse<Trip>>(ENDPOINTS.TRIP_DETAILS(tripId));
+      // Ensure departure_time is a valid ISO string if it's a Date object
+      if (busTripData.departure_time instanceof Date) {
+        busTripData.departure_time = busTripData.departure_time.toISOString();
+      }
+      const response = await api.post<ApiResponse<BusTrip>>(ENDPOINTS.BUS_TRIPS, busTripData); // New endpoint for creation
       return response.data;
     } catch (error) {
       throw error;
     }
   },
 
-  searchTrips: async (from: string, to: string, date: string): Promise<ApiResponse<Trip[]>> => {
+  // Update a Bus Trip
+  updateBusTrip: async (busTripId: string, updateData: Partial<BusTrip>): Promise<ApiResponse<BusTrip>> => {
     try {
-      const response = await api.get<ApiResponse<Trip[]>>(ENDPOINTS.TRIPS, {
-        params: { from, to, date },
+      // Ensure departure_time is a valid ISO string if it's a Date object
+      if (updateData.departure_time instanceof Date) {
+        updateData.departure_time = updateData.departure_time.toISOString();
+      }
+      const response = await api.put<ApiResponse<BusTrip>>(ENDPOINTS.BUS_TRIP_DETAILS(busTripId), updateData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Delete a Bus Trip
+  deleteBusTrip: async (busTripId: string): Promise<ApiResponse<null>> => {
+    try {
+      const response = await api.delete<ApiResponse<null>>(ENDPOINTS.BUS_TRIP_DETAILS(busTripId));
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+
+  // --- User-focused operations for Scheduled Bus Trips ---
+
+  // Get all *scheduled and available* Bus Trips (for user search)
+  getScheduledBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
+    try {
+      // Convert date to ISO string if it's a Date object
+      if (filters.date instanceof Date) {
+        filters.date = filters.date.toISOString().split('T')[0]; // Send as YYYY-MM-DD
+      }
+      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.SCHEDULED_BUS_TRIPS, { // New endpoint
+        params: filters,
       });
       return response.data;
     } catch (error) {
@@ -39,20 +95,10 @@ const TripService = {
     }
   },
 
-  createTrip: async (
-    tripData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ApiResponse<Trip>> => {
+  // Get a specific Scheduled Bus Trip by ID (for user to view details before booking)
+  getBusTripDetails: async (busTripId: string): Promise<ApiResponse<BusTrip>> => {
     try {
-      const response = await api.post<ApiResponse<Trip>>(ENDPOINTS.TRIPS, tripData);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  updateTrip: async (tripId: string, updateData: Partial<Trip>): Promise<ApiResponse<Trip>> => {
-    try {
-      const response = await api.put<ApiResponse<Trip>>(ENDPOINTS.TRIP_DETAILS(tripId), updateData);
+      const response = await api.get<ApiResponse<BusTrip>>(ENDPOINTS.BUS_TRIP_DETAILS(busTripId));
       return response.data;
     } catch (error) {
       throw error;
@@ -60,4 +106,4 @@ const TripService = {
   },
 };
 
-export default TripService;
+export default BusTripService;
