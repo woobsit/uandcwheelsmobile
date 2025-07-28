@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Trip } from '../types/trip';
+//import { Trip } from '../types/trip';
 
 // Define your authentication stack parameters
 export type AuthStackParamList = {
@@ -12,8 +12,9 @@ export type AuthStackParamList = {
   ResetPassword: { email: string };
   Dashboard: undefined;
   BookTransport: undefined;
-  BookingDetails: { trip: Trip };
+  //BookingDetails: { trip: Trip };
   // BookingConfirmation: {booking:}
+  TripDetails: {tripId: string};
   Notifications: undefined;
   Settings: undefined;
   UserProfile: undefined;
@@ -44,6 +45,12 @@ export type EmailVerificationScreenProps = NativeStackScreenProps<
 
 export type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
 
+// TripDetailsScreen screen props type
+export type TripDetailsScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'TripDetails'
+>;
+
 // ForgotPasswordScreen screen props type
 export type ForgotPasswordScreenProps = NativeStackScreenProps<
   AuthStackParamList,
@@ -51,12 +58,12 @@ export type ForgotPasswordScreenProps = NativeStackScreenProps<
 >;
 
 // Booking details props type
-export type BookingDetailsScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'BookingDetails'
->;
+// export type BookingDetailsScreenProps = NativeStackScreenProps<
+//   AuthStackParamList,
+//   'BookingDetails'
+// >;
 
-export type BookingDetailsScreenRouteProp = RouteProp<AuthStackParamList, 'BookingDetails'>;
+// export type BookingDetailsScreenRouteProp = RouteProp<AuthStackParamList, 'BookingDetails'>;
 
 // ResetPasswordScreen screen props type
 export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;

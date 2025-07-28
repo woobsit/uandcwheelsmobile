@@ -13,6 +13,7 @@ const { bookingRouter } = require('./routes/booking.routes');
 const { busRouter } = require('./routes/bus.routes');
 const { driverRouter } = require('./routes/driver.routes');
 const { tripRouter } = require('./routes/trip.routes');
+const { busTripRouter } = require('./routes/busTrip.routes');
 const { locationRouter } = require('./routes/location.routes');
 const { settingRouter } = require('./routes/setting.routes');
 
@@ -37,6 +38,7 @@ app.use('/api/v1/user', userRouter); // Add this line
 app.use('/api/v1/bus', busRouter);
 app.use('/api/v1/driver', driverRouter);
 app.use('/api/v1/trip', tripRouter);
+app.use('/api/v1/bus-trip', busTripRouter);
 app.use('/api/v1/booking', bookingRouter);
 app.use('/api/v1/location', locationRouter);
 

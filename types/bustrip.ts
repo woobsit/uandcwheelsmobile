@@ -5,7 +5,7 @@ export interface BusTrip {
   driver_id: string;
   trip_id: string; // The ID of the associated Trip (route)
   available_seats: number;
-  departure_time: string;
+  departure_time: string | Date;
   status: 'scheduled' | 'boarding' | 'departed' | 'arrived' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -48,7 +48,7 @@ export interface BusTripFilters {
   departureLocationState?: string;
   arrivalLocationName?: string;
   arrivalLocationState?: string;
-  date?: string; // For filtering by departure_time on a specific date
+  date?: string | Date; // For filtering by departure_time on a specific date
   status?: 'scheduled' | 'boarding' | 'departed' | 'arrived' | 'cancelled'; // If you need to filter by BusTrip status
   page?: number;
   limit?: number;

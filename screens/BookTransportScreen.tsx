@@ -14,60 +14,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import useRefreshControl from '../hooks/useRefreshControl'; // Assuming this hook works as is
-// import { Trip } from '../types/trip'; // Your existing Trip type - WE WILL UPDATE THIS INLINE
 import { formatDate } from '../utils/dateHelpers'; // Your existing date helper
-import { TripService } from '../requests'; // Your API service
+import BusTripService from '../requests/busTripService'; // IMPORT THE NEW BUS TRIP SERVICE
+import { BusTrip, BusTripFilters } from '../types/bustrip'; // IMPORT BusTrip AND BusTripFilters
 import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../types/screenprops';
-
-// --- UPDATED TRIP TYPE DEFINITION ---
-// This type should accurately reflect the structure returned by your backend's getAllScheduledTrips
-export interface Trip {
-  id: string; // This is the BusTrip ID
-  departure_time: string;
-  estimated_arrival: string;
-  fare: number;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  available_seats: number; // This comes directly from the backend's BusTrip response
-
-  // Location details are flattened in your backend response for convenience
-  departure_location: string;
-  departure_state: string;
-  departure_terminal: string;
-  arrival_location: string;
-  arrival_state: string;
-  arrival_terminal: string;
-
-  // Nested Bus and Driver objects
-  Bus?: {
-    // Make optional, though your backend ensures they exist
-    plate_number: string;
-    brand: string;
-    capacity: number;
-  };
-  Driver?: {
-    // Make optional
-    name: string;
-    license_number: string;
-  };
-}
-// --- END UPDATED TRIP TYPE DEFINITION ---
 
 // Define a type for a unique location for display
 interface UniqueLocation {
   name: string;
   state: string;
-  // type: 'departure' | 'arrival'; // Removed, as we'll search both ways
   count: number; // Number of trips associated with this location
 }
 
 export default function BookTransportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<BusTrip[]>([]); // Use BusTrip type here
   const [error, setError] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -86,47 +51,41 @@ export default function BookTransportScreen() {
     refreshAction: async () => {
       // If a location is selected, refresh for that location's trips
       // Otherwise, refresh the initial location list
+
       await fetchTrips(
         selectedLocation
           ? {
-              locationName: selectedLocation.name,
-              locationState: selectedLocation.state,
+              departureLocationName: selectedLocation.name, // Use specific filter names
+              departureLocationState: selectedLocation.state,
+              arrivalLocationName: selectedLocation.name, // Also search as arrival
+              arrivalLocationState: selectedLocation.state, // Also search as arrival
             }
           : undefined,
-        true,
-      ); // Pass true to reset pagination on refresh
+        true, // Pass true to reset pagination on refresh
+      );
     },
   });
 
   // Fetch trips or unique locations from API
-  // Add a parameter to optionally filter by a specific location
   const fetchTrips = async (
-    filter?: { locationName?: string; locationState?: string },
+    filter?: BusTripFilters, // Use BusTripFilters type
     resetPage = false,
   ) => {
     try {
       setIsLoading(true);
       setError(null);
-
       let currentPage = resetPage ? 1 : pagination.page;
 
-      const params: any = {
-        status: 'scheduled',
+      const params: BusTripFilters = {
+        status: 'scheduled', // Always fetch scheduled trips for user view
         page: currentPage,
         limit: pagination.limit,
+        ...filter, // Spread the incoming filter directly
       };
+      console.log(params);
 
-      if (filter?.locationName && filter?.locationState) {
-        // If a specific location is selected, fetch trips for that location
-        // The backend is now designed to filter by these parameters for both departure and arrival
-        params.departureLocationName = filter.locationName;
-        params.departureLocationState = filter.locationState;
-        params.arrivalLocationName = filter.locationName;
-        params.arrivalLocationState = filter.locationState;
-      }
-
-      const response = await TripService.getAllTrips(params);
-
+      // Call the correct service method
+      const response = await BusTripService.getScheduledBusTrips(params); // Use BusTripService
       // If resetting page, start with a fresh list, otherwise append for infinite scroll
       setTrips(resetPage ? response.data.items : [...trips, ...response.data.items]);
 
@@ -150,12 +109,12 @@ export default function BookTransportScreen() {
 
     trips.forEach(trip => {
       // Handle departure location
-      if (trip.departure_location && trip.departure_state) {
-        const key = `${trip.departure_location}_${trip.departure_state}`;
+      if (trip.trip?.departureLocation?.name && trip.trip?.departureLocation?.state) {
+        const key = `${trip.trip.departureLocation.name}_${trip.trip.departureLocation.state}`;
         if (!locationsMap.has(key)) {
           locationsMap.set(key, {
-            name: trip.departure_location,
-            state: trip.departure_state,
+            name: trip.trip.departureLocation.name,
+            state: trip.trip.departureLocation.state,
             count: 0, // Will count later
           });
         }
@@ -163,12 +122,12 @@ export default function BookTransportScreen() {
       }
 
       // Handle arrival location
-      if (trip.arrival_location && trip.arrival_state) {
-        const key = `${trip.arrival_location}_${trip.arrival_state}`;
+      if (trip.trip?.arrivalLocation?.name && trip.trip?.arrivalLocation?.state) {
+        const key = `${trip.trip.arrivalLocation.name}_${trip.trip.arrivalLocation.state}`;
         if (!locationsMap.has(key)) {
           locationsMap.set(key, {
-            name: trip.arrival_location,
-            state: trip.arrival_state,
+            name: trip.trip.arrivalLocation.name,
+            state: trip.trip.arrivalLocation.state,
             count: 0, // Will count later
           });
         }
@@ -178,8 +137,9 @@ export default function BookTransportScreen() {
 
     // Filter by search term on the STATE name
     const term = searchTerm.toLowerCase();
-    const filtered = Array.from(locationsMap.values()).filter(location =>
-      location.state.toLowerCase().includes(term),
+    const filtered = Array.from(locationsMap.values()).filter(
+      location =>
+        location.state.toLowerCase().includes(term) || location.name.toLowerCase().includes(term), // Also allow searching by location name
     );
 
     // Sort by location name
@@ -188,7 +148,6 @@ export default function BookTransportScreen() {
   }, [trips, searchTerm]); // Re-calculate when trips or searchTerm changes
 
   // Filter trips based on search term when a location IS selected
-  // This now only filters by searchTerm on the already API-filtered 'trips' array
   const filteredTrips = useMemo(() => {
     if (!selectedLocation) {
       return []; // Should not be called if no location is selected
@@ -198,24 +157,27 @@ export default function BookTransportScreen() {
     // due to the `fetchTrips` call. So, we just filter by the search term on location names.
     return trips.filter(
       trip =>
-        trip.departure_location?.toLowerCase().includes(term) ||
-        trip.arrival_location?.toLowerCase().includes(term) ||
-        trip.departure_state?.toLowerCase().includes(term) || // Allow searching by state within trips
-        trip.arrival_state?.toLowerCase().includes(term),
+        trip.trip?.departureLocation?.name?.toLowerCase().includes(term) ||
+        trip.trip?.arrivalLocation?.name?.toLowerCase().includes(term) ||
+        trip.trip?.departureLocation?.state?.toLowerCase().includes(term) ||
+        trip.trip?.arrivalLocation?.state?.toLowerCase().includes(term),
     );
   }, [trips, searchTerm, selectedLocation]);
 
   // Handle selecting a location to view its trips
   const handleSelectLocation = (location: UniqueLocation) => {
     setSelectedLocation(location);
+    setSearchTerm(''); // Clear search term when selecting a location
     // Reset pagination and fetch trips for this specific location
     fetchTrips(
       {
-        locationName: location.name,
-        locationState: location.state,
+        departureLocationName: location.name,
+        departureLocationState: location.state,
+        arrivalLocationName: location.name,
+        arrivalLocationState: location.state,
       },
-      true,
-    ); // Reset page to 1
+      true, // Reset page to 1
+    );
   };
 
   // Go back from trip list to location list
@@ -225,7 +187,7 @@ export default function BookTransportScreen() {
     fetchTrips(undefined, true); // Re-fetch initial unique locations (all trips)
   };
 
-  const handleBookTrip = (trip: Trip) => {
+  const handleBookTrip = (trip: BusTrip) => {
     // Navigate to the booking details screen, passing the trip ID or full trip object
     navigation.navigate('TripDetails', { tripId: trip.id }); // Assuming you have a TripDetails screen
   };
@@ -234,21 +196,6 @@ export default function BookTransportScreen() {
   useEffect(() => {
     fetchTrips();
   }, []); // Empty dependency array means this runs once on mount
-
-  // You'd want to handle "Load More" for pagination here if you implement it
-  // const handleLoadMore = () => {
-  //   if (pagination.hasNext && !isLoading) {
-  //     setPagination(prev => ({ ...prev, page: prev.page + 1 }));
-  //     fetchTrips(selectedLocation ? {
-  //       locationName: selectedLocation.name,
-  //       locationState: selectedLocation.state,
-  //     } : undefined);
-  //   }
-  // };
-  // const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
-  //   const paddingToBottom = 20; // How close to bottom to trigger load more
-  //   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-  // };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -267,19 +214,15 @@ export default function BookTransportScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
         }
-        // onScroll={({ nativeEvent }) => { // Uncomment for infinite scroll
-        //   if (isCloseToBottom(nativeEvent)) {
-        //     handleLoadMore();
-        //   }
-        // }}
-        // scrollEventThrottle={400} // Adjust as needed
       >
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Feather name="search" size={20} color="#999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder={selectedLocation ? 'Search within trips...' : 'Search by state name...'}
+            placeholder={
+              selectedLocation ? 'Search within trips...' : 'Search by state or city name...'
+            }
             value={searchTerm}
             onChangeText={setSearchTerm}
             placeholderTextColor="#999"
@@ -305,8 +248,10 @@ export default function BookTransportScreen() {
                 fetchTrips(
                   selectedLocation
                     ? {
-                        locationName: selectedLocation.name,
-                        locationState: selectedLocation.state,
+                        departureLocationName: selectedLocation.name,
+                        departureLocationState: selectedLocation.state,
+                        arrivalLocationName: selectedLocation.name,
+                        arrivalLocationState: selectedLocation.state,
                       }
                     : undefined,
                   true,
@@ -340,31 +285,31 @@ export default function BookTransportScreen() {
                     >
                       <View style={styles.tripHeader}>
                         <Text style={styles.tripRoute}>
-                          {trip.departure_location} → {trip.arrival_location}
+                          {trip.trip?.departureLocation?.name} → {trip.trip?.arrivalLocation?.name}
                         </Text>
-                        <Text style={styles.tripPrice}>₦{trip.fare?.toLocaleString()}</Text>
+                        <Text style={styles.tripPrice}>₦{trip.trip?.fare?.toLocaleString()}</Text>
                       </View>
 
                       <View style={styles.tripDetails}>
                         <View style={styles.detailItem}>
                           <MaterialIcons name="schedule" size={18} color="#666" />
                           <Text style={styles.detailText}>
-                            {formatDate(trip.departure_time, 'hh:mm a')} -{' '}
-                            {formatDate(trip.estimated_arrival, 'hh:mm a')}
+                            {formatDate(trip.departure_time as string, 'hh:mm a')} -{' '}
+                            {formatDate(trip.trip?.estimated_arrival as string, 'hh:mm a')}
                           </Text>
                         </View>
 
                         <View style={styles.detailItem}>
                           <MaterialIcons name="event" size={18} color="#666" />
                           <Text style={styles.detailText}>
-                            {formatDate(trip.departure_time, 'MMM d, yyyy')}
+                            {formatDate(trip.departure_time as string, 'MMM d, yyyy')}
                           </Text>
                         </View>
 
                         <View style={styles.detailItem}>
                           <MaterialIcons name="directions-bus" size={18} color="#666" />
                           <Text style={styles.detailText}>
-                            {trip.Bus?.brand || 'Standard Bus'} • {trip.Bus?.capacity || 'Unknown'}{' '}
+                            {trip.bus?.brand || 'Standard Bus'} • {trip.bus?.capacity || 'Unknown'}{' '}
                             seats
                           </Text>
                         </View>
@@ -383,7 +328,7 @@ export default function BookTransportScreen() {
                         <View style={styles.detailItem}>
                           <MaterialIcons name="person" size={18} color="#666" />
                           <Text style={styles.detailText}>
-                            {trip.Driver?.name || 'Driver information not available'}
+                            {trip.driver?.name || 'Driver information not available'}
                           </Text>
                         </View>
                       </View>
@@ -394,11 +339,13 @@ export default function BookTransportScreen() {
                             styles.statusText,
                             trip.status === 'scheduled'
                               ? styles.statusScheduled
-                              : trip.status === 'ongoing'
-                                ? styles.statusOngoing
-                                : trip.status === 'completed'
-                                  ? styles.statusCompleted
-                                  : styles.statusCancelled,
+                              : trip.status === 'boarding'
+                                ? styles.statusOngoing // Using ongoing for boarding visually
+                                : trip.status === 'departed'
+                                  ? styles.statusOngoing
+                                  : trip.status === 'arrived'
+                                    ? styles.statusCompleted
+                                    : styles.statusCancelled,
                           ]}
                         >
                           {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
@@ -452,14 +399,6 @@ export default function BookTransportScreen() {
             )}
           </>
         )}
-        {/* Pagination Controls - You'll need to implement actual pagination buttons/logic */}
-        {/*
-        {!isLoading && pagination.hasNext && (
-          <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
-            <Text style={styles.loadMoreButtonText}>Load More</Text>
-          </TouchableOpacity>
-        )}
-        */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -687,7 +626,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  // Styles for pagination "Load More" button (if you uncomment it)
   loadMoreButton: {
     backgroundColor: '#e0e0e0',
     padding: 12,
