@@ -1,11 +1,12 @@
-// services/BusTripService.ts (or similar)
+// services/BusTripService.ts (No major changes needed from your provided code, just ensuring it matches and confirming the types)
+
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
-import { ApiResponse, PaginatedResponse } from '../types/api';
-import { BusTrip, BusTripFilters } from '../types/bustrip'; // Import updated types
-
+import { ApiResponse, PaginatedResponse } from '../types/api'; // Ensure you have ApiResponse and PaginatedResponse defined
+import { BusTrip, BusTripFilters } from '../types/bustrip'; // Your updated types
 
 const BusTripService = {
+  // ... (Your existing getAllBusTrips, createBusTrip, updateBusTrip, deleteBusTrip functions)
 
   // Get all Bus Trips (for Admin view - includes all statuses)
   getAllBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
@@ -14,7 +15,7 @@ const BusTripService = {
       if (filters.date instanceof Date) {
         filters.date = filters.date.toISOString().split('T')[0];
       }
-      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.BUS_TRIPS_ADMIN, { // New endpoint
+      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.BUS_TRIPS_ADMIN, {
         params: filters,
       });
       return response.data;
@@ -32,7 +33,7 @@ const BusTripService = {
       if (busTripData.departure_time instanceof Date) {
         busTripData.departure_time = busTripData.departure_time.toISOString();
       }
-      const response = await api.post<ApiResponse<BusTrip>>(ENDPOINTS.BUS_TRIPS_CREATE, busTripData); // New endpoint for creation
+      const response = await api.post<ApiResponse<BusTrip>>(ENDPOINTS.BUS_TRIPS_CREATE, busTripData);
       return response.data;
     } catch (error) {
       throw error;
@@ -69,11 +70,20 @@ const BusTripService = {
   // Get all *scheduled and available* Bus Trips (for user search)
   getScheduledBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
     try {
-      // Convert date to ISO string if it's a Date object
+      // Your existing console.log("hello");
+      // Convert date to YYYY-MM-DD string if it's a Date object.
+      // This is crucial for filtering by date on the backend.
       if (filters.date instanceof Date) {
-        filters.date = filters.date.toISOString().split('T')[0]; // Send as YYYY-MM-DD
+        // This line assumes your backend expects 'YYYY-MM-DD'
+        filters.date = filters.date.toISOString().split('T')[0];
+      } else if (typeof filters.date === 'string') {
+        // Ensure string dates are already in 'YYYY-MM-DD' if used as filter
+        // Or, convert if they're in a different format
+        // For example, if your input string might be 'MMM d, yyyy', you'd convert it:
+        // filters.date = formatDate(filters.date, 'yyyy-MM-dd'); // Requires date-fns in formatDate
       }
-      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, { // New endpoint
+
+      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
         params: filters,
       });
       return response.data;

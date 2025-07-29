@@ -1,28 +1,33 @@
 // utils/dateHelpers.ts
-export const formatDate = (dateInput: Date | string | number, format: string): string => {
-  // Convert to Date object if it's a string or number
-  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+
+// --- RECOMMENDED: Using date-fns for robust formatting ---
+import { format, isValid, parseISO } from 'date-fns';
+
+export const formatDate = (dateInput: Date | string | number, dateFormat: string): string => {
+  let date: Date;
+
+  if (dateInput instanceof Date) {
+    date = dateInput;
+  } else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes(':')) {
+    // Assuming ISO 8601 string (e.g., from backend timestamps)
+    date = parseISO(dateInput);
+  } else if (typeof dateInput === 'string' || typeof dateInput === 'number') {
+    // Try parsing as a regular date string or number (e.g., timestamp)
+    date = new Date(dateInput);
+  } else {
+    return 'Invalid Date Input';
+  }
 
   // Handle invalid dates
-  if (isNaN(date.getTime())) return 'Invalid Date';
+  if (!isValid(date)) {
+    // console.warn('Invalid date input for formatDate:', dateInput, 'Result:', date);
+    return 'Invalid Date';
+  }
 
-  switch (format) {
-    case 'hh:mm a':
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    case 'HH:mm':
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-    case 'MMM d, yyyy':
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-    case 'EEE, MMM d':
-      return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-    case 'relative':
-      // Add relative time formatting if needed
-      const now = new Date();
-      const diffHours = Math.abs(now.getTime() - date.getTime()) / 36e5;
-      if (diffHours < 24) return 'Today';
-      if (diffHours < 48) return 'Tomorrow';
-      return date.toLocaleDateString();
-    default:
-      return date.toLocaleString();
+  try {
+    return format(date, dateFormat);
+  } catch (e) {
+    console.error('Error formatting date:', e, 'Input:', dateInput, 'Format:', dateFormat);
+    return 'Formatting Error';
   }
 };

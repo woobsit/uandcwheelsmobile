@@ -1,55 +1,30 @@
-// New BusTrip interface - This is what your frontend will primarily display and interact with for bookings
 export interface BusTrip {
-  id: string; // This is the ID of the BusTrip
-  bus_id: string;
-  driver_id: string;
-  trip_id: string; // The ID of the associated Trip (route)
-  available_seats: number;
-  departure_time: string | Date;
+  id: number; // Based on your data, it's a number
+  departure_time: string | Date; // Can be string from API, or Date object internally
+  estimated_arrival: string | Date; // Can be string from API, or Date object internally
+  fare: number; // This also seems to be directly on BusTrip
   status: 'scheduled' | 'boarding' | 'departed' | 'arrived' | 'cancelled';
-  createdAt: string;
-  updatedAt: string;
 
-  // Nested associated data from the backend
-  bus: {
-    id: string;
-    plate_number: string;
-    brand: string;
-    capacity: number;
-  };
-  driver: {
-    id: string;
-    name: string;
-    license_number: string;
-    phone?: string; // Add phone if it's included in driver details
-  };
-  trip: {
-    id: string;
-    estimated_arrival: string; // Estimated arrival for this specific bus trip
-    fare: number;
-    departure_terminal: string;
-    arrival_terminal: string;
-    departureLocation: {
-      id: string;
-      name: string;
-      state: string;
-    };
-    arrivalLocation: {
-      id: string;
-      name: string;
-      state: string;
-    };
-  };
+  // These are the direct fields from your API response
+  departure_location: string;
+  departure_state: string;
+  departure_terminal: string; // If you want to use this
+  arrival_location: string;
+  arrival_state: string;
+  arrival_terminal: string; // If you want to use this
+
+  bus?: Bus; // Use the updated Bus interface
+  driver?: Driver; // Use the updated Driver interface
+  available_seats: number;
 }
 
-// Update your TripFilters to reflect BusTrip filtering
 export interface BusTripFilters {
+  status?: 'scheduled' | 'boarding' | 'departed' | 'arrived' | 'cancelled';
   departureLocationName?: string;
   departureLocationState?: string;
   arrivalLocationName?: string;
   arrivalLocationState?: string;
-  date?: string | Date; // For filtering by departure_time on a specific date
-  status?: 'scheduled' | 'boarding' | 'departed' | 'arrived' | 'cancelled'; // If you need to filter by BusTrip status
+  date?: string | Date; // This will be used as `departureDate` in the screens, sent as YYYY-MM-DD
   page?: number;
   limit?: number;
 }

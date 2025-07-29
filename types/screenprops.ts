@@ -1,6 +1,8 @@
+// types/screenprops.ts
+
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-//import { Trip } from '../types/trip';
+import { BusTrip } from './bustrip'; // Make sure this import path is correct
 
 // Define your authentication stack parameters
 export type AuthStackParamList = {
@@ -12,9 +14,24 @@ export type AuthStackParamList = {
   ResetPassword: { email: string };
   Dashboard: undefined;
   BookTransport: undefined;
-  //BookingDetails: { trip: Trip };
-  // BookingConfirmation: {booking:}
-  TripDetails: {tripId: string};
+
+  // --- NEW/UPDATED BOOKING FLOW SCREENS ---
+  TripDates: {
+    departureLocationName: string;
+    departureLocationState: string;
+    arrivalLocationName: string;
+    arrivalLocationState: string;
+  };
+  TripDetails: {
+    departureLocationName: string;
+    departureLocationState: string;
+    arrivalLocationName: string;
+    arrivalLocationState: string;
+    departureDate: string; // Add this for filtering specific buses
+    selectedTripId?: number; // Optional: if you want to highlight a specific trip in a list
+  };
+  // ----------------------------------------
+
   Notifications: undefined;
   Settings: undefined;
   UserProfile: undefined;
@@ -45,10 +62,16 @@ export type EmailVerificationScreenProps = NativeStackScreenProps<
 
 export type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
 
-// TripDetailsScreen screen props type
+// TripDetailsScreen screen props type (UPDATED)
 export type TripDetailsScreenProps = NativeStackScreenProps<
   AuthStackParamList,
   'TripDetails'
+>;
+
+// NEW: TripDatesScreen props type
+export type TripDatesScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'TripDates'
 >;
 
 // ForgotPasswordScreen screen props type
@@ -57,7 +80,7 @@ export type ForgotPasswordScreenProps = NativeStackScreenProps<
   'ForgotPassword'
 >;
 
-// Booking details props type
+// Booking details props type (kept commented out as in your original)
 // export type BookingDetailsScreenProps = NativeStackScreenProps<
 //   AuthStackParamList,
 //   'BookingDetails'

@@ -1,3 +1,5 @@
+// screens/BookTransportScreen.tsx (No changes from the previous good version)
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -15,83 +17,64 @@ import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import useRefreshControl from '../hooks/useRefreshControl'; // Assuming this hook works as is
 import { formatDate } from '../utils/dateHelpers'; // Your existing date helper
-import BusTripService from '../requests/busTripService'; // IMPORT THE NEW BUS TRIP SERVICE
-import { BusTrip, BusTripFilters } from '../types/bustrip'; // IMPORT BusTrip AND BusTripFilters
+import BusTripService from '../requests/busTripService'; // Corrected import path
+import { BusTrip, BusTripFilters } from '../types/bustrip';
 import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../types/screenprops';
+import { AuthStackParamList, BookTransportScreenProps } from '../types/screenprops'; // Using your specific props type
 
-// Define a type for a unique location for display
-interface UniqueLocation {
-  name: string;
-  state: string;
-  count: number; // Number of trips associated with this location
+// Define a type for a unique trip route for display on the main screen
+interface UniqueTripRoute {
+  departureLocationName: string;
+  departureLocationState: string;
+  arrivalLocationName: string;
+  arrivalLocationState: string;
+  minFare: number;
+  maxFare: number;
+  availableDatesCount: number; // Number of distinct departure dates for this route
 }
 
-export default function BookTransportScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+// Using your BookTransportScreenProps directly
+export default function BookTransportScreen({ navigation }: BookTransportScreenProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<BusTrip[]>([]); // Use BusTrip type here
+  const [trips, setTrips] = useState<BusTrip[]>([]); // This will hold ALL fetched trips
   const [error, setError] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // New state for selected location (when drilling down)
-  const [selectedLocation, setSelectedLocation] = useState<UniqueLocation | null>(null);
-
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 100, // Fetch more to accurately group unique routes and dates
     total: 0,
     hasNext: false,
   });
 
-  // Create refresh control
   const { refreshing, onRefresh } = useRefreshControl({
     refreshAction: async () => {
-      // If a location is selected, refresh for that location's trips
-      // Otherwise, refresh the initial location list
-
-      await fetchTrips(
-        selectedLocation
-          ? {
-              departureLocationName: selectedLocation.name, // Use specific filter names
-              departureLocationState: selectedLocation.state,
-              arrivalLocationName: selectedLocation.name, // Also search as arrival
-              arrivalLocationState: selectedLocation.state, // Also search as arrival
-            }
-          : undefined,
-        true, // Pass true to reset pagination on refresh
-      );
+      await fetchTrips(true);
     },
   });
 
-  // Fetch trips or unique locations from API
-  const fetchTrips = async (
-    filter?: BusTripFilters, // Use BusTripFilters type
-    resetPage = false,
-  ) => {
+  const fetchTrips = async (resetPage = false) => {
     try {
       setIsLoading(true);
       setError(null);
       let currentPage = resetPage ? 1 : pagination.page;
 
       const params: BusTripFilters = {
-        status: 'scheduled', // Always fetch scheduled trips for user view
+        status: 'scheduled',
         page: currentPage,
         limit: pagination.limit,
-        ...filter, // Spread the incoming filter directly
       };
-      console.log(params);
 
-      // Call the correct service method
-      const response = await BusTripService.getScheduledBusTrips(params); // Use BusTripService
-      // If resetting page, start with a fresh list, otherwise append for infinite scroll
+      const response = await BusTripService.getScheduledBusTrips(params);
+
+      // Append items if not resetting, otherwise start fresh
       setTrips(resetPage ? response.data.items : [...trips, ...response.data.items]);
 
       setPagination(prev => ({
         ...prev,
-        page: currentPage, // Update page to the current page
+        page: currentPage,
         total: response.data.total,
         hasNext: response.data.hasNext,
       }));
@@ -103,110 +86,101 @@ export default function BookTransportScreen() {
     }
   };
 
-  // Memoize unique locations to avoid re-calculating on every render
-  const uniqueLocations = useMemo(() => {
-    const locationsMap = new Map<string, UniqueLocation>(); // Key: "name_state"
+  // Memoize unique trip routes and their aggregated info
+  const uniqueTripRoutes = useMemo(() => {
+    const routesMap = new Map<string, UniqueTripRoute>(); // Key: "departureName_departureState_arrivalName_arrivalState"
 
     trips.forEach(trip => {
-      // Handle departure location
-      if (trip.trip?.departureLocation?.name && trip.trip?.departureLocation?.state) {
-        const key = `${trip.trip.departureLocation.name}_${trip.trip.departureLocation.state}`;
-        if (!locationsMap.has(key)) {
-          locationsMap.set(key, {
-            name: trip.trip.departureLocation.name,
-            state: trip.trip.departureLocation.state,
-            count: 0, // Will count later
-          });
-        }
-        locationsMap.get(key)!.count++;
+      // Ensure essential properties exist before processing
+      if (!trip.departure_location || !trip.departure_state || !trip.arrival_location || !trip.arrival_state || trip.fare === undefined || trip.fare === null || !trip.departure_time) {
+        return;
       }
 
-      // Handle arrival location
-      if (trip.trip?.arrivalLocation?.name && trip.trip?.arrivalLocation?.state) {
-        const key = `${trip.trip.arrivalLocation.name}_${trip.trip.arrivalLocation.state}`;
-        if (!locationsMap.has(key)) {
-          locationsMap.set(key, {
-            name: trip.trip.arrivalLocation.name,
-            state: trip.trip.arrivalLocation.state,
-            count: 0, // Will count later
-          });
-        }
-        locationsMap.get(key)!.count++;
+      const routeKey = `${trip.departure_location}_${trip.departure_state}_${trip.arrival_location}_${trip.arrival_state}`;
+      const departureDateKey = formatDate(trip.departure_time as string, 'yyyy-MM-dd'); // Use just the date for grouping unique dates
+
+      if (!routesMap.has(routeKey)) {
+        routesMap.set(routeKey, {
+          departureLocationName: trip.departure_location,
+          departureLocationState: trip.departure_state,
+          arrivalLocationName: trip.arrival_location,
+          arrivalLocationState: trip.arrival_state,
+          minFare: trip.fare,
+          maxFare: trip.fare,
+          availableDatesCount: 0, // Will be calculated below
+        });
       }
+
+      const currentRoute = routesMap.get(routeKey)!;
+      currentRoute.minFare = Math.min(currentRoute.minFare, trip.fare);
+      currentRoute.maxFare = Math.max(currentRoute.maxFare, trip.fare);
+
+      // Use a temporary Set to count unique dates for this route
+      if (!(currentRoute as any)._uniqueDates) {
+        (currentRoute as any)._uniqueDates = new Set<string>();
+      }
+      (currentRoute as any)._uniqueDates.add(departureDateKey);
     });
 
-    // Filter by search term on the STATE name
+    // Finalize the availableDatesCount after iterating through all trips
+    const routesArray = Array.from(routesMap.values()).map(route => ({
+      ...route,
+      availableDatesCount: (route as any)._uniqueDates.size,
+      _uniqueDates: undefined // Clean up temporary property
+    }));
+
+    // Filter by search term across all route parts
     const term = searchTerm.toLowerCase();
-    const filtered = Array.from(locationsMap.values()).filter(
-      location =>
-        location.state.toLowerCase().includes(term) || location.name.toLowerCase().includes(term), // Also allow searching by location name
+    const filtered = routesArray.filter(
+      route =>
+        route.departureLocationName.toLowerCase().includes(term) ||
+        route.departureLocationState.toLowerCase().includes(term) ||
+        route.arrivalLocationName.toLowerCase().includes(term) ||
+        route.arrivalLocationState.toLowerCase().includes(term),
     );
 
-    // Sort by location name
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by departure location name, then arrival location name
+    filtered.sort((a, b) => {
+      const depCompare = a.departureLocationName.localeCompare(b.departureLocationName);
+      if (depCompare !== 0) return depCompare;
+      return a.arrivalLocationName.localeCompare(b.arrivalLocationName);
+    });
     return filtered;
-  }, [trips, searchTerm]); // Re-calculate when trips or searchTerm changes
+  }, [trips, searchTerm]); // Re-run memo if trips or search term change
 
-  // Filter trips based on search term when a location IS selected
-  const filteredTrips = useMemo(() => {
-    if (!selectedLocation) {
-      return []; // Should not be called if no location is selected
-    }
-    const term = searchTerm.toLowerCase();
-    // The 'trips' array will already contain only trips relevant to `selectedLocation`
-    // due to the `fetchTrips` call. So, we just filter by the search term on location names.
-    return trips.filter(
-      trip =>
-        trip.trip?.departureLocation?.name?.toLowerCase().includes(term) ||
-        trip.trip?.arrivalLocation?.name?.toLowerCase().includes(term) ||
-        trip.trip?.departureLocation?.state?.toLowerCase().includes(term) ||
-        trip.trip?.arrivalLocation?.state?.toLowerCase().includes(term),
-    );
-  }, [trips, searchTerm, selectedLocation]);
-
-  // Handle selecting a location to view its trips
-  const handleSelectLocation = (location: UniqueLocation) => {
-    setSelectedLocation(location);
-    setSearchTerm(''); // Clear search term when selecting a location
-    // Reset pagination and fetch trips for this specific location
-    fetchTrips(
-      {
-        departureLocationName: location.name,
-        departureLocationState: location.state,
-        arrivalLocationName: location.name,
-        arrivalLocationState: location.state,
-      },
-      true, // Reset page to 1
-    );
-  };
-
-  // Go back from trip list to location list
-  const handleBackToLocations = () => {
-    setSelectedLocation(null);
-    setSearchTerm(''); // Clear search when going back
-    fetchTrips(undefined, true); // Re-fetch initial unique locations (all trips)
-  };
-
-  const handleBookTrip = (trip: BusTrip) => {
-    // Navigate to the booking details screen, passing the trip ID or full trip object
-    navigation.navigate('TripDetails', { tripId: trip.id }); // Assuming you have a TripDetails screen
+  // Handle selecting a unique trip route
+  const handleSelectRoute = (route: UniqueTripRoute) => {
+    // Navigate to TripDatesScreen, passing the route details
+    navigation.navigate('TripDates', {
+      departureLocationName: route.departureLocationName,
+      departureLocationState: route.departureLocationState,
+      arrivalLocationName: route.arrivalLocationName,
+      arrivalLocationState: route.arrivalLocationState,
+    });
   };
 
   // Initial fetch on component mount
   useEffect(() => {
-    fetchTrips();
+    fetchTrips(true);
   }, []); // Empty dependency array means this runs once on mount
+
+  // For infinite scrolling: load more data when page changes
+  useEffect(() => {
+    if (pagination.page > 1) { // Prevents re-fetching on initial mount with page 1
+      fetchTrips();
+    }
+  }, [pagination.page]);
+
+  const handleLoadMore = () => {
+    // Only load more if there's a next page and not already loading
+    if (pagination.hasNext && !isLoading) {
+      setPagination(prev => ({ ...prev, page: prev.page + 1 }));
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <TopNavBar
-        title={
-          selectedLocation
-            ? `${selectedLocation.name}, ${selectedLocation.state} Trips`
-            : 'Book Transport'
-        }
-        onBackPress={selectedLocation ? handleBackToLocations : undefined} // Show back button when location selected
-      />
+      <TopNavBar title={'Book Transport'} />
 
       <ScrollView
         ref={scrollViewRef}
@@ -214,188 +188,106 @@ export default function BookTransportScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
         }
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          // Check if we are 20 pixels from the bottom
+          const isCloseToBottom =
+            layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+          if (isCloseToBottom) {
+            handleLoadMore();
+          }
+        }}
+        scrollEventThrottle={400} // Adjust throttle for performance
       >
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Feather name="search" size={20} color="#999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder={
-              selectedLocation ? 'Search within trips...' : 'Search by state or city name...'
-            }
+            placeholder={'Search by departure/arrival city or state...'}
             value={searchTerm}
             onChangeText={setSearchTerm}
             placeholderTextColor="#999"
           />
         </View>
 
-        {isLoading ? (
+        {isLoading && trips.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>
-              {selectedLocation
-                ? 'Loading trips for this location...'
-                : 'Loading available locations...'}
-            </Text>
+            <Text style={styles.loadingText}>Loading available trip routes...</Text>
           </View>
         ) : error ? (
           <View style={styles.emptyContainer}>
             <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
             <Text style={styles.emptyText}>{error}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() =>
-                fetchTrips(
-                  selectedLocation
-                    ? {
-                        departureLocationName: selectedLocation.name,
-                        departureLocationState: selectedLocation.state,
-                        arrivalLocationName: selectedLocation.name,
-                        arrivalLocationState: selectedLocation.state,
-                      }
-                    : undefined,
-                  true,
-                )
-              }
-            >
+            <TouchableOpacity style={styles.retryButton} onPress={() => fetchTrips(true)}>
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            {selectedLocation ? (
-              // Display actual trips for the selected location
-              <>
-                <Text style={styles.sectionTitle}>
-                  Trips from/to {selectedLocation.name}, {selectedLocation.state} (
-                  {filteredTrips.length})
-                </Text>
-                {filteredTrips.length === 0 ? (
-                  <View style={styles.emptyContainer}>
-                    <MaterialIcons name="directions-bus" size={60} color="#ddd" />
-                    <Text style={styles.emptyText}>No trips found for this location</Text>
-                    <Text style={styles.emptySubtext}>Try a different search or go back</Text>
-                  </View>
-                ) : (
-                  filteredTrips.map(trip => (
-                    <TouchableOpacity
-                      key={trip.id}
-                      style={styles.tripCard}
-                      onPress={() => handleBookTrip(trip)}
-                    >
-                      <View style={styles.tripHeader}>
-                        <Text style={styles.tripRoute}>
-                          {trip.trip?.departureLocation?.name} → {trip.trip?.arrivalLocation?.name}
-                        </Text>
-                        <Text style={styles.tripPrice}>₦{trip.trip?.fare?.toLocaleString()}</Text>
-                      </View>
-
-                      <View style={styles.tripDetails}>
-                        <View style={styles.detailItem}>
-                          <MaterialIcons name="schedule" size={18} color="#666" />
-                          <Text style={styles.detailText}>
-                            {formatDate(trip.departure_time as string, 'hh:mm a')} -{' '}
-                            {formatDate(trip.trip?.estimated_arrival as string, 'hh:mm a')}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detailItem}>
-                          <MaterialIcons name="event" size={18} color="#666" />
-                          <Text style={styles.detailText}>
-                            {formatDate(trip.departure_time as string, 'MMM d, yyyy')}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detailItem}>
-                          <MaterialIcons name="directions-bus" size={18} color="#666" />
-                          <Text style={styles.detailText}>
-                            {trip.bus?.brand || 'Standard Bus'} • {trip.bus?.capacity || 'Unknown'}{' '}
-                            seats
-                          </Text>
-                        </View>
-
-                        <View style={styles.detailItem}>
-                          <MaterialIcons
-                            name="airline-seat-recline-normal"
-                            size={18}
-                            color="#666"
-                          />
-                          <Text style={styles.detailText}>
-                            Available Seats: {trip.available_seats}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detailItem}>
-                          <MaterialIcons name="person" size={18} color="#666" />
-                          <Text style={styles.detailText}>
-                            {trip.driver?.name || 'Driver information not available'}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.statusContainer}>
-                        <Text
-                          style={[
-                            styles.statusText,
-                            trip.status === 'scheduled'
-                              ? styles.statusScheduled
-                              : trip.status === 'boarding'
-                                ? styles.statusOngoing // Using ongoing for boarding visually
-                                : trip.status === 'departed'
-                                  ? styles.statusOngoing
-                                  : trip.status === 'arrived'
-                                    ? styles.statusCompleted
-                                    : styles.statusCancelled,
-                          ]}
-                        >
-                          {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
-                        </Text>
-                      </View>
-
-                      <TouchableOpacity
-                        style={styles.bookButton}
-                        onPress={() => handleBookTrip(trip)}
-                      >
-                        <Text style={styles.bookButtonText}>Book This Trip</Text>
-                      </TouchableOpacity>
-                    </TouchableOpacity>
-                  ))
-                )}
-              </>
+            <Text style={styles.sectionTitle}>
+              Available Trip Routes ({uniqueTripRoutes.length})
+            </Text>
+            {uniqueTripRoutes.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <MaterialIcons name="route" size={60} color="#ddd" />
+                <Text style={styles.emptyText}>No trip routes found.</Text>
+                <Text style={styles.emptySubtext}>Try adjusting your search criteria or refresh.</Text>
+              </View>
             ) : (
-              // Display unique locations if no location is selected
-              <>
-                <Text style={styles.sectionTitle}>
-                  Explore Locations ({uniqueLocations.length})
-                </Text>
-                {uniqueLocations.length === 0 ? (
-                  <View style={styles.emptyContainer}>
-                    <MaterialIcons name="location-city" size={60} color="#ddd" />
-                    <Text style={styles.emptyText}>No locations found</Text>
-                    <Text style={styles.emptySubtext}>Try adjusting your search criteria</Text>
+              uniqueTripRoutes.map((route, index) => (
+                <TouchableOpacity
+                  key={`${route.departureLocationName}-${route.departureLocationState}-${route.arrivalLocationName}-${route.arrivalLocationState}-${index}`}
+                  style={styles.routeCard}
+                  onPress={() => handleSelectRoute(route)}
+                >
+                  <View style={styles.routeHeader}>
+                    <View style={styles.routeTextContainer}>
+                      <Text style={styles.routeLocationText}>
+                        {route.departureLocationName} ({route.departureLocationState})
+                      </Text>
+                      <MaterialIcons
+                        name="arrow-forward"
+                        size={20}
+                        color="#333"
+                        style={styles.arrowIcon}
+                      />
+                      <Text style={styles.routeLocationText}>
+                        {route.arrivalLocationName} ({route.arrivalLocationState})
+                      </Text>
+                    </View>
+                    <Text style={styles.routePriceRange}>
+                      ₦{route.minFare?.toLocaleString()}
+                      {route.minFare !== route.maxFare ? ` - ₦${route.maxFare?.toLocaleString()}` : ''}
+                    </Text>
                   </View>
-                ) : (
-                  uniqueLocations.map((location, index) => (
-                    <TouchableOpacity
-                      key={`${location.name}-${location.state}-${index}`} // Unique key for locations
-                      style={styles.locationCard}
-                      onPress={() => handleSelectLocation(location)}
-                    >
-                      <View style={styles.locationInfo}>
-                        <MaterialIcons name="place" size={24} color="#007AFF" />
-                        <View style={styles.locationTextContainer}>
-                          <Text style={styles.locationName}>{location.name}</Text>
-                          <Text style={styles.locationState}>{location.state}</Text>
-                        </View>
-                      </View>
-                      <View style={styles.locationAction}>
-                        <Text style={styles.locationTripCount}>{location.count} Trips</Text>
-                        <MaterialIcons name="navigate-next" size={24} color="#007AFF" />
-                      </View>
-                    </TouchableOpacity>
-                  ))
-                )}
-              </>
+
+                  <View style={styles.routeDetails}>
+                    <View style={styles.detailItem}>
+                      <MaterialIcons name="date-range" size={18} color="#666" />
+                      <Text style={styles.detailText}>
+                        {route.availableDatesCount} available departure dates
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.viewTripsButton}
+                    onPress={() => handleSelectRoute(route)}
+                  >
+                    <Text style={styles.viewTripsButtonText}>View Dates</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))
+            )}
+            {pagination.hasNext && !isLoading && (
+              <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
+                <Text style={styles.loadMoreButtonText}>Load More Routes</Text>
+              </TouchableOpacity>
+            )}
+            {isLoading && pagination.page > 1 && (
+              <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 10 }} />
             )}
           </>
         )}
@@ -404,6 +296,7 @@ export default function BookTransportScreen() {
   );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -447,57 +340,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#444',
   },
-  // New styles for location cards
-  locationCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.41,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  locationInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  locationTextContainer: {
-    marginLeft: 10,
-  },
-  locationName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  locationState: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  locationAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationTripCount: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  // Existing trip card styles (no changes needed for these from your original code)
-  tripCard: {
+  routeCard: {
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 16,
@@ -514,7 +357,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  tripHeader: {
+  routeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -523,19 +366,27 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     paddingBottom: 12,
   },
-  tripRoute: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  routeTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
     marginRight: 10,
+    flexWrap: 'wrap',
   },
-  tripPrice: {
-    fontSize: 18,
+  routeLocationText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  arrowIcon: {
+    marginHorizontal: 8,
+  },
+  routePriceRange: {
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#007AFF',
   },
-  tripDetails: {
+  routeDetails: {
     marginBottom: 12,
   },
   detailItem: {
@@ -549,39 +400,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     flex: 1,
   },
-  statusContainer: {
-    marginBottom: 16,
-  },
-  statusText: {
-    fontWeight: '600',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  statusScheduled: {
-    backgroundColor: '#e8f4ff',
-    color: '#007AFF',
-  },
-  statusOngoing: {
-    backgroundColor: '#fff8e1',
-    color: '#ff9800',
-  },
-  statusCompleted: {
-    backgroundColor: '#e8f5e9',
-    color: '#4caf50',
-  },
-  statusCancelled: {
-    backgroundColor: '#ffebee',
-    color: '#f44336',
-  },
-  bookButton: {
+  viewTripsButton: {
     backgroundColor: '#007AFF',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
-  bookButtonText: {
+  viewTripsButtonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,

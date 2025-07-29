@@ -1,11 +1,12 @@
 // Generic API response format
-export interface ApiResponse<T> {
+interface ApiResponse<T> {
   success: boolean;
-  message?: string;
-  data: T;
-  error?: {
-    code: string;
-    details?: Record<string, string>;
+  data: {
+    items: T[];
+    total: number;
+    page: number;
+    limit: number;
+    hasNext: boolean;
   };
 }
 
