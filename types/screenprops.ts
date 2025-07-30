@@ -1,8 +1,18 @@
 // types/screenprops.ts
-
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { BusTrip } from './bustrip'; // Make sure this import path is correct
+import { StackNavigationProp } from '@react-navigation/stack';
+
+
+type RegisterScreenNavigationProp = StackNavigationProp<
+  AuthStackParamList,
+  'Register' // Screen name in your navigator
+>;
+
+export interface RegisterScreenProps {
+  navigation: RegisterScreenNavigationProp;
+}
+
 
 // Define your authentication stack parameters
 export type AuthStackParamList = {
@@ -46,7 +56,7 @@ export type AuthStackParamList = {
 export type WelcomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 // Register screen props type
-export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+//export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 // Login screen props type
 export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -67,6 +77,9 @@ export type TripDetailsScreenProps = NativeStackScreenProps<
   AuthStackParamList,
   'TripDetails'
 >;
+
+// BookTransport screen props type
+export type BookTransportScreenProps = NativeStackScreenProps<AuthStackParamList, 'BookTransport'>;
 
 // NEW: TripDatesScreen props type
 export type TripDatesScreenProps = NativeStackScreenProps<
@@ -93,5 +106,3 @@ export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList
 
 export type EmailResetScreenRouteProp = RouteProp<AuthStackParamList, 'ResetPassword'>;
 
-// BookTransport screen props type
-export type BookTransportScreenProps = NativeStackScreenProps<AuthStackParamList, 'BookTransport'>;

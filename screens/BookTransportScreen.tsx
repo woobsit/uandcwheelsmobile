@@ -20,8 +20,7 @@ import { formatDate } from '../utils/dateHelpers'; // Your existing date helper
 import BusTripService from '../requests/busTripService'; // Corrected import path
 import { BusTrip, BusTripFilters } from '../types/bustrip';
 import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList, BookTransportScreenProps } from '../types/screenprops'; // Using your specific props type
+import { BookTransportScreenProps } from '../types/screenprops'; // Using your specific props type
 
 // Define a type for a unique trip route for display on the main screen
 interface UniqueTripRoute {
@@ -44,7 +43,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
 
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 100, // Fetch more to accurately group unique routes and dates
+    limit: 50, // Fetch more to accurately group unique routes and dates
     total: 0,
     hasNext: false,
   });
@@ -66,13 +65,13 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
         page: currentPage,
         limit: pagination.limit,
       };
-
+console.log(params.limit);
       const response = await BusTripService.getScheduledBusTrips(params);
-
+      
       // Append items if not resetting, otherwise start fresh
       setTrips(resetPage ? response.data.items : [...trips, ...response.data.items]);
 
-      setPagination(prev => ({
+    setPagination(prev => ({
         ...prev,
         page: currentPage,
         total: response.data.total,
@@ -92,7 +91,15 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
 
     trips.forEach(trip => {
       // Ensure essential properties exist before processing
-      if (!trip.departure_location || !trip.departure_state || !trip.arrival_location || !trip.arrival_state || trip.fare === undefined || trip.fare === null || !trip.departure_time) {
+      if (
+        !trip.departure_location ||
+        !trip.departure_state ||
+        !trip.arrival_location ||
+        !trip.arrival_state ||
+        trip.fare === undefined ||
+        trip.fare === null ||
+        !trip.departure_time
+      ) {
         return;
       }
 
@@ -126,7 +133,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
     const routesArray = Array.from(routesMap.values()).map(route => ({
       ...route,
       availableDatesCount: (route as any)._uniqueDates.size,
-      _uniqueDates: undefined // Clean up temporary property
+      _uniqueDates: undefined, // Clean up temporary property
     }));
 
     // Filter by search term across all route parts
@@ -166,7 +173,8 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
 
   // For infinite scrolling: load more data when page changes
   useEffect(() => {
-    if (pagination.page > 1) { // Prevents re-fetching on initial mount with page 1
+    if (pagination.page > 1) {
+      // Prevents re-fetching on initial mount with page 1
       fetchTrips();
     }
   }, [pagination.page]);
@@ -233,7 +241,9 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
               <View style={styles.emptyContainer}>
                 <MaterialIcons name="route" size={60} color="#ddd" />
                 <Text style={styles.emptyText}>No trip routes found.</Text>
-                <Text style={styles.emptySubtext}>Try adjusting your search criteria or refresh.</Text>
+                <Text style={styles.emptySubtext}>
+                  Try adjusting your search criteria or refresh.
+                </Text>
               </View>
             ) : (
               uniqueTripRoutes.map((route, index) => (
@@ -259,7 +269,9 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
                     </View>
                     <Text style={styles.routePriceRange}>
                       ₦{route.minFare?.toLocaleString()}
-                      {route.minFare !== route.maxFare ? ` - ₦${route.maxFare?.toLocaleString()}` : ''}
+                      {route.minFare !== route.maxFare
+                        ? ` - ₦${route.maxFare?.toLocaleString()}`
+                        : ''}
                     </Text>
                   </View>
 

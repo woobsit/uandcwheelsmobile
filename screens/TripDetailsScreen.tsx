@@ -30,7 +30,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
     arrivalLocationName,
     arrivalLocationState,
     departureDate, // This is the new crucial parameter from TripDatesScreen
-    selectedTripId // Kept optional, if you have a flow that navigates directly to a single trip by ID
+    selectedTripId, // Kept optional, if you have a flow that navigates directly to a single trip by ID
   } = route.params;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -91,36 +91,54 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
     // You would typically navigate to a SeatSelectionScreen or a PaymentScreen from here,
     // passing the full `trip` object or its `id` and any other accumulated booking details.
     console.log('User selected trip:', trip.id);
-    alert(`Selected Trip: ${trip.departure_location} to ${trip.arrival_location}\nTime: ${formatDate(trip.departure_time as string, 'hh:mm a')}\nBus: ${trip.bus?.brand || 'N/A'}`);
+    alert(
+      `Selected Trip: ${trip.departure_location} to ${trip.arrival_location}\nTime: ${formatDate(trip.departure_time as string, 'hh:mm a')}\nBus: ${trip.bus?.brand || 'N/A'}`,
+    );
     // Example: navigation.navigate('BookingConfirmation', { booking: { tripId: trip.id, passengerInfo: {} } });
     // Make sure 'BookingConfirmation' is in your AuthStackParamList and accepts these props.
   };
 
   useEffect(() => {
     // Only fetch if all necessary route and date parameters are present
-    if (departureLocationName && departureLocationState && arrivalLocationName && arrivalLocationState && departureDate) {
+    if (
+      departureLocationName &&
+      departureLocationState &&
+      arrivalLocationName &&
+      arrivalLocationState &&
+      departureDate
+    ) {
       fetchBusesForDate(true);
     } else if (selectedTripId) {
       // Fallback for direct tripId navigation if still used in some flows.
       // You would fetch a single trip by ID here if selectedTripId is the only parameter.
       // This part might need adjustment if selectedTripId is only used for highlighting.
-      BusTripService.getBusTripDetails(String(selectedTripId)).then(response => {
-        if (response.data) {
-          setBusesForDate([response.data]);
-        } else {
-          setError("Trip details not found.");
-        }
-      }).catch(err => {
-        setError("Failed to load specific trip details.");
-        console.error("Error fetching specific trip:", err);
-      }).finally(() => {
-        setIsLoading(false);
-      });
+      BusTripService.getBusTripDetails(String(selectedTripId))
+        .then(response => {
+          if (response.data) {
+            setBusesForDate([response.data]);
+          } else {
+            setError('Trip details not found.');
+          }
+        })
+        .catch(err => {
+          setError('Failed to load specific trip details.');
+          console.error('Error fetching specific trip:', err);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     } else {
-      setError("Missing route or trip information to display details.");
+      setError('Missing route or trip information to display details.');
       setIsLoading(false);
     }
-  }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState, departureDate, selectedTripId]); // Depend on all relevant route/date params
+  }, [
+    departureLocationName,
+    departureLocationState,
+    arrivalLocationName,
+    arrivalLocationState,
+    departureDate,
+    selectedTripId,
+  ]); // Depend on all relevant route/date params
 
   const handleLoadMore = () => {
     if (pagination.hasNext && !isLoading) {
@@ -134,14 +152,14 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
     }
   }, [pagination.page]);
 
-
   const screenTitle = departureDate
     ? `${departureLocationName} to ${arrivalLocationName} on ${formatDate(departureDate, 'MMM d, yyyy')}`
     : 'Trip Details'; // Fallback title
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <TopNavBar title={screenTitle} onBackPress={navigation.goBack} />
+      {/* <TopNavBar title={screenTitle} onBackPress={navigation.goBack} /> */}
+      <TopNavBar title={screenTitle} />
 
       <ScrollView
         contentContainerStyle={styles.container}
@@ -173,9 +191,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
           </View>
         ) : (
           <>
-            <Text style={styles.sectionTitle}>
-              Available Buses ({busesForDate.length})
-            </Text>
+            <Text style={styles.sectionTitle}>Available Buses ({busesForDate.length})</Text>
             {busesForDate.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <MaterialIcons name="bus_alert" size={60} color="#ddd" />
@@ -208,9 +224,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
 
                     <View style={styles.detailItem}>
                       <MaterialIcons name="airline_seat_recline_normal" size={18} color="#666" />
-                      <Text style={styles.detailText}>
-                        Available Seats: {trip.available_seats}
-                      </Text>
+                      <Text style={styles.detailText}>Available Seats: {trip.available_seats}</Text>
                     </View>
 
                     <View style={styles.detailItem}>
@@ -219,7 +233,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
                         Driver: {trip.driver?.name || 'Information not available'}
                       </Text>
                     </View>
-                     <View style={styles.detailItem}>
+                    <View style={styles.detailItem}>
                       <MaterialIcons name="departure_board" size={18} color="#666" />
                       <Text style={styles.detailText}>
                         Dep. Terminal: {trip.departure_terminal || 'N/A'}
@@ -240,12 +254,12 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
                         trip.status === 'scheduled'
                           ? styles.statusScheduled
                           : trip.status === 'boarding'
-                          ? styles.statusOngoing
-                          : trip.status === 'departed'
-                          ? styles.statusOngoing
-                          : trip.status === 'arrived'
-                          ? styles.statusCompleted
-                          : styles.statusCancelled,
+                            ? styles.statusOngoing
+                            : trip.status === 'departed'
+                              ? styles.statusOngoing
+                              : trip.status === 'arrived'
+                                ? styles.statusCompleted
+                                : styles.statusCancelled,
                       ]}
                     >
                       {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
@@ -286,7 +300,12 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41 },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
+      },
       android: { elevation: 2 },
     }),
   },

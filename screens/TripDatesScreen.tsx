@@ -33,7 +33,12 @@ interface UniqueDepartureDate {
 
 // Using your TripDatesScreenProps directly
 export default function TripDatesScreen({ navigation, route }: TripDatesScreenProps) {
-  const { departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState } = route.params;
+  const {
+    departureLocationName,
+    departureLocationState,
+    arrivalLocationName,
+    arrivalLocationState,
+  } = route.params;
 
   const [isLoading, setIsLoading] = useState(true);
   const [tripsForRoute, setTripsForRoute] = useState<BusTrip[]>([]); // All trips matching the route
@@ -73,7 +78,9 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
       const response = await BusTripService.getScheduledBusTrips(params);
 
       // Append items if not resetting, otherwise start fresh
-      setTripsForRoute(resetPage ? response.data.items : [...tripsForRoute, ...response.data.items]);
+      setTripsForRoute(
+        resetPage ? response.data.items : [...tripsForRoute, ...response.data.items],
+      );
 
       setPagination(prev => ({
         ...prev,
@@ -156,7 +163,8 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <TopNavBar title={screenTitle} onBackPress={navigation.goBack} />
+      {/* <TopNavBar title={screenTitle} onBackPress={navigation.goBack} /> */}
+      <TopNavBar title={screenTitle} />
 
       <ScrollView
         contentContainerStyle={styles.container}
@@ -195,7 +203,9 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
               <View style={styles.emptyContainer}>
                 <MaterialIcons name="calendar-today" size={60} color="#ddd" />
                 <Text style={styles.emptyText}>No available dates for this route.</Text>
-                <Text style={styles.emptySubtext}>Please try another route or check back later.</Text>
+                <Text style={styles.emptySubtext}>
+                  Please try another route or check back later.
+                </Text>
               </View>
             ) : (
               uniqueDepartureDates.map((date, index) => (
@@ -223,7 +233,7 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
                 </TouchableOpacity>
               ))
             )}
-             {pagination.hasNext && !isLoading && (
+            {pagination.hasNext && !isLoading && (
               <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
                 <Text style={styles.loadMoreButtonText}>Load More Dates</Text>
               </TouchableOpacity>

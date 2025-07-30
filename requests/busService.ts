@@ -1,7 +1,7 @@
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { Bus, CreateBusData } from '../types/bus';
-import { Trip } from '../types/trip';
+//import { Trip } from '../types/trip';
 import { ApiResponse, PaginatedResponse } from '../types/api';
 
 const BusService = {

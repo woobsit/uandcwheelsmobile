@@ -82,10 +82,10 @@ const BusTripService = {
         // For example, if your input string might be 'MMM d, yyyy', you'd convert it:
         // filters.date = formatDate(filters.date, 'yyyy-MM-dd'); // Requires date-fns in formatDate
       }
-
-      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
-        params: filters,
-      });
+  
+         const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
+           params: filters,
+         });
       return response.data;
     } catch (error) {
       throw error;

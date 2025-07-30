@@ -1,7 +1,7 @@
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { Driver, CreateDriverData } from '../types/driver';
-import { Trip } from '../types/trip';
+import { TripBase } from '../types/trip';
 
 import { ApiResponse, PaginatedResponse } from '../types/api';
 
@@ -59,9 +59,9 @@ const DriverService = {
     }
   },
 
-  getDriverTrips: async (driverId: string): Promise<ApiResponse<Trip[]>> => {
+  getDriverTrips: async (driverId: string): Promise<ApiResponse<TripBase[]>> => {
     try {
-      const response = await api.get<ApiResponse<Trip[]>>(`${ENDPOINTS.DRIVERS}/${driverId}/trips`);
+      const response = await api.get<ApiResponse<TripBase[]>>(`${ENDPOINTS.DRIVERS}/${driverId}/trips`);
       return response.data;
     } catch (error) {
       throw error;

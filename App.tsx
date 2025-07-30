@@ -9,7 +9,6 @@ import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
 import LoginScreen from './screens/auth/LoginScreen';
 import ForgotPasswordScreen from './screens/auth/ForgetPasswordScreen';
 import DashboardScreen from './screens/DashboardScreen';
-import BookingDetailsScreen from './screens/BookingDetailsScreen';
 import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; // You'll create this
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
 import BookTransportScreen from './screens/BookTransportScreen';
@@ -35,13 +34,12 @@ function DashboardDrawer() {
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       {/* Add other logistics screens here */}
-      <Drawer.Screen name="BookingDetails" component={BookingDetailsScreen} />
-       <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
-        <Drawer.Screen name="TripDates" component={TripDatesScreen} />
-        <Drawer.Screen name="TripDetails" component={TripDetailsScreen} />
-        {/* If you have a BookingConfirmation screen, add it here too: */}
-        {/* <AuthStack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} /> */}
-        {/* --------------------------- */}
+      <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
+      <Drawer.Screen name="TripDates" component={TripDatesScreen} />
+      <Drawer.Screen name="TripDetails" component={TripDetailsScreen} />
+      {/* If you have a BookingConfirmation screen, add it here too: */}
+      {/* <AuthStack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} /> */}
+      {/* --------------------------- */}
       {/* <Drawer.Screen name="Drivers" component={DriversScreen} /> */}
       {/* ... other logistics screens */}
     </Drawer.Navigator>

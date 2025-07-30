@@ -1,3 +1,6 @@
+import type {Bus} from './bus'
+import type {Driver} from './driver'
+
 export interface BusTrip {
   id: number; // Based on your data, it's a number
   departure_time: string | Date; // Can be string from API, or Date object internally

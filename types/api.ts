@@ -1,15 +1,8 @@
 // Generic API response format
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
-  data: {
-    items: T[];
-    total: number;
-    page: number;
-    limit: number;
-    hasNext: boolean;
-  };
+  data: T; // <-- This is the correct structure
 }
-
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

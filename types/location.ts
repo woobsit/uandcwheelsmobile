@@ -7,8 +7,7 @@ export interface Location {
   updatedAt?: string;
 }
 
-// export interface CreateLocationData {
-//   name: string;
-//   code?: string;
-//   timezone?: string;
-// }
+ export interface CreateLocationData {
+   name: string;
+   state?: string;
+ }

@@ -19,8 +19,9 @@ import useRefreshControl from '../../hooks/useRefreshControl';
 import { matchEmail } from '../../utils/pregmatch';
 import { AuthService } from '../../requests';
 import { showApiErrorAlert } from '../../utils/apiHelpers';
+import { RegisterScreenProps } from '../../types/screenprops';
 
-export default function RegisterScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation } : RegisterScreenProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
