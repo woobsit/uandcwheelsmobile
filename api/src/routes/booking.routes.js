@@ -12,5 +12,6 @@ router.use(passport.authenticate('jwt', { session: false }));
 router.post('/create', createBookingValidations, validateRequest, createBooking);
 router.get('/user-bookings', getUserBookings);
 
+
 const bookingRouter = router;
 module.exports = { bookingRouter };

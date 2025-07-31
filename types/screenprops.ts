@@ -2,6 +2,8 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { BusTrip } from './bustrip'; // Import BusTrip
+import { CreateBookingPayload } from './booking'; // Import the booking payload
 
 
 type RegisterScreenNavigationProp = StackNavigationProp<
@@ -38,9 +40,22 @@ export type AuthStackParamList = {
     arrivalLocationName: string;
     arrivalLocationState: string;
     departureDate: string; // Add this for filtering specific buses
-    selectedTripId?: number; // Optional: if you want to highlight a specific trip in a list
+    selectedTripId?: number;
   };
   // ----------------------------------------
+// --- NEW SCREENS FOR BOOKING FLOW ---
+  PassengerDetailsAndSeatSelection: {
+    selectedBusTrip: BusTrip; // Pass the *entire* selected BusTrip object, which includes `bus` and `fare`
+  };
+  Payment: {
+    bookingPayload: CreateBookingPayload; // The full payload to send to the backend
+  };
+  BookingConfirmation: {
+    bookingReference: string;
+    bookingId: number;
+  };
+  // ------------------------------------
+
 
   Notifications: undefined;
   Settings: undefined;
@@ -106,3 +121,13 @@ export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList
 
 export type EmailResetScreenRouteProp = RouteProp<AuthStackParamList, 'ResetPassword'>;
 
+export type PassengerDetailsAndSeatSelectionScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'PassengerDetailsAndSeatSelection'
+>;
+export type PaymentScreenProps = NativeStackScreenProps<AuthStackParamList, 'Payment'>;
+
+export type BookingConfirmationScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'BookingConfirmation'
+>;

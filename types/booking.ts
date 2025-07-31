@@ -1,13 +1,12 @@
-// types/booking.ts
+import { Passenger, PassengerPayload } from './passenger'; // Use the new Passenger types
+import { BusTrip } from './bustrip'; // For including bus trip details in response
+import { User } from './auth'; // Assuming you have a User type
 
 // Booking Status Enum
 export enum BookingStatus {
-  PENDING = 'pending',
   CONFIRMED = 'confirmed',
   CANCELLED = 'cancelled',
   COMPLETED = 'completed',
-  IN_PROGRESS = 'in_progress',
-  REFUNDED = 'refunded',
 }
 
 // Payment Status Enum
@@ -22,104 +21,77 @@ export enum PaymentStatus {
 // Payment Method Enum
 export enum PaymentMethod {
   CREDIT_CARD = 'credit_card',
-  DEBIT_CARD = 'debit_card',
-  PAYPAL = 'paypal',
-  MOBILE_MONEY = 'mobile_money',
-  CASH = 'cash',
   BANK_TRANSFER = 'bank_transfer',
+  CASH = 'cash',
 }
 
-// Passenger Type
-export interface Passenger {
-  id?: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dateOfBirth: Date | string;
-  specialNeeds?: string;
-  nationality: string;
-  passportNumber?: string;
+// Type for creating a new booking (payload sent to backend)
+export interface CreateBookingPayload {
+  user_id?: number; // Optional, if user is logged in and not guest
+  outbound_bus_trip_id: number;
+  return_bus_trip_id?: number; // Optional for round trips
+  total_amount: number; // Calculated on frontend based on fare * number of seats
+  payment_method: PaymentMethod; // From common enum
+  notes?: string;
+  adult_count: number;
+  lap_child_count: number;
+  seated_child_count: number;
+  is_guest: boolean;
+  guest_email?: string; // Required if is_guest is true
+  emergency_contact_name?: string; // Optional (could be part of primary passenger instead)
+  emergency_contact_phone?: string; // Optional (could be part of primary passenger instead)
+  passengers: PassengerPayload[]; // Array of passenger details for the trip
 }
 
-// Trip Details
-export interface Trip {
-  id: number;
-  departureLocation: string;
-  arrivalLocation: string;
-  departureTime: Date | string;
-  arrivalTime: Date | string;
-  duration: number; // in minutes
-  vehicleType: string;
-  operator: string;
-  price: number;
-}
-
-// Booking Type
+// Type for a Booking as returned from the API (full model)
+// This mirrors your `booking.model.js`'s fields
 export interface Booking {
   id: number;
-  userId: number;
-  tripId: number;
-  bookingDate: Date | string;
-  amountPaid: number;
+  user_id?: number;
+  outbound_bus_trip_id: number;
+  return_bus_trip_id?: number;
+  booking_reference: string;
+  booking_date: string; // API will return as string
+  payment_status: PaymentStatus;
+  payment_method?: PaymentMethod;
+  total_amount: number;
+  amount_paid: number;
   status: BookingStatus;
-  paymentStatus: PaymentStatus;
-  paymentMethod: PaymentMethod;
-  paymentDate?: Date | string;
-  transactionId?: string;
-  cancellationDate?: Date | string;
-  refundAmount?: number;
   notes?: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  adult_count: number;
+  lap_child_count: number;
+  seated_child_count: number;
+  is_guest: boolean;
+  guest_email?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
 
-  // Optional nested objects (for API responses)
-  trip?: Trip;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-  };
+  // Associations (as included by Sequelize in backend, if fetched)
+  outbound_bus_trip?: BusTrip;
+  return_bus_trip?: BusTrip;
+  user?: User; // Define User type if not already
+  passengers?: Passenger[]; // Array of associated Passenger objects
 }
 
-// API Response Types
-export interface BookingResponse {
-  success: boolean;
-  message: string;
-  data: Booking | Booking[];
-  pagination?: {
-    total: number;
-    page: number;
-    perPage: number;
-    totalPages: number;
-  };
-}
+// No longer need BookingResponse and CreateBookingRequest/UpdateBookingRequest from your old file.
+// ApiResponse<Booking> will handle single booking responses.
+// ApiResponse<PaginatedResponse<Booking>> will handle list responses.
+// CreateBookingPayload is the request body.
 
-export interface CreateBookingRequest {
-  tripId: number;
-  passengers: Omit<Passenger, 'id'>[];
-  paymentMethod: PaymentMethod;
-  notes?: string;
-}
-
-export interface UpdateBookingRequest {
-  bookingId: number;
-  bookingStatus?: BookingStatus;
-  paymentStatus?: PaymentStatus;
-  notes?: string;
-}
-
-// Filtering Options
+// Filtering Options (Similar to your existing, but adjusted)
 export interface BookingFilterOptions {
   userId?: number;
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
-  startDate?: Date | string;
-  endDate?: Date | string;
+  startDate?: string; // Pass dates as 'YYYY-MM-DD' strings
+  endDate?: string;
   minAmount?: number;
   maxAmount?: number;
-  sortBy?: 'bookingDate' | 'totalAmount';
+  sortBy?: 'bookingDate' | 'totalAmount'; // Align with model field names if used
   sortOrder?: 'asc' | 'desc';
   page?: number;
-  perPage?: number;
+  limit?: number; // Consistency
 }

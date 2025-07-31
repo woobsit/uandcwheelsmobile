@@ -11,13 +11,13 @@ export interface BusTrip {
   // These are the direct fields from your API response
   departure_location: string;
   departure_state: string;
-  departure_terminal: string; // If you want to use this
+  departure_terminal?: string; // If you want to use this
   arrival_location: string;
   arrival_state: string;
-  arrival_terminal: string; // If you want to use this
+  arrival_terminal?: string; // If you want to use this
 
-  bus?: Bus; // Use the updated Bus interface
-  driver?: Driver; // Use the updated Driver interface
+  bus: Bus; // Use the updated Bus interface
+  driver: Driver; // Use the updated Driver interface
   available_seats: number;
 }
 

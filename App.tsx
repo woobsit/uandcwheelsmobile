@@ -14,6 +14,9 @@ import CustomDrawerContent from './components/molecules/CustomDrawerContent'; //
 import BookTransportScreen from './screens/BookTransportScreen';
 import TripDatesScreen from './screens/TripDatesScreen'; // NEW
 import TripDetailsScreen from './screens/TripDetailsScreen'; // Existing, but logic updated
+import PassengerDetailsAndSeatSelectionScreen from './screens/PassengerDetailsAndSeatSelectionScreen';
+import PaymentScreen from './screens/PaymentScreen';
+import BookingConfirmationScreen from './screens/BookingConfirmationScreen';
 
 // Create navigators
 //const Stack = createStackNavigator<RootStackParamList>();
@@ -37,6 +40,20 @@ function DashboardDrawer() {
       <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
       <Drawer.Screen name="TripDates" component={TripDatesScreen} />
       <Drawer.Screen name="TripDetails" component={TripDetailsScreen} />
+
+      {/* ... your existing screens */}
+      <Drawer.Screen
+        name="PassengerDetailsAndSeatSelection"
+        component={PassengerDetailsAndSeatSelectionScreen}
+        options={{ headerShown: false }}
+      />
+      <Drawer.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
+      <Drawer.Screen
+        name="BookingConfirmation"
+        component={BookingConfirmationScreen}
+        options={{ headerShown: false }}
+      />
+
       {/* If you have a BookingConfirmation screen, add it here too: */}
       {/* <AuthStack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} /> */}
       {/* --------------------------- */}

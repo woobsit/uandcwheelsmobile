@@ -10,10 +10,11 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native'; // Keep useRoute for route.params
 import useRefreshControl from '../hooks/useRefreshControl'; // Your existing hook
 import { formatDate } from '../utils/dateHelpers'; // Your existing date helper
 import BusTripService from '../requests/busTripService'; // Corrected import path
@@ -21,7 +22,6 @@ import { BusTrip, BusTripFilters } from '../types/bustrip';
 import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
 import { TripDetailsScreenProps } from '../types/screenprops'; // Using your specific props type
 
-// Using your TripDetailsScreenProps directly
 export default function TripDetailsScreen({ navigation, route }: TripDetailsScreenProps) {
   // Extract all relevant parameters from the route
   const {
@@ -70,6 +70,10 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
 
       const response = await BusTripService.getScheduledBusTrips(params);
 
+      // IMPORTANT: Ensure your BusTripService.getScheduledBusTrips returns BusTrip objects
+      // that *include* the associated Bus details (capacity, seat_arrangement, taken_seats).
+      // If your backend doesn't automatically include this, you might need a separate call
+      // or modify your backend API to include bus details with the trip.
       setBusesForDate(resetPage ? response.data.items : [...busesForDate, ...response.data.items]);
 
       setPagination(prev => ({
@@ -87,15 +91,23 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
   };
 
   const handleBookSpecificTrip = (trip: BusTrip) => {
-    // This is where the user commits to a specific bus/time.
-    // You would typically navigate to a SeatSelectionScreen or a PaymentScreen from here,
-    // passing the full `trip` object or its `id` and any other accumulated booking details.
-    console.log('User selected trip:', trip.id);
-    alert(
-      `Selected Trip: ${trip.departure_location} to ${trip.arrival_location}\nTime: ${formatDate(trip.departure_time as string, 'hh:mm a')}\nBus: ${trip.bus?.brand || 'N/A'}`,
-    );
-    // Example: navigation.navigate('BookingConfirmation', { booking: { tripId: trip.id, passengerInfo: {} } });
-    // Make sure 'BookingConfirmation' is in your AuthStackParamList and accepts these props.
+    // Navigate to the PassengerDetailsAndSeatSelection screen
+    // Pass the full 'trip' object to the next screen.
+    // Ensure that 'trip.bus' is populated with necessary details (capacity, seat_arrangement, taken_seats)
+    // from your API response for the next screen to function correctly.
+    if (!trip.bus) {
+      // This is a crucial check. If the bus details aren't loaded, you can't proceed.
+      // You might fetch full trip details here if not already available, or show an error.
+      Alert.alert(
+        'Bus Details Missing',
+        'Cannot proceed without bus configuration details. Please try again or contact support.',
+      );
+      return;
+    }
+
+    navigation.navigate('PassengerDetailsAndSeatSelection', {
+      selectedBusTrip: trip,
+    });
   };
 
   useEffect(() => {
@@ -110,8 +122,8 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
       fetchBusesForDate(true);
     } else if (selectedTripId) {
       // Fallback for direct tripId navigation if still used in some flows.
-      // You would fetch a single trip by ID here if selectedTripId is the only parameter.
-      // This part might need adjustment if selectedTripId is only used for highlighting.
+      // If `selectedTripId` is used to fetch a single trip, ensure that `getBusTripDetails`
+      // also includes the `Bus` object in its response.
       BusTripService.getBusTripDetails(String(selectedTripId))
         .then(response => {
           if (response.data) {
@@ -158,7 +170,6 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* <TopNavBar title={screenTitle} onBackPress={navigation.goBack} /> */}
       <TopNavBar title={screenTitle} />
 
       <ScrollView
@@ -203,7 +214,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
                 <TouchableOpacity
                   key={trip.id}
                   style={styles.tripCard}
-                  onPress={() => handleBookSpecificTrip(trip)}
+                  onPress={() => handleBookSpecificTrip(trip)} // <-- MODIFIED LINE
                 >
                   <View style={styles.tripHeader}>
                     <Text style={styles.tripRoute}>
@@ -268,7 +279,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
 
                   <TouchableOpacity
                     style={styles.bookButton}
-                    onPress={() => handleBookSpecificTrip(trip)}
+                    onPress={() => handleBookSpecificTrip(trip)} // <-- MODIFIED LINE
                   >
                     <Text style={styles.bookButtonText}>Select This Bus</Text>
                   </TouchableOpacity>
