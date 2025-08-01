@@ -25,7 +25,7 @@ module.exports = {
       references: {
         model: 'bus_trips',
         key: 'id',
-    },
+    }},
      return_bus_trip_id: {
       type: Sequelize.INTEGER,
       allowNull: true,

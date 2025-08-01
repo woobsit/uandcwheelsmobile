@@ -6,7 +6,7 @@ export interface Bus {
   model?: string; // Added model from your Bus type, make optional if not always present
   capacity: number;
   status?: 'active' | 'maintenance' | 'retired'; // Added status from your Bus type
-   seat_arrangement?: string; // e.g., "2-2" for how seats are laid out
+  seat_arrangement?: string; // e.g., "2-2" for how seats are laid out
   taken_seats?: string[]; // Array of seat numbers that are already booked, e.g., ["A1", "B2", "C3"]
   createdAt?: string; // Added from your Bus type
   updatedAt?: string; // Added from your Bus type

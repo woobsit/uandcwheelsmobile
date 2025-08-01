@@ -27,8 +27,8 @@ export default function BookingConfirmationScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <TopNavBar title="Booking Confirmed!" canGoBack={false} /> {/* No back button */}
-
+      {/* <TopNavBar title="Booking Confirmed!" canGoBack={false} />  */}
+      <TopNavBar title="Booking Confirmed!" />
       <View style={styles.container}>
         <View style={styles.confirmationCard}>
           <MaterialIcons name="check-circle" size={100} color="#28a745" style={styles.icon} />

@@ -35,6 +35,10 @@ module.exports = {
           min: 1,
         },
       },
+      seat_arrangement: {
+        type: Sequelize.STRING(10), // e.g., '2-2', '2-1'
+        allowNull: false,
+      },
       status: {
         type: Sequelize.ENUM('active', 'maintenance', 'retired'),
         defaultValue: 'active',

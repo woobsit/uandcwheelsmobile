@@ -8,6 +8,7 @@ module.exports = {
     model: faker.vehicle.model(),
     capacity: faker.number.int({ min: 14, max: 60 }),
     status: faker.helpers.arrayElement(['active', 'maintenance']),
+    seat_arrangement: faker.helpers.arrayElement(['2-2', '2-1']),
     ...overrides,
   }),
 };

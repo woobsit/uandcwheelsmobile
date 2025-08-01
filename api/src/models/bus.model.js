@@ -38,6 +38,10 @@ Bus.init(
         min: 1,
       },
     },
+    seat_arrangement: {
+      type: DataTypes.STRING(10), // e.g., '2-2', '2-1'
+      allowNull: false,
+    },
     status: {
       type: DataTypes.ENUM('active', 'maintenance', 'retired'),
       defaultValue: 'active',

@@ -19,14 +19,15 @@ class BusTrip extends Model {
       as: 'driver',
     });
 
+    // Define two associations for bookings, one for outbound, one for return
     this.hasMany(models.Booking, {
-      foreignKey: 'bus_trip_id',
-      as: 'bookings',
+      foreignKey: 'outbound_bus_trip_id', // <-- Specify the correct foreign key
+      as: 'outboundBookings',
     });
 
     this.hasMany(models.Booking, {
-      foreignKey: 'return_bus_trip_id',
-      as: 'return_bookings',
+      foreignKey: 'return_bus_trip_id', // <-- Specify the correct foreign key
+      as: 'returnBookings',
     });
   }
 }
