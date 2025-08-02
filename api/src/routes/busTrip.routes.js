@@ -22,7 +22,12 @@ const router = Router();
 
 router.post('/create-scheduled', createBusTripValidator, validateRequest, createBusTrip);
 router.get('/all', getAllBusTripsValidator, validateRequest, getAllBusTrips);
-router.get('/show-one/:id', busTripIdValidator, validateRequest, getBusTripById);
+router.get(
+  '/one-scheduled-bus-trip-with-details/:id',
+  busTripIdValidator,
+  validateRequest,
+  getBusTripById,
+);
 router.put('/update/:id', updateBusTripValidator, validateRequest, updateBusTrip);
 router.get(
   '/scheduled-bus-trips',

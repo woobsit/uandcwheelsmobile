@@ -93,10 +93,10 @@ const BusTripService = {
   },
 
   // Get a specific Scheduled Bus Trip by ID (for user to view details before booking)
-  getBusTripDetails: async (busTripId: string): Promise<ApiResponse<BusTrip>> => {
+  getBusTripWithDetails: async (busTripId: number): Promise<BusTrip> => {
     try {
       const response = await api.get<ApiResponse<BusTrip>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS_ID(busTripId));
-      return response.data;
+      return response.data.data;
     } catch (error) {
       throw error;
     }

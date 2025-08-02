@@ -298,7 +298,7 @@ const getScheduledBusTrips = async (req, res) => {
   }
 };
 // 5. Get Bus Trip by ID
-// A slightly modified getBusTripById controller function
+// Revised getBusTripById controller function
 const getBusTripById = async (req, res) => {
   try {
     const busTrip = await db.BusTrip.findByPk(req.params.id, {
@@ -306,7 +306,7 @@ const getBusTripById = async (req, res) => {
         {
           model: db.Bus,
           as: 'bus',
-          attributes: ['id', 'plate_number', 'brand', 'capacity', 'seat_arrangement'], // <-- Include the new field
+          attributes: ['id', 'plate_number', 'brand', 'capacity', 'seat_arrangement'],
         },
         {
           model: db.Driver,
@@ -323,9 +323,8 @@ const getBusTripById = async (req, res) => {
           ],
         },
         {
-          // Include bookings that reference this bus trip as an outbound trip
           model: db.Booking,
-          as: 'outboundBookings', // Use the new alias from BusTrip model
+          as: 'outboundBookings',
           required: false,
           include: [
             {
@@ -333,14 +332,13 @@ const getBusTripById = async (req, res) => {
               as: 'passengers',
               required: false,
               where: { requires_seat: true, seat_number: { [Op.ne]: null } },
-              attributes: ['seat_number'], // Only get the seat number
+              attributes: ['seat_number'],
             },
           ],
         },
         {
-          // Include bookings that reference this bus trip as a return trip (just in case)
           model: db.Booking,
-          as: 'returnBookings', // Use the new alias from BusTrip model
+          as: 'returnBookings',
           required: false,
           include: [
             {
@@ -353,8 +351,6 @@ const getBusTripById = async (req, res) => {
           ],
         },
       ],
-      // Add an order clause for consistency
-      order: [[db.Sequelize.literal('"outboundBookings->passengers"."seat_number"'), 'ASC']],
     });
 
     if (!busTrip) {
@@ -363,7 +359,6 @@ const getBusTripById = async (req, res) => {
 
     const busTripData = busTrip.get({ plain: true });
 
-    // Combine passengers from both outbound and return bookings to get all taken seats
     const outboundSeats =
       busTripData.outboundBookings?.flatMap(booking =>
         booking.passengers.map(p => p.seat_number),
@@ -372,36 +367,36 @@ const getBusTripById = async (req, res) => {
       busTripData.returnBookings?.flatMap(booking => booking.passengers.map(p => p.seat_number)) ||
       [];
 
-    const takenSeats = [...outboundSeats, ...returnSeats].filter(Boolean); // Flatten and remove any nulls
+    // Combine all seats and then filter out nulls and sort them
+    const takenSeats = [...outboundSeats, ...returnSeats].filter(Boolean).sort((a, b) => {
+      // Custom sort for seat numbers like "S1", "S10"
+      const numA = parseInt(a.replace('S', ''), 10);
+      const numB = parseInt(b.replace('S', ''), 10);
+      return numA - numB;
+    });
 
-    // Calculate available seats (This is an alternative, more reliable method)
     const busCapacity = busTripData.bus.capacity || 0;
     const actualAvailableSeats = Math.max(0, busCapacity - takenSeats.length);
 
-    // Create the final response object with a flat structure
     const formattedBusTrip = {
       id: busTripData.id,
       departure_time: busTripData.departure_time,
       status: busTripData.status,
-      // Pulling from the nested trip object
       estimated_arrival: busTripData.trip?.estimated_arrival,
       fare: parseFloat(busTripData.trip?.fare),
       departure_terminal: busTripData.trip?.departure_terminal,
       arrival_terminal: busTripData.trip?.arrival_terminal,
-      // Pulling from nested location objects
       departure_location: busTripData.trip?.departureLocation?.name || 'N/A',
       departure_state: busTripData.trip?.departureLocation?.state || '',
       arrival_location: busTripData.trip?.arrivalLocation?.name || 'N/A',
       arrival_state: busTripData.trip?.arrivalLocation?.state || '',
-      // Bus details
       bus: {
         plate_number: busTripData.bus?.plate_number,
         brand: busTripData.bus?.brand,
         capacity: busTripData.bus?.capacity,
-        seat_arrangement: busTripData.bus?.seat_arrangement, // <-- Add this to the response
-        taken_seats: takenSeats, // <-- Add this to the response
+        seat_arrangement: busTripData.bus?.seat_arrangement,
+        taken_seats: takenSeats, // <-- This is now a sorted array
       },
-      // Driver details
       driver: {
         name: busTripData.driver?.name,
         license_number: busTripData.driver?.license_number,
@@ -433,12 +428,10 @@ const updateBusTrip = async (req, res) => {
         },
       });
       if (bookingsCount > 0) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: 'Cannot cancel bus trip with existing bookings. Refunds must be handled.',
-          });
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot cancel bus trip with existing bookings. Refunds must be handled.',
+        });
       }
     }
 
@@ -466,12 +459,10 @@ const deleteBusTrip = async (req, res) => {
     });
 
     if (bookingsCount > 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Cannot delete bus trip with existing bookings. Consider canceling instead.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete bus trip with existing bookings. Consider canceling instead.',
+      });
     }
 
     await busTrip.destroy(); // Soft delete if paranoid is true in model

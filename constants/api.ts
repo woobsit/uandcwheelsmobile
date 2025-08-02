@@ -16,7 +16,7 @@ export const ENDPOINTS = {
   BUS_TRIP_UPDATE:(id: string) => `/update-bus-trip/${id}`,
   BUS_TRIP_DELETE:(id: string) => `/delete-bus-trip/${id}`,
   USER_SCHEDULED_BUS_TRIPS:'/bus-trip/scheduled-bus-trips',
-  USER_SCHEDULED_BUS_TRIPS_ID:(id: string)=>`/scheduled-bus-trips-by-id/${id}`,
+  USER_SCHEDULED_BUS_TRIPS_ID:(id: number)=>`/bus-trip/one-scheduled-bus-trip-with-details/${id}`,
   TRIP_DETAILS: (id: string) => `/trips/${id}`,
   BOOKINGS: '/bookings',
   BOOKING_DETAILS: (id: string) => `/bookings/${id}`,
