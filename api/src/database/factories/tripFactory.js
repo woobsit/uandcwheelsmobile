@@ -12,7 +12,7 @@ module.exports = {
       departure_location_id: departureLocId, // was departure_location
       arrival_location_id: arrivalLocId, // was arrival_location
       estimated_arrival: arrival,
-      fare: faker.number.float({ min: 1500, max: 15000, precision: 2 }),
+      fare: parseInt(faker.number.float({ min: 1500, max: 15000, precision: 2 })),
       status: 'scheduled',
       departure_terminal: 'Arena Terminal',
       arrival_terminal: 'East Terminal',

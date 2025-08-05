@@ -1,5 +1,4 @@
 // screens/BookTransportScreen.tsx (No changes from the previous good version)
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -65,7 +64,6 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
         page: currentPage,
         limit: pagination.limit,
       };
-console.log(params.limit);
       const response = await BusTripService.getScheduledBusTrips(params);
       
       // Append items if not resetting, otherwise start fresh

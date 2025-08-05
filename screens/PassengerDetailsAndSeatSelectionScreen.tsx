@@ -22,7 +22,7 @@ import { CreateBookingPayload, PaymentMethod } from '../types/booking';
 import { BusTrip } from '../types/bustrip';
 
 import BusTripService from '../requests/busTripService'; // <-- We need a service function to fetch the data
-import { formatCurrency } from '../utils'; // Assuming you have a formatCurrency helper
+import { formatCurrency } from '../utils/formatCurrency'; // Assuming you have a formatCurrency helper
 
 export default function PassengerDetailsAndSeatSelectionScreen() {
   const navigation = useNavigation<PassengerDetailsAndSeatSelectionScreenProps['navigation']>();
@@ -231,7 +231,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
         Alert.alert('Loading...', 'Please wait for trip details to load.');
         return;
       }
-      if (busTripDetails.bus.taken_seats.includes(seatNumber)) {
+      if ((busTripDetails?.bus?.taken_seats ?? []).includes(seatNumber)) {
         Alert.alert('Seat Taken', `Seat ${seatNumber} is already taken.`);
         return;
       }
@@ -364,8 +364,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
         {/* Trip Summary (now uses busTripDetails) */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>
-            Trip: {busTripDetails.trip.departureLocation.name} to{' '}
-            {busTripDetails.trip.arrivalLocation.name}
+            Trip: {busTripDetails.departure_location} to {busTripDetails.arrival_location}
           </Text>
           <Text style={styles.summaryDetails}>
             Date: {new Date(busTripDetails.departure_time).toLocaleDateString()}
@@ -374,7 +373,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
             Bus: {busTripDetails.bus?.plate_number} ({busTripDetails.bus?.brand})
           </Text>
           <Text style={styles.summaryDetails}>
-            Fare per seat: {formatCurrency(busTripDetails.trip.fare)}
+            Fare per seat: {formatCurrency(busTripDetails.fare)}
           </Text>
           <Text style={styles.summaryTotal}>Total Fare: {formatCurrency(totalFare)}</Text>
         </View>
@@ -480,7 +479,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
                     const isAisle = seatNumber === 'AISLE';
                     // Use the fetched data
                     const isTaken =
-                      busTripDetails.bus.taken_seats.includes(seatNumber) &&
+                      (busTripDetails.bus.taken_seats ?? []).includes(seatNumber) &&
                       !selectedSeats.includes(seatNumber);
                     const isSelected = selectedSeats.includes(seatNumber);
 

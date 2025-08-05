@@ -1,5 +1,4 @@
 // screens/TripDatesScreen.tsx
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -46,7 +45,7 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
 
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50, // Fetch enough to cover all dates for a given route typically
+    limit: 10, // Fetch enough to cover all dates for a given route typically
     total: 0,
     hasNext: false,
   });
@@ -56,7 +55,6 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
       await fetchTripsForRoute(true);
     },
   });
-
   // Fetch trips specifically for the selected route
   const fetchTripsForRoute = async (resetPage = false) => {
     try {
@@ -76,7 +74,6 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
       };
 
       const response = await BusTripService.getScheduledBusTrips(params);
-
       // Append items if not resetting, otherwise start fresh
       setTripsForRoute(
         resetPage ? response.data.items : [...tripsForRoute, ...response.data.items],

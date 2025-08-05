@@ -172,7 +172,6 @@ const getScheduledBusTrips = async (req, res) => {
       ],
     };
 
-    // ... (Your trip and location where conditions remain the same)
     const tripWhereConditions = {};
     const departureLocationWhereConditions = {};
     const arrivalLocationWhereConditions = {};
@@ -184,23 +183,17 @@ const getScheduledBusTrips = async (req, res) => {
       arrivalLocationWhereConditions.name = { [Op.like]: `%${arrivalLocationName}%` };
     }
 
-    // Subquery to calculate total booked seats
-    const bookedSeatsSubquery = db.sequelize.literal(
-      `(SELECT SUM(COALESCE(adult_count, 0) + COALESCE(seated_child_count, 0)) FROM bookings AS Booking WHERE Booking.outbound_bus_trip_id = BusTrip.id AND Booking.status IN ('confirmed', 'pending', 'paid'))`,
-    );
-
+    // A more reliable way to fetch the data is to include the bookings
+    // and then aggregate the count in memory.
     const { count, rows: scheduledBusTrips } = await db.BusTrip.findAndCountAll({
       where: busTripWhereConditions,
-      attributes: {
-        include: [[bookedSeatsSubquery, 'booked_seats_count']],
-      },
+      // No custom attributes here to avoid issues with COUNT query
       include: [
         {
           model: db.Bus,
           as: 'bus',
           attributes: ['id', 'plate_number', 'brand', 'capacity'],
         },
-        // ... (other includes for driver and trip are the same)
         {
           model: db.Driver,
           as: 'driver',
@@ -216,35 +209,50 @@ const getScheduledBusTrips = async (req, res) => {
               model: db.Location,
               as: 'departureLocation',
               attributes: ['id', 'name', 'state'],
-              where:
-                Object.keys(departureLocationWhereConditions).length > 0
-                  ? departureLocationWhereConditions
-                  : undefined,
+              where: Object.keys(departureLocationWhereConditions).length > 0
+                ? departureLocationWhereConditions
+                : undefined,
               required: Object.keys(departureLocationWhereConditions).length > 0,
             },
             {
               model: db.Location,
               as: 'arrivalLocation',
               attributes: ['id', 'name', 'state'],
-              where:
-                Object.keys(arrivalLocationWhereConditions).length > 0
-                  ? arrivalLocationWhereConditions
-                  : undefined,
+              where: Object.keys(arrivalLocationWhereConditions).length > 0
+                ? arrivalLocationWhereConditions
+                : undefined,
               required: Object.keys(arrivalLocationWhereConditions).length > 0,
             },
           ],
+        },
+        // NEW: Include bookings here to calculate booked seats in JS
+        {
+          model: db.Booking,
+          as: 'outboundBookings',
+          attributes: ['id', 'adult_count', 'seated_child_count'],
+          required: false,
         },
       ],
       order: [['departure_time', 'ASC']],
       offset: (page - 1) * limit,
       limit,
+      subQuery: false, // Prevents Sequelize from wrapping the query in a subquery,
     });
 
+    // Post-process the fetched rows to calculate available seats and filter
     const items = scheduledBusTrips
       .map(busTrip => {
         const busTripData = busTrip.get({ plain: true });
+
+        // Calculate booked seats from the included bookings
+        const bookedSeats = busTripData.outboundBookings
+          ? busTripData.outboundBookings.reduce(
+              (sum, booking) => sum + (booking.adult_count || 0) + (booking.seated_child_count || 0),
+              0,
+            )
+          : 0;
+
         const busCapacity = busTripData.bus?.capacity || 0;
-        const bookedSeats = parseInt(busTripData.booked_seats_count || 0); // Convert to int
         const actualAvailableSeats = Math.max(0, busCapacity - bookedSeats);
 
         // Do not return trips with zero available seats
@@ -255,22 +263,24 @@ const getScheduledBusTrips = async (req, res) => {
         return {
           id: busTripData.id,
           departure_time: busTripData.departure_time,
-          estimated_arrival: busTripData.trip.estimated_arrival,
-          fare: parseFloat(busTripData.trip.fare),
+          // ✅ CORRECTED: Use optional chaining to safely access nested trip data
+          estimated_arrival: busTripData.trip?.estimated_arrival,
+          fare: parseFloat(busTripData.trip?.fare),
           status: busTripData.status,
-          departure_location: busTripData.trip.departureLocation.name,
-          departure_state: busTripData.trip.departureLocation.state,
-          departure_terminal: busTripData.trip.departure_terminal,
-          arrival_location: busTripData.trip.arrivalLocation.name,
-          arrival_state: busTripData.trip.arrivalLocation.state,
-          arrival_terminal: busTripData.trip.arrival_terminal,
+          // ✅ CORRECTED: Use optional chaining to safely access nested location data
+          departure_location: busTripData.trip?.departureLocation?.name,
+          departure_state: busTripData.trip?.departureLocation?.state,
+          departure_terminal: busTripData.trip?.departure_terminal,
+          arrival_location: busTripData.trip?.arrivalLocation?.name,
+          arrival_state: busTripData.trip?.arrivalLocation?.state,
+          arrival_terminal: busTripData.trip?.arrival_terminal,
           bus: {
-            plate_number: busTripData.bus.plate_number,
-            brand: busTripData.bus.brand,
-            capacity: busTripData.bus.capacity,
+            plate_number: busTripData.bus?.plate_number,
+            brand: busTripData.bus?.brand,
+            capacity: busTripData.bus?.capacity,
           },
           driver: {
-            name: busTripData.driver.name,
+            name: busTripData.driver?.name,
           },
           available_seats: actualAvailableSeats,
         };
@@ -279,6 +289,10 @@ const getScheduledBusTrips = async (req, res) => {
 
     const totalAvailableTrips = items.length;
 
+    // NOTE: The `count` from `findAndCountAll` now includes trips that might have 0 available seats.
+    // The `total` returned in your response will only be the count of available trips on the current page.
+    // This is a trade-off. To get a true total, you'd need another query or a more complex subquery with a HAVING clause.
+    // For now, this is a reasonable approach.
     return res.status(200).json({
       success: true,
       data: {
@@ -286,7 +300,6 @@ const getScheduledBusTrips = async (req, res) => {
         total: totalAvailableTrips,
         page,
         limit,
-        // The hasNext check is now more complex, you may need a separate query for the total count without filtering by availability
         hasNext: scheduledBusTrips.length === limit,
       },
     });

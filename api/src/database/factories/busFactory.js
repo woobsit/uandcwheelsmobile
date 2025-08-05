@@ -6,7 +6,7 @@ module.exports = {
     plate_number: `${faker.string.alpha(3).toUpperCase()}${faker.string.numeric(3)}${faker.string.alpha(2).toUpperCase()}`,
     brand: faker.vehicle.manufacturer(),
     model: faker.vehicle.model(),
-    capacity: faker.number.int({ min: 14, max: 60 }),
+    capacity: faker.number.int({ min: 8, max: 24 }),
     status: faker.helpers.arrayElement(['active', 'maintenance']),
     seat_arrangement: faker.helpers.arrayElement(['2-2', '2-1']),
     ...overrides,

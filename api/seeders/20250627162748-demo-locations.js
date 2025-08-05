@@ -6,7 +6,7 @@ module.exports = {
     const locations = [];
     const existingNames = new Set();
 
-    // Create 20 unique locations
+    // Create unique locations
     while (locations.length < 20) {
       const locationData = factory.createLocation();
 

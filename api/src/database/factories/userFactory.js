@@ -9,7 +9,7 @@ module.exports = {
     return {
       name: faker.person.fullName(),
       email: faker.internet.email(),
-      phone: `0${faker.string.numeric(10)}`, // Nigerian format
+      phone: `${faker.helpers.arrayElement(['080', '090'])}${faker.string.numeric(8)}`, // Nigerian format
       address: faker.location.streetAddress(),
       birth_date: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
       preferred_payment_method: faker.helpers.arrayElement([
