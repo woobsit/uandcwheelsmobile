@@ -12,76 +12,84 @@ module.exports = {
       await db.Location.bulkCreate(
         Array(20)
           .fill()
-          .map(() => factory.createLocation())
+          .map(() => factory.createLocation()),
       );
     }
-    
+
     // Ensure buses and drivers exist
     const busCount = await db.Bus.count();
     if (busCount === 0) {
       await db.Bus.bulkCreate(
-        Array(10)
+        Array(15)
           .fill()
-          .map(() => factory.createBus())
+          .map(() => factory.createBus()),
       );
     }
-    
+
     const driverCount = await db.Driver.count();
     if (driverCount === 0) {
       await db.Driver.bulkCreate(
-        Array(15)
+        Array(10)
           .fill()
-          .map(() => factory.createDriver())
+          .map(() => factory.createDriver()),
       );
     }
-    
+
     const locations = await db.Location.findAll();
     const buses = await db.Bus.findAll();
     const drivers = await db.Driver.findAll();
-    
+
     // Create trips
     const trips = [];
+    const existingTripPairs = new Set();
+
     for (let i = 0; i < 50; i++) {
       let departureLoc, arrivalLoc;
+      let tripPairKey;
+
       do {
         departureLoc = faker.helpers.arrayElement(locations);
         arrivalLoc = faker.helpers.arrayElement(locations);
-      } while (departureLoc.id === arrivalLoc.id);
-      
+
+        // Create a unique key for the location pair
+        tripPairKey = `${departureLoc.id}-${arrivalLoc.id}`;
+      } while (departureLoc.id === arrivalLoc.id || existingTripPairs.has(tripPairKey));
+
+      existingTripPairs.add(tripPairKey);
       trips.push(factory.createTrip(departureLoc.id, arrivalLoc.id));
     }
-    
+
     // Create trips in DB
     const createdTrips = await db.Trip.bulkCreate(trips, { returning: true });
-    
+
     // Create BusTrip records
     const busTrips = [];
     for (const trip of createdTrips) {
       // Get a bus and driver for this trip
       const bus = faker.helpers.arrayElement(buses);
       const driver = faker.helpers.arrayElement(drivers);
-      
+
       // Create multiple BusTrips for the same trip (different departure times)
       const busTripCount = faker.number.int({ min: 1, max: 3 });
-      
+
       for (let i = 0; i < busTripCount; i++) {
         // Generate random departure time within next 30 days
         const departureTime = new Date();
         departureTime.setDate(departureTime.getDate() + faker.number.int({ min: 1, max: 30 }));
         departureTime.setHours(faker.number.int({ min: 0, max: 23 }));
         departureTime.setMinutes(faker.number.int({ min: 0, max: 59 }));
-        
+
         busTrips.push({
           bus_id: bus.id,
           driver_id: driver.id,
           trip_id: trip.id,
           available_seats: bus.capacity,
           departure_time: departureTime,
-          status: 'scheduled'
+          status: 'scheduled',
         });
       }
     }
-    
+
     await queryInterface.bulkInsert('bus_trips', busTrips);
   },
 
