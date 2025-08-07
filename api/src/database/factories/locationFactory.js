@@ -3,12 +3,12 @@ const { faker } = require('@faker-js/faker');
 module.exports = {
   createLocation: (overrides = {}) => {
     const nigerianLocation = {
-      abia: ["Aba", "Arochukwu", "Umuahia"],
-      adamawa: ["Jimeta", "Mubi", "Numan", "Yola"],
-      akwaibom: ["Ikot Abasi", "Ikot Ekpene", "Oron", "Uyo"],
-      anambra: ["Awka", "Onitsha"],
-      imo: ["Owerri"],
-      lagos: ["Badagry", "Epe", "Ikeja", "Ikorodu", "Lagos", "Mushin", "Shomolu"]
+      abia: ['Aba', 'Arochukwu', 'Umuahia'],
+      adamawa: ['Jimeta', 'Mubi', 'Numan', 'Yola'],
+      akwaibom: ['Ikot Abasi', 'Ikot Ekpene', 'Oron', 'Uyo'],
+      anambra: ['Awka', 'Onitsha'],
+      imo: ['Owerri'],
+      lagos: ['Badagry', 'Epe', 'Ikeja', 'Ikorodu', 'Lagos', 'Mushin', 'Shomolu'],
     };
 
     const stateKeys = Object.keys(nigerianLocation);

@@ -8,7 +8,7 @@ module.exports = {
    */
   createPassenger: (overrides = {}) => {
     const age = faker.number.int({ min: 1, max: 100 });
-    
+
     // Determine passenger type based on age
     let type = 'adult';
     if (age < 18) {
@@ -16,8 +16,8 @@ module.exports = {
     }
 
     // Generate a valid Nigerian phone number
-    const nextOfKinPhone = `0${faker.string.numeric({ length: 10, exclude: ['0'] })}`;
-    
+    const nextOfKinPhone = `${faker.helpers.arrayElement(['080', '090'])}${faker.string.numeric({ length: 8, exclude: ['0'] })}`;
+
     // Base passenger data
     const passengerData = {
       booking_id: faker.number.int({ min: 1, max: 1000 }), // Default, but will be overridden
@@ -33,7 +33,7 @@ module.exports = {
       is_primary: false, // Let the seeder handle this flag
       ...overrides,
     };
-    
+
     return passengerData;
   },
 };

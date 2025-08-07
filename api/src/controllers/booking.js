@@ -5,20 +5,19 @@ const EmailService = require('../email/email.service');
 //const { Booking, BusTrip, Passenger } = require('../models');
 //const { calculateGroupFare } = require('../utils/priceCalculator');
 
-
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
-    const { 
-      outbound_bus_trip_id, 
-      return_bus_trip_id, 
-      passengers, 
-      payment_method, 
+    const {
+      outbound_bus_trip_id,
+      return_bus_trip_id,
+      passengers,
+      payment_method,
       user_email,
       emergency_contact_name,
-      emergency_contact_phone
+      emergency_contact_phone,
     } = req.body;
-    
+
     const userId = req.user ? req.user.id : null;
 
     // Validate passengers
@@ -26,12 +25,12 @@ const createBooking = async (req, res) => {
     const lapChildren = passengers.filter(p => p.type === 'lap-child').length;
     const seatedChildren = passengers.filter(p => p.type === 'seated-child').length;
     const totalChildren = lapChildren + seatedChildren;
-    
+
     // Validation rules
     if (lapChildren > adults) {
       return res.status(400).json({ message: 'Maximum 1 lap child per adult' });
     }
-    
+
     // Calculate seats needed
     const seatsNeeded = adults + seatedChildren + Math.ceil(lapChildren / 2);
 
@@ -40,14 +39,14 @@ const createBooking = async (req, res) => {
       transaction,
       include: [
         { association: 'bus' },
-        { 
+        {
           association: 'trip',
           include: [
             { association: 'departureLocation', as: 'departureLocation' },
-            { association: 'arrivalLocation', as: 'arrivalLocation' }
-          ]
-        }
-      ]
+            { association: 'arrivalLocation', as: 'arrivalLocation' },
+          ],
+        },
+      ],
     });
 
     if (!outboundBusTrip || outboundBusTrip.status !== 'scheduled') {
@@ -57,8 +56,8 @@ const createBooking = async (req, res) => {
 
     if (outboundBusTrip.available_seats < seatsNeeded) {
       await transaction.rollback();
-      return res.status(400).json({ 
-        message: `Only ${outboundBusTrip.available_seats} seats available on outbound trip` 
+      return res.status(400).json({
+        message: `Only ${outboundBusTrip.available_seats} seats available on outbound trip`,
       });
     }
 
@@ -66,10 +65,7 @@ const createBooking = async (req, res) => {
     if (return_bus_trip_id) {
       returnBusTrip = await BusTrip.findByPk(return_bus_trip_id, {
         transaction,
-        include: [
-          { association: 'bus' },
-          { association: 'trip' }
-        ]
+        include: [{ association: 'bus' }, { association: 'trip' }],
       });
 
       if (!returnBusTrip || returnBusTrip.status !== 'scheduled') {
@@ -79,46 +75,41 @@ const createBooking = async (req, res) => {
 
       if (returnBusTrip.available_seats < seatsNeeded) {
         await transaction.rollback();
-        return res.status(400).json({ 
-          message: `Only ${returnBusTrip.available_seats} seats available on return trip` 
+        return res.status(400).json({
+          message: `Only ${returnBusTrip.available_seats} seats available on return trip`,
         });
       }
     }
 
     // 2. Calculate pricing
-    const outboundFare = calculateGroupFare(
-      adults, 
-      totalChildren, 
-      outboundBusTrip.trip.fare
-    );
+    const outboundFare = calculateGroupFare(adults, totalChildren, outboundBusTrip.trip.fare);
 
     let returnFare = 0;
     if (returnBusTrip) {
-      returnFare = calculateGroupFare(
-        adults, 
-        totalChildren, 
-        returnBusTrip.trip.fare
-      );
+      returnFare = calculateGroupFare(adults, totalChildren, returnBusTrip.trip.fare);
     }
 
     const totalAmount = outboundFare + returnFare;
 
     // 3. Create booking
-    const booking = await Booking.create({
-      user_id: userId,
-      outbound_bus_trip_id,
-      return_bus_trip_id: returnBusTrip ? returnBusTrip.id : null,
-      adult_count: adults,
-      lap_child_count: lapChildren,
-      seated_child_count: seatedChildren,
-      total_amount: totalAmount,
-      payment_status: 'pending',
-      is_guest: !userId,
-      guest_email: userId ? null : user_email,
-      emergency_contact_name,
-      emergency_contact_phone,
-      total_seats: seatsNeeded
-    }, { transaction });
+    const booking = await Booking.create(
+      {
+        user_id: userId,
+        outbound_bus_trip_id,
+        return_bus_trip_id: returnBusTrip ? returnBusTrip.id : null,
+        adult_count: adults,
+        lap_child_count: lapChildren,
+        seated_child_count: seatedChildren,
+        total_amount: totalAmount,
+        payment_status: 'pending',
+        is_guest: !userId,
+        guest_email: userId ? null : user_email,
+        emergency_contact_name,
+        emergency_contact_phone,
+        total_seats: seatsNeeded,
+      },
+      { transaction },
+    );
 
     // 4. Create passengers
     const passengerRecords = passengers.map(passenger => {
@@ -133,14 +124,20 @@ const createBooking = async (req, res) => {
     await Passenger.bulkCreate(passengerRecords, { transaction });
 
     // 5. Update bus trip seat availability
-    await outboundBusTrip.update({
-      available_seats: outboundBusTrip.available_seats - seatsNeeded
-    }, { transaction });
+    await outboundBusTrip.update(
+      {
+        available_seats: outboundBusTrip.available_seats - seatsNeeded,
+      },
+      { transaction },
+    );
 
     if (returnBusTrip) {
-      await returnBusTrip.update({
-        available_seats: returnBusTrip.available_seats - seatsNeeded
-      }, { transaction });
+      await returnBusTrip.update(
+        {
+          available_seats: returnBusTrip.available_seats - seatsNeeded,
+        },
+        { transaction },
+      );
     }
 
     // 6. Process payment
@@ -150,23 +147,98 @@ const createBooking = async (req, res) => {
     const email = userId ? req.user.email : user_email;
     if (email) {
       await sendBookingConfirmation(
-        email, 
-        booking, 
-        outboundBusTrip, 
-        returnBusTrip, 
-        passengerRecords
+        email,
+        booking,
+        outboundBusTrip,
+        returnBusTrip,
+        passengerRecords,
       );
     }
 
     await transaction.commit();
-    return res.status(201).json({ 
-      success: true, 
-      data: booking 
+    return res.status(201).json({
+      success: true,
+      data: booking,
     });
-    
   } catch (error) {
     await transaction.rollback();
     logger.error('Booking failed', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+const createInitialBooking = async (req, res) => {
+  const transaction = await db.sequelize.transaction();
+  try {
+    // Get the bus trip IDs from the request body
+    const { outbound_bus_trip_id, return_bus_trip_id } = req.body; // Get the user ID from the authenticated user or set to null for guests
+    const userId = req.user ? req.user.id : null; // 1. Validate bus trip availability
+    const outboundBusTrip = await db.BusTrip.findByPk(outbound_bus_trip_id, {
+      transaction,
+    });
+
+    if (!outboundBusTrip || outboundBusTrip.available_seats <= 0) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Outbound trip not available or no seats left.' });
+    } // Check for a return trip if provided
+
+    let returnBusTrip = null;
+    if (return_bus_trip_id) {
+      returnBusTrip = await db.BusTrip.findByPk(return_bus_trip_id, { transaction });
+      if (!returnBusTrip || returnBusTrip.available_seats <= 0) {
+        await transaction.rollback();
+        return res.status(400).json({ message: 'Return trip not available or no seats left.' });
+      }
+    } // 2. Create the provisional booking
+
+    const booking = await db.Booking.create(
+      {
+        user_id: userId,
+        outbound_bus_trip_id,
+        return_bus_trip_id: returnBusTrip ? returnBusTrip.id : null, // Set initial values
+        total_seats: 1, // Temporarily reserve one seat to prevent overbooking on the first click
+        payment_status: 'pending_details', // New status to indicate details are needed
+        status: 'provisional', // New status for initial reservation
+        total_amount: 0, // Will be calculated on the next screen
+        adult_count: 0,
+        lap_child_count: 0,
+        seated_child_count: 0,
+        is_guest: !userId, // Other fields are null by default
+      },
+      { transaction },
+    ); // 3. Deduct one seat from the available count for the reservation
+
+    await db.BusTrip.update(
+      { available_seats: db.sequelize.literal('available_seats - 1') },
+      {
+        where: { id: outboundBusTrip.id },
+        transaction,
+      },
+    );
+
+    if (returnBusTrip) {
+      await db.BusTrip.update(
+        { available_seats: db.sequelize.literal('available_seats - 1') },
+        {
+          where: { id: returnBusTrip.id },
+          transaction,
+        },
+      );
+    }
+
+    await transaction.commit();
+    return res.status(201).json({
+      success: true,
+      message: 'Initial booking created successfully.',
+      bookingId: booking.id,
+      bookingReference: booking.booking_reference,
+    });
+  } catch (error) {
+    await transaction.rollback();
+    logger.error('Initial booking failed', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -182,28 +254,26 @@ async function sendBookingConfirmation(email, booking, outboundBusTrip, returnBu
     bus: outboundBusTrip.bus,
   };
 
-  const returnData = returnBusTrip ? {
-    departure: returnBusTrip.trip.departureLocation.name,
-    arrival: returnBusTrip.trip.arrivalLocation.name,
-    departure_time: returnBusTrip.departure_time,
-    bus: returnBusTrip.bus,
-  } : null;
+  const returnData = returnBusTrip
+    ? {
+        departure: returnBusTrip.trip.departureLocation.name,
+        arrival: returnBusTrip.trip.arrivalLocation.name,
+        departure_time: returnBusTrip.departure_time,
+        bus: returnBusTrip.bus,
+      }
+    : null;
 
-  await EmailService.sendBookingConfirmation(
-    email,
-    'Guest',
-    {
-      reference: booking.booking_reference,
-      total_amount: booking.total_amount,
-      outbound: tripData,
-      return: returnData,
-      passengers: passengers.map(p => ({
-        name: p.name,
-        type: p.type,
-        seat: p.seat_number
-      }))
-    }
-  );
+  await EmailService.sendBookingConfirmation(email, 'Guest', {
+    reference: booking.booking_reference,
+    total_amount: booking.total_amount,
+    outbound: tripData,
+    return: returnData,
+    passengers: passengers.map(p => ({
+      name: p.name,
+      type: p.type,
+      seat: p.seat_number,
+    })),
+  });
 }
 
 // Helper function to send booking confirmation
@@ -215,18 +285,20 @@ async function sendBookingConfirmation(email, booking, busTrip, returnBusTrip, p
     bus: {
       brand: busTrip.Bus.brand,
       plate_number: busTrip.Bus.plate_number,
-    }
+    },
   };
 
-  const returnData = returnBusTrip ? {
-    departure_location: returnBusTrip.trip.departureLocation.name,
-    arrival_location: returnBusTrip.trip.arrivalLocation.name,
-    departure_time: returnBusTrip.departure_time,
-    bus: {
-      brand: returnBusTrip.Bus.brand,
-      plate_number: returnBusTrip.Bus.plate_number,
-    }
-  } : null;
+  const returnData = returnBusTrip
+    ? {
+        departure_location: returnBusTrip.trip.departureLocation.name,
+        arrival_location: returnBusTrip.trip.arrivalLocation.name,
+        departure_time: returnBusTrip.departure_time,
+        bus: {
+          brand: returnBusTrip.Bus.brand,
+          plate_number: returnBusTrip.Bus.plate_number,
+        },
+      }
+    : null;
 
   await EmailService.sendBookingConfirmation(
     email,
@@ -240,9 +312,9 @@ async function sendBookingConfirmation(email, booking, busTrip, returnBusTrip, p
         name: p.name,
         type: p.type,
         seat: p.seat_assignment,
-        fare: p.fare_paid
-      }))
-    }
+        fare: p.fare_paid,
+      })),
+    },
   );
 }
 

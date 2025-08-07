@@ -12,7 +12,7 @@ module.exports = {
       include: [{ model: db.Bus, as: 'bus', attributes: ['capacity'] }],
     });
     const users = await db.User.findAll();
-    
+
     // Ensure we have data to work with
     if (busTrips.length === 0 || users.length === 0) {
       console.warn('BusTrips or Users not found. Skipping booking seeding.');
@@ -51,7 +51,7 @@ module.exports = {
             adult_count: adultCount,
             seated_child_count: seatedChildCount,
             lap_child_count: lapChildCount,
-          }
+          },
         );
         bookings.push(bookingData);
 

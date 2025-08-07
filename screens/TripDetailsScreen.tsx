@@ -120,25 +120,6 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
       departureDate
     ) {
       fetchBusesForDate(true);
-    } else if (selectedTripId) {
-      // Fallback for direct tripId navigation if still used in some flows.
-      // If `selectedTripId` is used to fetch a single trip, ensure that `getBusTripDetails`
-      // also includes the `Bus` object in its response.
-      BusTripService.getBusTripDetails(String(selectedTripId))
-        .then(response => {
-          if (response.data) {
-            setBusesForDate([response.data]);
-          } else {
-            setError('Trip details not found.');
-          }
-        })
-        .catch(err => {
-          setError('Failed to load specific trip details.');
-          console.error('Error fetching specific trip:', err);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
     } else {
       setError('Missing route or trip information to display details.');
       setIsLoading(false);
@@ -226,7 +207,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
 
                   <View style={styles.tripDetails}>
                     <View style={styles.detailItem}>
-                      <MaterialIcons name="directions_bus" size={18} color="#666" />
+                      <MaterialIcons name="local-shipping" size={18} color="#666" />
                       <Text style={styles.detailText}>
                         Bus: {trip.bus?.brand || 'Standard Bus'} • {trip.bus?.capacity || 'N/A'}{' '}
                         seats ({trip.bus?.plate_number})
@@ -234,7 +215,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
                     </View>
 
                     <View style={styles.detailItem}>
-                      <MaterialIcons name="airline_seat_recline_normal" size={18} color="#666" />
+                      <MaterialIcons name="chair" size={18} color="#666" />
                       <Text style={styles.detailText}>Available Seats: {trip.available_seats}</Text>
                     </View>
 
@@ -245,7 +226,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
                       </Text>
                     </View>
                     <View style={styles.detailItem}>
-                      <MaterialIcons name="departure_board" size={18} color="#666" />
+                      <MaterialIcons name="place" size={18} color="#666" />
                       <Text style={styles.detailText}>
                         Dep. Terminal: {trip.departure_terminal || 'N/A'}
                       </Text>
