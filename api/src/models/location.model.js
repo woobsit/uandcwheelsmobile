@@ -30,7 +30,6 @@ Location.init(
     state: {
       type: DataTypes.STRING(),
       allowNull: true,
-      unique: true,
     },
   },
   {

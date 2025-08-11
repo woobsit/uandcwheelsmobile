@@ -8,7 +8,7 @@ module.exports = {
       akwaibom: ['Ikot Abasi', 'Ikot Ekpene', 'Oron', 'Uyo'],
       anambra: ['Awka', 'Onitsha'],
       imo: ['Owerri'],
-      lagos: ['Badagry', 'Epe', 'Ikeja', 'Ikorodu', 'Lagos', 'Mushin', 'Shomolu'],
+      lagos: ['Badagry', 'Epe', 'Ikeja', 'Ikorodu', 'Mushin', 'Shomolu'],
     };
 
     const stateKeys = Object.keys(nigerianLocation);

@@ -11,53 +11,43 @@ module.exports = {
    */
   createBooking: (userId, outboundBusTripId, returnBusTripId = null, overrides = {}) => {
     const isGuest = userId === null || userId === undefined;
-    const passengerCount = faker.number.int({ min: 1, max: 4 });
-    const adultCount = faker.number.int({ min: 1, max: passengerCount });
-    const seatedChildCount = faker.number.int({ min: 0, max: passengerCount - adultCount });
-    const lapChildCount = passengerCount - adultCount - seatedChildCount;
+    const { total_amount, adult_count, seated_child_count, lap_child_count, ...otherOverrides } = overrides;
+
+    const passengerCount = adult_count + seated_child_count; // Lap children don't occupy a seat
 
     // Base booking data
     const bookingData = {
-      // Required IDs
       user_id: isGuest ? null : userId,
       outbound_bus_trip_id: outboundBusTripId,
       return_bus_trip_id: returnBusTripId,
 
-      // Auto-generated fields in the model, so we don't need to generate them here
-      // booking_reference: handled by model hook
-      // booking_date: handled by model defaultValue
-
-      // Required fields
-      total_amount: faker.number.float({ min: 1500 * passengerCount, max: 15000 * passengerCount, precision: 2 }),
-      amount_paid: faker.number.float({ min: 1500 * passengerCount, max: 15000 * passengerCount, precision: 2 }),
+      // These values are now expected to be passed via overrides
+      total_amount: total_amount,
+      amount_paid: total_amount, // Assume all bookings are paid for seeding
       status: faker.helpers.arrayElement(['confirmed', 'cancelled']),
-      
-      // Passenger counts
-      adult_count: adultCount,
-      lap_child_count: lapChildCount,
-      seated_child_count: seatedChildCount,
-      
-      // Guest-related
+
+      // Passenger counts from overrides
+      adult_count: adult_count || 0,
+      lap_child_count: lap_child_count || 0,
+      seated_child_count: seated_child_count || 0,
+
       is_guest: isGuest,
       guest_email: isGuest ? faker.internet.email() : null,
 
-      // Other fields
-      payment_status: faker.helpers.arrayElement(['paid', 'pending', 'failed']),
+      payment_status: 'paid', // Assume 'paid' for confirmed bookings
       payment_method: faker.helpers.arrayElement(['credit_card', 'bank_transfer', 'cash', null]),
       notes: faker.lorem.sentence(),
       emergency_contact_name: faker.person.fullName(),
       emergency_contact_phone: `0${faker.string.numeric({ length: 10 })}`,
 
-      ...overrides,
+      ...otherOverrides,
     };
 
-    // Ensure amount_paid doesn't exceed total_amount and is set to 0 if payment is pending/failed
+    // Ensure amount_paid is set to 0 if payment is pending/failed
     if (bookingData.payment_status === 'pending' || bookingData.payment_status === 'failed') {
       bookingData.amount_paid = 0;
-    } else if (bookingData.amount_paid > bookingData.total_amount) {
-        bookingData.amount_paid = bookingData.total_amount;
     }
-
+    
     return bookingData;
   },
 };
