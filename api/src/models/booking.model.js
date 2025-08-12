@@ -4,7 +4,6 @@ const sequelize = require('../config/config');
 const { generateBookingRef } = require('../utils/bookingHelpers');
 const db = require('../models');
 
-
 class Booking extends Model {
   static async createBooking(bookingData) {
     return await this.create({
@@ -188,21 +187,24 @@ Booking.init(
     paranoid: true,
     hooks: {
       beforeValidate: booking => {
+        // Calculate the total seats before validation
+        booking.total_seats_booked = booking.adult_count + booking.seated_child_count;
+
         if (booking.notes) booking.notes = booking.notes.trim();
       },
       afterCreate: async booking => {
-        // Update trip availability
-        await updateBusTripSeats(booking.outbound_bus_trip_id, -booking.total_seats);
+        // Use the newly calculated total_seats_booked
+        await updateBusTripSeats(booking.outbound_bus_trip_id, -booking.total_seats_booked);
         if (booking.return_bus_trip_id) {
-          await updateBusTripSeats(booking.return_bus_trip_id, -booking.total_seats);
+          await updateBusTripSeats(booking.return_bus_trip_id, -booking.total_seats_booked);
         }
       },
       afterUpdate: async booking => {
         if (booking.changed('status') && booking.status === 'cancelled') {
-          // Restore seats when cancelled
-          await updateBusTripSeats(booking.outbound_bus_trip_id, booking.total_seats);
+          // Use the newly calculated total_seats_booked
+          await updateBusTripSeats(booking.outbound_bus_trip_id, booking.total_seats_booked);
           if (booking.return_bus_trip_id) {
-            await updateBusTripSeats(booking.return_bus_trip_id, booking.total_seats);
+            await updateBusTripSeats(booking.return_bus_trip_id, booking.total_seats_booked);
           }
         }
       },

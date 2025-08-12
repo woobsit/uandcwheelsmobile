@@ -65,11 +65,11 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
         limit: pagination.limit,
       };
       const response = await BusTripService.getScheduledBusTrips(params);
-      
+      console.log(response.data);
       // Append items if not resetting, otherwise start fresh
       setTrips(resetPage ? response.data.items : [...trips, ...response.data.items]);
 
-    setPagination(prev => ({
+      setPagination(prev => ({
         ...prev,
         page: currentPage,
         total: response.data.total,

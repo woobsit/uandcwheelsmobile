@@ -209,18 +209,20 @@ const getScheduledBusTrips = async (req, res) => {
               model: db.Location,
               as: 'departureLocation',
               attributes: ['id', 'name', 'state'],
-              where: Object.keys(departureLocationWhereConditions).length > 0
-                ? departureLocationWhereConditions
-                : undefined,
+              where:
+                Object.keys(departureLocationWhereConditions).length > 0
+                  ? departureLocationWhereConditions
+                  : undefined,
               required: Object.keys(departureLocationWhereConditions).length > 0,
             },
             {
               model: db.Location,
               as: 'arrivalLocation',
               attributes: ['id', 'name', 'state'],
-              where: Object.keys(arrivalLocationWhereConditions).length > 0
-                ? arrivalLocationWhereConditions
-                : undefined,
+              where:
+                Object.keys(arrivalLocationWhereConditions).length > 0
+                  ? arrivalLocationWhereConditions
+                  : undefined,
               required: Object.keys(arrivalLocationWhereConditions).length > 0,
             },
           ],
@@ -247,7 +249,8 @@ const getScheduledBusTrips = async (req, res) => {
         // Calculate booked seats from the included bookings
         const bookedSeats = busTripData.outboundBookings
           ? busTripData.outboundBookings.reduce(
-              (sum, booking) => sum + (booking.adult_count || 0) + (booking.seated_child_count || 0),
+              (sum, booking) =>
+                sum + (booking.adult_count || 0) + (booking.seated_child_count || 0),
               0,
             )
           : 0;

@@ -1,6 +1,6 @@
 'use strict';
-const factory = require('../src/database/factories');
-const db = require('../src/models');
+const factory = require('./database/factories');
+const db = require('./models');
 const { faker } = require('@faker-js/faker');
 
 module.exports = {
