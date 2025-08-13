@@ -56,34 +56,57 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
     },
   });
   // Fetch trips specifically for the selected route
+  // Fetch trips specifically for the selected route, fetching all pages if necessary
   const fetchTripsForRoute = async (resetPage = false) => {
     try {
       setIsLoading(true);
       setError(null);
-      let currentPage = resetPage ? 1 : pagination.page;
 
-      const params: BusTripFilters = {
-        status: 'scheduled',
-        page: currentPage,
-        limit: pagination.limit,
-        departureLocationName,
-        departureLocationState,
-        arrivalLocationName,
-        arrivalLocationState,
-        // Do NOT include departureDate here, we want ALL dates for this route
-      };
+      let allItems: BusTrip[] = [];
+      let currentPage = 1;
+      let hasNextPage = true;
 
-      const response = await BusTripService.getScheduledBusTrips(params);
-      // Append items if not resetting, otherwise start fresh
-      setTripsForRoute(
-        resetPage ? response.data.items : [...tripsForRoute, ...response.data.items],
-      );
+      // Reset trips if this is a refresh or initial load
+      if (resetPage) {
+        setTripsForRoute([]);
+      } else {
+        allItems = [...tripsForRoute];
+      }
 
+      while (hasNextPage) {
+        const params: BusTripFilters = {
+          status: 'scheduled',
+          page: currentPage,
+          limit: pagination.limit,
+          departureLocationName,
+          departureLocationState,
+          arrivalLocationName,
+          arrivalLocationState,
+        };
+
+        const response = await BusTripService.getScheduledBusTrips(params);
+
+        // Append new items to our growing list
+        allItems = [...allItems, ...response.data.items];
+
+        // Update the pagination state based on the last response
+        hasNextPage = response.data.hasNext;
+        currentPage++;
+
+        // Safety break to prevent infinite loops with a misconfigured API
+        if (currentPage > 50) {
+          console.warn('Reached page limit of 50. Breaking fetch loop.');
+          break;
+        }
+      }
+
+      // After fetching all pages, set the final state
+      setTripsForRoute(allItems);
       setPagination(prev => ({
         ...prev,
-        page: currentPage,
-        total: response.data.total,
-        hasNext: response.data.hasNext,
+        page: currentPage - 1,
+        total: allItems.length,
+        hasNext: false, // All data is loaded, so there's no next page
       }));
     } catch (err) {
       setError('Failed to load trips for this route. Please try again.');
@@ -93,6 +116,11 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
     }
   };
 
+  // Remove the second useEffect that listens for pagination.page changes,
+  // as the new fetch function handles it internally.
+  useEffect(() => {
+    fetchTripsForRoute(true);
+  }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]);
   // Memoize unique departure dates for the selected route
   const uniqueDepartureDates = useMemo(() => {
     const datesMap = new Map<string, UniqueDepartureDate>(); // Key: 'yyyy-MM-dd'
@@ -159,7 +187,7 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
   const screenTitle = `${departureLocationName} to ${arrivalLocationName}`;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* <TopNavBar title={screenTitle} onBackPress={navigation.goBack} /> */}
       <TopNavBar title={screenTitle} />
 

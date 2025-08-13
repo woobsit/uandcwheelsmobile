@@ -51,6 +51,7 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
   });
 
   // Fetch individual bus trips matching the route and date
+  // Fetch individual bus trips matching the route and date
   const fetchBusesForDate = async (resetPage = false) => {
     try {
       setIsLoading(true);
@@ -65,16 +66,23 @@ export default function TripDetailsScreen({ navigation, route }: TripDetailsScre
         departureLocationState,
         arrivalLocationName,
         arrivalLocationState,
-        date: departureDate, // Pass the selected date string (YYYY-MM-DD) for filtering
+        date: departureDate,
       };
 
       const response = await BusTripService.getScheduledBusTrips(params);
 
-      // IMPORTANT: Ensure your BusTripService.getScheduledBusTrips returns BusTrip objects
-      // that *include* the associated Bus details (capacity, seat_arrangement, taken_seats).
-      // If your backend doesn't automatically include this, you might need a separate call
-      // or modify your backend API to include bus details with the trip.
-      setBusesForDate(resetPage ? response.data.items : [...busesForDate, ...response.data.items]);
+      // Filter out any trips with missing crucial data
+      const validTrips = response.data.items.filter(
+        trip =>
+          trip.departure_time &&
+          trip.bus &&
+          trip.bus.brand &&
+          trip.bus.capacity &&
+          trip.departure_terminal &&
+          trip.arrival_terminal,
+      );
+
+      setBusesForDate(resetPage ? validTrips : [...busesForDate, ...validTrips]);
 
       setPagination(prev => ({
         ...prev,

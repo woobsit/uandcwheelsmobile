@@ -1,4 +1,4 @@
-// screens/BookTransportScreen.tsx (No changes from the previous good version)
+// screens/BookTransportScreen.tsx (Corrected)
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -21,7 +21,7 @@ import { BusTrip, BusTripFilters } from '../types/bustrip';
 import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
 import { BookTransportScreenProps } from '../types/screenprops'; // Using your specific props type
 
-// Define a type for a unique trip route for display on the main screen
+// ... (Interface definitions remain the same) ...
 interface UniqueTripRoute {
   departureLocationName: string;
   departureLocationState: string;
@@ -29,20 +29,19 @@ interface UniqueTripRoute {
   arrivalLocationState: string;
   minFare: number;
   maxFare: number;
-  availableDatesCount: number; // Number of distinct departure dates for this route
+  availableDatesCount: number;
 }
 
-// Using your BookTransportScreenProps directly
 export default function BookTransportScreen({ navigation }: BookTransportScreenProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<BusTrip[]>([]); // This will hold ALL fetched trips
+  const [trips, setTrips] = useState<BusTrip[]>([]);
   const [error, setError] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50, // Fetch more to accurately group unique routes and dates
+    limit: 30,
     total: 0,
     hasNext: false,
   });
@@ -57,38 +56,56 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
     try {
       setIsLoading(true);
       setError(null);
-      let currentPage = resetPage ? 1 : pagination.page;
 
-      const params: BusTripFilters = {
-        status: 'scheduled',
-        page: currentPage,
-        limit: pagination.limit,
-      };
-      const response = await BusTripService.getScheduledBusTrips(params);
-      console.log(response.data);
-      // Append items if not resetting, otherwise start fresh
-      setTrips(resetPage ? response.data.items : [...trips, ...response.data.items]);
+      let allItems: BusTrip[] = [];
+      let currentPage = 1;
+      let hasNextPage = true;
 
+      // Reset trips if this is a refresh or initial load
+      if (resetPage) {
+        setTrips([]);
+      } else {
+        // Keep existing trips if we're just loading more
+        allItems = [...trips];
+      }
+
+      while (hasNextPage) {
+        const params: BusTripFilters = {
+          status: 'scheduled',
+          page: currentPage,
+          limit: pagination.limit,
+        };
+        const response = await BusTripService.getScheduledBusTrips(params);
+
+        allItems = [...allItems, ...response.data.items];
+
+        // Check if there are more pages
+        hasNextPage = response.data.hasNext;
+        currentPage++;
+
+        // To avoid an infinite loop in case of bad data,
+        // we can add a safety break, e.g., if page > 100
+        if (currentPage > 100) break;
+      }
+
+      setTrips(allItems);
+      // We've loaded all data, so pagination is effectively done
       setPagination(prev => ({
         ...prev,
-        page: currentPage,
-        total: response.data.total,
-        hasNext: response.data.hasNext,
+        page: currentPage - 1, // Set to the last page number
+        total: allItems.length,
+        hasNext: false,
       }));
     } catch (err) {
-      setError('Failed to load trips. Please try again.');
-      console.error('Error fetching trips:', err);
+      setError('Failed to load all trips. Please try again.');
+      console.error('Error fetching all trips:', err);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Memoize unique trip routes and their aggregated info
   const uniqueTripRoutes = useMemo(() => {
-    const routesMap = new Map<string, UniqueTripRoute>(); // Key: "departureName_departureState_arrivalName_arrivalState"
-
+    const routesMap = new Map<string, UniqueTripRoute>();
     trips.forEach(trip => {
-      // Ensure essential properties exist before processing
       if (
         !trip.departure_location ||
         !trip.departure_state ||
@@ -102,7 +119,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
       }
 
       const routeKey = `${trip.departure_location}_${trip.departure_state}_${trip.arrival_location}_${trip.arrival_state}`;
-      const departureDateKey = formatDate(trip.departure_time as string, 'yyyy-MM-dd'); // Use just the date for grouping unique dates
+      const departureDateKey = formatDate(trip.departure_time as string, 'yyyy-MM-dd');
 
       if (!routesMap.has(routeKey)) {
         routesMap.set(routeKey, {
@@ -112,7 +129,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
           arrivalLocationState: trip.arrival_state,
           minFare: trip.fare,
           maxFare: trip.fare,
-          availableDatesCount: 0, // Will be calculated below
+          availableDatesCount: 0,
         });
       }
 
@@ -120,21 +137,18 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
       currentRoute.minFare = Math.min(currentRoute.minFare, trip.fare);
       currentRoute.maxFare = Math.max(currentRoute.maxFare, trip.fare);
 
-      // Use a temporary Set to count unique dates for this route
       if (!(currentRoute as any)._uniqueDates) {
         (currentRoute as any)._uniqueDates = new Set<string>();
       }
       (currentRoute as any)._uniqueDates.add(departureDateKey);
     });
 
-    // Finalize the availableDatesCount after iterating through all trips
     const routesArray = Array.from(routesMap.values()).map(route => ({
       ...route,
       availableDatesCount: (route as any)._uniqueDates.size,
-      _uniqueDates: undefined, // Clean up temporary property
+      _uniqueDates: undefined,
     }));
 
-    // Filter by search term across all route parts
     const term = searchTerm.toLowerCase();
     const filtered = routesArray.filter(
       route =>
@@ -144,18 +158,15 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
         route.arrivalLocationState.toLowerCase().includes(term),
     );
 
-    // Sort by departure location name, then arrival location name
     filtered.sort((a, b) => {
       const depCompare = a.departureLocationName.localeCompare(b.departureLocationName);
       if (depCompare !== 0) return depCompare;
       return a.arrivalLocationName.localeCompare(b.arrivalLocationName);
     });
     return filtered;
-  }, [trips, searchTerm]); // Re-run memo if trips or search term change
+  }, [trips, searchTerm]);
 
-  // Handle selecting a unique trip route
   const handleSelectRoute = (route: UniqueTripRoute) => {
-    // Navigate to TripDatesScreen, passing the route details
     navigation.navigate('TripDates', {
       departureLocationName: route.departureLocationName,
       departureLocationState: route.departureLocationState,
@@ -164,144 +175,139 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
     });
   };
 
-  // Initial fetch on component mount
   useEffect(() => {
     fetchTrips(true);
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // For infinite scrolling: load more data when page changes
   useEffect(() => {
     if (pagination.page > 1) {
-      // Prevents re-fetching on initial mount with page 1
       fetchTrips();
     }
   }, [pagination.page]);
 
   const handleLoadMore = () => {
-    // Only load more if there's a next page and not already loading
     if (pagination.hasNext && !isLoading) {
       setPagination(prev => ({ ...prev, page: prev.page + 1 }));
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <TopNavBar title={'Book Transport'} />
-
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
-        }
-        onScroll={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          // Check if we are 20 pixels from the bottom
-          const isCloseToBottom =
-            layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-          if (isCloseToBottom) {
-            handleLoadMore();
+      <View style={styles.contentWrapper}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollViewContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
           }
-        }}
-        scrollEventThrottle={400} // Adjust throttle for performance
-      >
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Feather name="search" size={20} color="#999" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={'Search by departure/arrival city or state...'}
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        {isLoading && trips.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading available trip routes...</Text>
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const isCloseToBottom =
+              layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+            if (isCloseToBottom) {
+              handleLoadMore();
+            }
+          }}
+          scrollEventThrottle={400}
+        >
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <Feather name="search" size={20} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={'Search by departure/arrival city or state...'}
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              placeholderTextColor="#999"
+            />
           </View>
-        ) : error ? (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
-            <Text style={styles.emptyText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => fetchTrips(true)}>
-              <Text style={styles.retryButtonText}>Try Again</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <Text style={styles.sectionTitle}>
-              Available Trip Routes ({uniqueTripRoutes.length})
-            </Text>
-            {uniqueTripRoutes.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <MaterialIcons name="route" size={60} color="#ddd" />
-                <Text style={styles.emptyText}>No trip routes found.</Text>
-                <Text style={styles.emptySubtext}>
-                  Try adjusting your search criteria or refresh.
-                </Text>
-              </View>
-            ) : (
-              uniqueTripRoutes.map((route, index) => (
-                <TouchableOpacity
-                  key={`${route.departureLocationName}-${route.departureLocationState}-${route.arrivalLocationName}-${route.arrivalLocationState}-${index}`}
-                  style={styles.routeCard}
-                  onPress={() => handleSelectRoute(route)}
-                >
-                  <View style={styles.routeHeader}>
-                    <View style={styles.routeTextContainer}>
-                      <Text style={styles.routeLocationText}>
-                        {route.departureLocationName} ({route.departureLocationState})
-                      </Text>
-                      <MaterialIcons
-                        name="arrow-forward"
-                        size={20}
-                        color="#333"
-                        style={styles.arrowIcon}
-                      />
-                      <Text style={styles.routeLocationText}>
-                        {route.arrivalLocationName} ({route.arrivalLocationState})
-                      </Text>
-                    </View>
-                    <Text style={styles.routePriceRange}>
-                      ₦{route.minFare?.toLocaleString()}
-                      {route.minFare !== route.maxFare
-                        ? ` - ₦${route.maxFare?.toLocaleString()}`
-                        : ''}
-                    </Text>
-                  </View>
 
-                  <View style={styles.routeDetails}>
-                    <View style={styles.detailItem}>
-                      <MaterialIcons name="date-range" size={18} color="#666" />
-                      <Text style={styles.detailText}>
-                        {route.availableDatesCount} available departure dates
-                      </Text>
-                    </View>
-                  </View>
-
+          {isLoading && trips.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Loading available trip routes...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
+              <Text style={styles.emptyText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => fetchTrips(true)}>
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.sectionTitle}>
+                {/* Available Trip Routes ({uniqueTripRoutes.length}) */}
+                Available Trip Routes
+              </Text>
+              {uniqueTripRoutes.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <MaterialIcons name="route" size={60} color="#ddd" />
+                  <Text style={styles.emptyText}>No trip routes found.</Text>
+                  <Text style={styles.emptySubtext}>
+                    Try adjusting your search criteria or refresh.
+                  </Text>
+                </View>
+              ) : (
+                uniqueTripRoutes.map((route, index) => (
                   <TouchableOpacity
-                    style={styles.viewTripsButton}
+                    key={`${route.departureLocationName}-${route.departureLocationState}-${route.arrivalLocationName}-${route.arrivalLocationState}-${index}`}
+                    style={styles.routeCard}
                     onPress={() => handleSelectRoute(route)}
                   >
-                    <Text style={styles.viewTripsButtonText}>View Dates</Text>
+                    <View style={styles.routeHeader}>
+                      <View style={styles.routeTextContainer}>
+                        <Text style={styles.routeLocationText}>
+                          {route.departureLocationName} ({route.departureLocationState})
+                        </Text>
+                        <MaterialIcons
+                          name="arrow-forward"
+                          size={20}
+                          color="#333"
+                          style={styles.arrowIcon}
+                        />
+                        <Text style={styles.routeLocationText}>
+                          {route.arrivalLocationName} ({route.arrivalLocationState})
+                        </Text>
+                      </View>
+                      <Text style={styles.routePriceRange}>
+                        ₦{route.minFare?.toLocaleString()}
+                        {route.minFare !== route.maxFare
+                          ? ` - ₦${route.maxFare?.toLocaleString()}`
+                          : ''}
+                      </Text>
+                    </View>
+                    <View style={styles.routeDetails}>
+                      <View style={styles.detailItem}>
+                        <MaterialIcons name="date-range" size={18} color="#666" />
+                        <Text style={styles.detailText}>
+                          {route.availableDatesCount} available departure dates
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.viewTripsButton}
+                      onPress={() => handleSelectRoute(route)}
+                    >
+                      <Text style={styles.viewTripsButtonText}>View Dates</Text>
+                    </TouchableOpacity>
                   </TouchableOpacity>
+                ))
+              )}
+              {pagination.hasNext && !isLoading && (
+                <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
+                  <Text style={styles.loadMoreButtonText}>Load More Routes</Text>
                 </TouchableOpacity>
-              ))
-            )}
-            {pagination.hasNext && !isLoading && (
-              <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
-                <Text style={styles.loadMoreButtonText}>Load More Routes</Text>
-              </TouchableOpacity>
-            )}
-            {isLoading && pagination.page > 1 && (
-              <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 10 }} />
-            )}
-          </>
-        )}
-      </ScrollView>
+              )}
+              {isLoading && pagination.page > 1 && (
+                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 10 }} />
+              )}
+            </>
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -310,12 +316,16 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5', // Apply a consistent background color here
   },
-  container: {
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: 16, // Apply horizontal padding here
+  },
+  scrollViewContent: {
+    paddingTop: 16, // Add top padding for content inside ScrollView
+    paddingBottom: 16, // Add bottom padding for content inside ScrollView
     flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -467,7 +477,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
-    marginBottom: 10,
   },
   loadMoreButtonText: {
     color: '#333',
