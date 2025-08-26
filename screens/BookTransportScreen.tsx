@@ -1,4 +1,4 @@
-// screens/BookTransportScreen.tsx (Corrected)
+// screens/BookTransportScreen.tsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -13,15 +13,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import useRefreshControl from '../hooks/useRefreshControl'; // Assuming this hook works as is
-import { formatDate } from '../utils/dateHelpers'; // Your existing date helper
-import BusTripService from '../requests/busTripService'; // Corrected import path
-import { BusTrip, BusTripFilters } from '../types/bustrip';
-import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
-import { BookTransportScreenProps } from '../types/screenprops'; // Using your specific props type
+import useRefreshControl from '../hooks/useRefreshControl';
+import BusTripService from '../requests/busTripService';
+import TopNavBar from '../components/molecules/TopNavBar';
+import { BookTransportScreenProps } from '../types/screenprops';
 
-// ... (Interface definitions remain the same) ...
 interface UniqueTripRoute {
   departureLocationName: string;
   departureLocationState: string;
@@ -35,122 +31,63 @@ interface UniqueTripRoute {
 export default function BookTransportScreen({ navigation }: BookTransportScreenProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<BusTrip[]>([]);
+  const [tripRoutes, setTripRoutes] = useState<UniqueTripRoute[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 30,
-    total: 0,
-    hasNext: false,
-  });
+  // New state for pagination
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [hasNext, setHasNext] = useState(true);
 
   const { refreshing, onRefresh } = useRefreshControl({
     refreshAction: async () => {
-      await fetchTrips(true);
+      setPage(1); // Reset page on refresh
+      await fetchTripRoutes(1, limit, true);
     },
   });
 
-  const fetchTrips = async (resetPage = false) => {
+  // Updated fetch function to handle pagination and append data
+  const fetchTripRoutes = async (currentPage = 1, currentLimit = limit, reset = false) => {
+    
+    if (!hasNext && !reset) return; // Prevent unnecessary fetches if we're at the end
+    
     try {
       setIsLoading(true);
       setError(null);
-
-      let allItems: BusTrip[] = [];
-      let currentPage = 1;
-      let hasNextPage = true;
-
-      // Reset trips if this is a refresh or initial load
-      if (resetPage) {
-        setTrips([]);
+      
+      const response = await BusTripService.getAllAvailableTrips({
+        page: currentPage,
+        limit: currentLimit
+      });
+      console.log(response)
+      if (reset) {
+        setTripRoutes(response.data.items);
       } else {
-        // Keep existing trips if we're just loading more
-        allItems = [...trips];
+        setTripRoutes(prev => [...prev, ...response.data.items]);
       }
 
-      while (hasNextPage) {
-        const params: BusTripFilters = {
-          status: 'scheduled',
-          page: currentPage,
-          limit: pagination.limit,
-        };
-        const response = await BusTripService.getScheduledBusTrips(params);
-
-        allItems = [...allItems, ...response.data.items];
-
-        // Check if there are more pages
-        hasNextPage = response.data.hasNext;
-        currentPage++;
-
-        // To avoid an infinite loop in case of bad data,
-        // we can add a safety break, e.g., if page > 100
-        if (currentPage > 100) break;
-      }
-
-      setTrips(allItems);
-      // We've loaded all data, so pagination is effectively done
-      setPagination(prev => ({
-        ...prev,
-        page: currentPage - 1, // Set to the last page number
-        total: allItems.length,
-        hasNext: false,
-      }));
+      setHasNext(response.data.hasNext);
+      setPage(currentPage); // Update the page state after a successful fetch
+      
     } catch (err) {
-      setError('Failed to load all trips. Please try again.');
-      console.error('Error fetching all trips:', err);
+      setError('Failed to load available trip routes. Please try again.');
+      console.error('Error fetching trip routes:', err);
     } finally {
       setIsLoading(false);
     }
   };
-  const uniqueTripRoutes = useMemo(() => {
-    const routesMap = new Map<string, UniqueTripRoute>();
-    trips.forEach(trip => {
-      if (
-        !trip.departure_location ||
-        !trip.departure_state ||
-        !trip.arrival_location ||
-        !trip.arrival_state ||
-        trip.fare === undefined ||
-        trip.fare === null ||
-        !trip.departure_time
-      ) {
-        return;
-      }
 
-      const routeKey = `${trip.departure_location}_${trip.departure_state}_${trip.arrival_location}_${trip.arrival_state}`;
-      const departureDateKey = formatDate(trip.departure_time as string, 'yyyy-MM-dd');
+  const handleLoadMore = () => {
+    if (hasNext && !isLoading) {
+      fetchTripRoutes(page + 1);
+    }
+  };
 
-      if (!routesMap.has(routeKey)) {
-        routesMap.set(routeKey, {
-          departureLocationName: trip.departure_location,
-          departureLocationState: trip.departure_state,
-          arrivalLocationName: trip.arrival_location,
-          arrivalLocationState: trip.arrival_state,
-          minFare: trip.fare,
-          maxFare: trip.fare,
-          availableDatesCount: 0,
-        });
-      }
-
-      const currentRoute = routesMap.get(routeKey)!;
-      currentRoute.minFare = Math.min(currentRoute.minFare, trip.fare);
-      currentRoute.maxFare = Math.max(currentRoute.maxFare, trip.fare);
-
-      if (!(currentRoute as any)._uniqueDates) {
-        (currentRoute as any)._uniqueDates = new Set<string>();
-      }
-      (currentRoute as any)._uniqueDates.add(departureDateKey);
-    });
-
-    const routesArray = Array.from(routesMap.values()).map(route => ({
-      ...route,
-      availableDatesCount: (route as any)._uniqueDates.size,
-      _uniqueDates: undefined,
-    }));
-
+  const filteredRoutes = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    const filtered = routesArray.filter(
+    if (!tripRoutes || tripRoutes.length === 0) return [];
+
+    const filtered = tripRoutes.filter(
       route =>
         route.departureLocationName.toLowerCase().includes(term) ||
         route.departureLocationState.toLowerCase().includes(term) ||
@@ -164,7 +101,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
       return a.arrivalLocationName.localeCompare(b.arrivalLocationName);
     });
     return filtered;
-  }, [trips, searchTerm]);
+  }, [tripRoutes, searchTerm]);
 
   const handleSelectRoute = (route: UniqueTripRoute) => {
     navigation.navigate('TripDates', {
@@ -176,32 +113,20 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
   };
 
   useEffect(() => {
-    fetchTrips(true);
-  }, []);
-
-  useEffect(() => {
-    if (pagination.page > 1) {
-      fetchTrips();
-    }
-  }, [pagination.page]);
-
-  const handleLoadMore = () => {
-    if (pagination.hasNext && !isLoading) {
-      setPagination(prev => ({ ...prev, page: prev.page + 1 }));
-    }
-  };
+    fetchTripRoutes(1, limit, true);
+  }, []); // Initial fetch on component mount
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <TopNavBar title={'Book Transport'} />
       <View style={styles.contentWrapper}>
         <ScrollView
-          ref={scrollViewRef}
           contentContainerStyle={styles.scrollViewContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
           }
           onScroll={({ nativeEvent }) => {
+            // Lazy loading logic
             const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
             const isCloseToBottom =
               layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
@@ -209,9 +134,9 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
               handleLoadMore();
             }
           }}
-          scrollEventThrottle={400}
+          scrollEventThrottle={400} // Adjust as needed for performance
         >
-          {/* Search Bar */}
+          {/* Search Bar and other JSX */}
           <View style={styles.searchContainer}>
             <Feather name="search" size={20} color="#999" style={styles.searchIcon} />
             <TextInput
@@ -222,8 +147,8 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
               placeholderTextColor="#999"
             />
           </View>
-
-          {isLoading && trips.length === 0 ? (
+          
+          {isLoading && filteredRoutes.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#007AFF" />
               <Text style={styles.loadingText}>Loading available trip routes...</Text>
@@ -232,17 +157,16 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
             <View style={styles.emptyContainer}>
               <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
               <Text style={styles.emptyText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={() => fetchTrips(true)}>
+              <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
               <Text style={styles.sectionTitle}>
-                {/* Available Trip Routes ({uniqueTripRoutes.length}) */}
-                Available Trip Routes
+                Available Trip Routes ({filteredRoutes.length})
               </Text>
-              {uniqueTripRoutes.length === 0 ? (
+              {filteredRoutes.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <MaterialIcons name="route" size={60} color="#ddd" />
                   <Text style={styles.emptyText}>No trip routes found.</Text>
@@ -251,9 +175,9 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
                   </Text>
                 </View>
               ) : (
-                uniqueTripRoutes.map((route, index) => (
+                filteredRoutes.map((route, index) => (
                   <TouchableOpacity
-                    key={`${route.departureLocationName}-${route.departureLocationState}-${route.arrivalLocationName}-${route.arrivalLocationState}-${index}`}
+                    key={`${route.departureLocationName}-${route.arrivalLocationName}-${index}`}
                     style={styles.routeCard}
                     onPress={() => handleSelectRoute(route)}
                   >
@@ -274,9 +198,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
                       </View>
                       <Text style={styles.routePriceRange}>
                         ₦{route.minFare?.toLocaleString()}
-                        {route.minFare !== route.maxFare
-                          ? ` - ₦${route.maxFare?.toLocaleString()}`
-                          : ''}
+                        {route.minFare !== route.maxFare ? ` - ₦${route.maxFare?.toLocaleString()}` : ''}
                       </Text>
                     </View>
                     <View style={styles.routeDetails}>
@@ -296,13 +218,9 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
                   </TouchableOpacity>
                 ))
               )}
-              {pagination.hasNext && !isLoading && (
-                <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
-                  <Text style={styles.loadMoreButtonText}>Load More Routes</Text>
-                </TouchableOpacity>
-              )}
-              {isLoading && pagination.page > 1 && (
-                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 10 }} />
+              {/* Indicator for lazy loading */}
+              {isLoading && hasNext && (
+                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
               )}
             </>
           )}
@@ -316,15 +234,15 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f5', // Apply a consistent background color here
+    backgroundColor: '#f5f5f5',
   },
   contentWrapper: {
     flex: 1,
-    paddingHorizontal: 16, // Apply horizontal padding here
+    paddingHorizontal: 16,
   },
   scrollViewContent: {
-    paddingTop: 16, // Add top padding for content inside ScrollView
-    paddingBottom: 16, // Add bottom padding for content inside ScrollView
+    paddingTop: 16,
+    paddingBottom: 16,
     flexGrow: 1,
   },
   searchContainer: {
@@ -471,15 +389,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  loadMoreButton: {
-    backgroundColor: '#e0e0e0',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  loadMoreButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
+  // Removed unnecessary loadMoreButton styles as infinite scrolling is no longer needed
 });

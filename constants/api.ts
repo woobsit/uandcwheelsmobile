@@ -9,7 +9,7 @@ export const ENDPOINTS = {
   VERIFY_EMAIL: (token: string) => `/auth/verify-email/${token}`,
   FORGOT_PASSWORD: '/auth/forgot-password',
   PASSWORD_RESET: (token: string) => `/auth/reset-password/${token}`,
-  TRIPS: '/all',
+  ALL_AVAILABLE_TRIPS: '/bus-trip/all',
   TRIPS_ROUTES_CREATE:'/create',
   BUS_TRIPS_ADMIN:'',
   BUS_TRIPS_CREATE:'',

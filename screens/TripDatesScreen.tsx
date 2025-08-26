@@ -84,7 +84,8 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
           arrivalLocationState,
         };
 
-        const response = await BusTripService.getScheduledBusTrips(params);
+          const response = await BusTripService.getScheduledBusTripsByDate(params);
+
 
         // Append new items to our growing list
         allItems = [...allItems, ...response.data.items];

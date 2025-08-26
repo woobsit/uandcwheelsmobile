@@ -5,10 +5,19 @@ import { ENDPOINTS } from '../constants/api';
 import { ApiResponse, PaginatedResponse } from '../types/api'; // Ensure you have ApiResponse and PaginatedResponse defined
 import { BusTrip, BusTripFilters } from '../types/bustrip'; // Your updated types
 
-const BusTripService = {
-  // ... (Your existing getAllBusTrips, createBusTrip, updateBusTrip, deleteBusTrip functions)
+// Define the new interface for the aggregated data
+export interface UniqueTripRoute {
+  departureLocationName: string;
+  departureLocationState: string;
+  arrivalLocationName: string;
+  arrivalLocationState: string;
+  minFare: number;
+  maxFare: number;
+  availableDatesCount: number;
+}
 
-  // Get all Bus Trips (for Admin view - includes all statuses)
+const BusTripService = {
+  
   getAllBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
     try {
       // Convert date to ISO string if it's a Date object for backend compatibility
@@ -65,10 +74,45 @@ const BusTripService = {
   },
 
 
-  // --- User-focused operations for Scheduled Bus Trips ---
+   /**
+   * Fetches scheduled bus trips for a specific date and route.
+   * This is for the TripDetailsScreen.
+   */
+  getScheduledBusTripsByDate: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
+    try {
+      // Your existing date conversion logic
+      if (filters.date instanceof Date) {
+        filters.date = filters.date.toISOString().split('T')[0];
+      }
+      
+      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
+        params: filters,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
+   /**
+   * Fetches unique trip routes with aggregated data (min/max fare, available dates).
+   * This is for the BookTransportScreen.
+   */
+  getUniqueTripRoutes: async (filters: { 
+    departureLocationName?: string; 
+    arrivalLocationName?: string; 
+  } = {}): Promise<ApiResponse<PaginatedResponse<UniqueTripRoute>>> => {
+    try {
+      const response = await api.get<ApiResponse<PaginatedResponse<UniqueTripRoute>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
+        params: filters,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
   // Get all *scheduled and available* Bus Trips (for user search)
-  getScheduledBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
+  /*getScheduledBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
     try {
       // Your existing console.log("hello");
       // Convert date to YYYY-MM-DD string if it's a Date object.
@@ -89,7 +133,7 @@ const BusTripService = {
     } catch (error) {
       throw error;
     }
-  },
+  },*/
 
   // Get a specific Scheduled Bus Trip by ID (for user to view details before booking)
   getBusTripWithDetails: async (busTripId: number): Promise<BusTrip> => {

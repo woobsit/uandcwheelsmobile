@@ -2,7 +2,7 @@
 const { Router } = require('express');
 const {
   createBusTrip,
-  getAllBusTrips,
+  getAllAvailableBusTrips,
   getScheduledBusTrips,
   getBusTripById,
   updateBusTrip,
@@ -14,14 +14,14 @@ const {
   createBusTripValidator,
   updateBusTripValidator,
   busTripIdValidator,
-  getAllBusTripsValidator,
+  //getAllAvailableBusTripsValidator,
   getScheduledBusTripsValidator,
 } = require('../middlewares/validators/busTrip.validator');
 
 const router = Router();
 
 router.post('/create-scheduled', createBusTripValidator, validateRequest, createBusTrip);
-router.get('/all', getAllBusTripsValidator, validateRequest, getAllBusTrips);
+router.get('/all', getAllAvailableBusTrips);
 router.get(
   '/one-scheduled-bus-trip-with-details/:id',
   busTripIdValidator,

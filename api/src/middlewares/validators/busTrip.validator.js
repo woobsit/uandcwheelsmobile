@@ -118,8 +118,7 @@ const busTripIdValidator = [
   param('id').isInt({ min: 1 }).withMessage('Invalid bus trip ID.'),
 ];
 
-// --- Validator for getAllBusTrips (Admin View) ---
-const getAllBusTripsValidator = [
+const getAllAvailableBusTripsValidator = [
   // Status filtering for BusTrip (scheduled, boarding, departed, arrived, cancelled)
   query('status')
     .optional()
@@ -186,6 +185,6 @@ module.exports = {
   createBusTripValidator,
   updateBusTripValidator,
   busTripIdValidator, // For getBusTripById and deleteBusTrip
-  getAllBusTripsValidator,
+  getAllAvailableBusTripsValidator,
   getScheduledBusTripsValidator,
 };
