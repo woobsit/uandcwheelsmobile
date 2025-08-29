@@ -49,67 +49,91 @@ const createBusTrip = async (req, res) => {
   }
 };
 
-// 3. Get All Bus Trips (for Admin - scheduled or not)
 const getAllAvailableBusTrips = async (req, res) => {
   try {
-   const now = new Date();
-    const scheduledBusTrips = await db.BusTrip.findAll({
-      where: {
-        status: 'scheduled',
-        departure_time: { [Op.gte]: now },
-      },
-      include: [
-        {
-          model: db.Trip,
-          as: 'trip',
-          attributes: ['fare'],
-          include: [
-            { model: db.Location, as: 'departureLocation', attributes: ['name', 'state'] },
-            { model: db.Location, as: 'arrivalLocation', attributes: ['name', 'state'] },
-          ],
-        },
-      ],
-      order: [['departure_time', 'ASC']],
+    // 1. Get and sanitize query parameters from the request
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50); // Set a reasonable limit
+    const offset = (page - 1) * limit;
+
+    const searchTerm = req.query.searchTerm ? req.query.searchTerm.toLowerCase() : null;
+
+    const now = new Date();
+
+    // 2. Build the dynamic WHERE clause based on the search term
+    let whereClause = `WHERE bt.status = 'scheduled' AND bt.departure_time >= :now`;
+    if (searchTerm) {
+      whereClause += `
+        AND (
+          LOWER(dl.name) LIKE :searchTerm OR LOWER(dl.state) LIKE :searchTerm
+          OR LOWER(al.name) LIKE :searchTerm OR LOWER(al.state) LIKE :searchTerm
+        )`;
+    }
+
+    // 3. Define the count and data queries
+    const countQuery = `
+      SELECT COUNT(DISTINCT CONCAT(dl.name, al.name)) AS totalRoutes
+      FROM bus_trips bt
+      INNER JOIN trips t ON bt.trip_id = t.id
+      INNER JOIN locations dl ON t.departure_location_id = dl.id
+      INNER JOIN locations al ON t.arrival_location_id = al.id
+      ${whereClause};
+    `;
+
+    const dataQuery = `
+      SELECT
+        dl.name AS departureLocationName,
+        dl.state AS departureLocationState,
+        al.name AS arrivalLocationName,
+        al.state AS arrivalLocationState,
+        MIN(t.fare) AS minFare,
+        MAX(t.fare) AS maxFare,
+        COUNT(DISTINCT DATE(bt.departure_time)) AS availableDatesCount
+      FROM bus_trips bt
+      INNER JOIN trips t ON bt.trip_id = t.id
+      INNER JOIN locations dl ON t.departure_location_id = dl.id
+      INNER JOIN locations al ON t.arrival_location_id = al.id
+      ${whereClause}
+      GROUP BY dl.name, dl.state, al.name, al.state
+      ORDER BY dl.name ASC, al.name ASC
+      LIMIT :limit
+      OFFSET :offset;
+    `;
+
+    // 4. Create the replacements object for the queries
+    const replacements = {
+      now,
+      limit,
+      offset,
+    };
+    if (searchTerm) {
+      replacements.searchTerm = `%${searchTerm}%`; // Use a wildcard for `LIKE`
+    }
+
+    // 5. Execute both queries
+    const [totalResults] = await db.sequelize.query(countQuery, {
+      replacements, // Use the unified replacements object
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    const total = totalResults.totalRoutes;
+    
+    const [paginatedResults] = await db.sequelize.query(dataQuery, {
+      replacements, // Use the unified replacements object
+      type: db.sequelize.QueryTypes.SELECT,
     });
 
-    // Manually aggregate the data to match your frontend's UniqueTripRoute type
-    const aggregatedTrips = scheduledBusTrips.reduce((acc, currentTrip) => {
-      const departure = currentTrip.trip.departureLocation;
-      const arrival = currentTrip.trip.arrivalLocation;
-      const key = `${departure.name}-${departure.state}-${arrival.name}-${arrival.state}`;
+    // 6. Calculate hasNext based on the fetched data and total count
+    const hasNext = offset + paginatedResults.length < total;
 
-      if (!acc[key]) {
-        acc[key] = {
-          departureLocationName: departure.name,
-          departureLocationState: departure.state,
-          arrivalLocationName: arrival.name,
-          arrivalLocationState: arrival.state,
-          minFare: currentTrip.trip.fare,
-          maxFare: currentTrip.trip.fare,
-          availableDates: new Set(),
-        };
-      } else {
-        acc[key].minFare = Math.min(acc[key].minFare, currentTrip.trip.fare);
-        acc[key].maxFare = Math.max(acc[key].maxFare, currentTrip.trip.fare);
-      }
-      acc[key].availableDates.add(currentTrip.departure_time.toISOString().split('T')[0]);
-      return acc;
-    }, {});
-
-    const items = Object.values(aggregatedTrips).map(trip => ({
-      ...trip,
-      availableDatesCount: trip.availableDates.size,
-      availableDates: undefined, // Remove the set to keep the response clean
-    }));
-
+    // 7. Send the paginated data as a response
     res.status(200).json({
       success: true,
       data: {
-        items,
-        total: items.length,
-        page: 1,
-        limit: items.length,
-        hasNext: false,
+        items: paginatedResults,
+        total: total,
+        page,
+        limit,
+        hasNext,
       },
     });
   } catch (error) {
@@ -122,250 +146,85 @@ const getAllAvailableBusTrips = async (req, res) => {
 };
 
 // 4. Get All Scheduled Bus Trips (for Users/Booking)
-// A revised and more performant getScheduledBusTrips controller function
-const getScheduledBusTrips = async (req, res) => {
-  try {
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
-    const now = new Date();
-    const { departureLocationName, arrivalLocationName, date } = req.query;
 
-    const busTripWhereConditions = {
-      status: 'scheduled',
-      departure_time: { [Op.gte]: now },
+// New file or new function in controllers/busTripController.js
+
+const getAvailableDatesForRoute = async (req, res) => {
+  try {
+    const { 
+      departureLocationName, 
+      departureLocationState, 
+      arrivalLocationName, 
+      arrivalLocationState 
+    } = req.query;
+
+    if (!departureLocationName || !arrivalLocationName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: departureLocationName and arrivalLocationName.',
+      });
+    }
+
+    const now = new Date();
+
+    const query = `
+      SELECT
+        DATE(bt.departure_time) AS departureDate,
+        MIN(t.fare) AS minFare,
+        MAX(t.fare) AS maxFare,
+        COUNT(bt.id) AS availableBusesCount
+      FROM bus_trips bt
+      INNER JOIN trips t ON bt.trip_id = t.id
+      INNER JOIN locations dl ON t.departure_location_id = dl.id
+      INNER JOIN locations al ON t.arrival_location_id = al.id
+      WHERE bt.status = 'scheduled' 
+      AND bt.departure_time >= :now
+      AND dl.name = :departureLocationName
+      AND dl.state = :departureLocationState
+      AND al.name = :arrivalLocationName
+      AND al.state = :arrivalLocationState
+      GROUP BY departureDate
+      ORDER BY departureDate ASC;
+    `;
+
+    const replacements = {
+      now,
+      departureLocationName,
+      departureLocationState,
+      arrivalLocationName,
+      arrivalLocationState,
     };
 
-    const tripWhereConditions = {};
-    const departureLocationWhereConditions = {};
-    const arrivalLocationWhereConditions = {};
-
-    if (departureLocationName) {
-      departureLocationWhereConditions.name = { [Op.like]: `%${departureLocationName}%` };
-    }
-    if (arrivalLocationName) {
-      arrivalLocationWhereConditions.name = { [Op.like]: `%${arrivalLocationName}%` };
-    }
-
-    let result;
-    let items;
-
-    // Case 1: The 'date' query parameter is NOT provided.
-// Case 1: The 'date' query parameter is NOT provided.
-// Case 1: The 'date' query parameter is NOT provided.
-if (!date) {
-  // Use raw SQL query to get unique trip routes
-  const query = `
-    SELECT
-      dl.name AS departureLocationName,
-      dl.state AS departureLocationState,
-      al.name AS arrivalLocationName,
-      al.state AS arrivalLocationState,
-      MIN(t.fare) AS minFare,
-      MAX(t.fare) AS maxFare,
-      COUNT(DISTINCT DATE(bt.departure_time)) AS availableDatesCount
-    FROM bus_trips bt
-    INNER JOIN trips t ON bt.trip_id = t.id
-    INNER JOIN locations dl ON t.departure_location_id = dl.id
-    INNER JOIN locations al ON t.arrival_location_id = al.id
-    WHERE bt.status = 'scheduled' 
-      AND bt.departure_time >= :now
-      ${departureLocationName ? `AND dl.name LIKE :departureLocationName` : ''}
-      ${arrivalLocationName ? `AND al.name LIKE :arrivalLocationName` : ''}
-    GROUP BY
-      dl.name,
-      dl.state,
-      al.name,
-      al.state
-    ORDER BY
-      dl.name,
-      al.name ASC
-  `;
-
-  const replacements = {
-    now: now,
-    ...(departureLocationName && { departureLocationName: `%${departureLocationName}%` }),
-    ...(arrivalLocationName && { arrivalLocationName: `%${arrivalLocationName}%` }),
-  };
-
-  try {
-    result = await db.sequelize.query(query, {
-      replacements: replacements,
+    const [results] = await db.sequelize.query(query, {
+      replacements,
       type: db.sequelize.QueryTypes.SELECT,
     });
 
-    // The raw query directly returns the structured data, so no extra mapping is needed.
-    items = result.map(item => ({
-      departureLocationName: item.departureLocationName,
-      departureLocationState: item.departureLocationState,
-      arrivalLocationName: item.arrivalLocationName,
-      arrivalLocationState: item.arrivalLocationState,
+    // Process the raw results into the desired format
+    const formattedResults = results.map(item => ({
+      ...item,
       minFare: parseFloat(item.minFare),
       maxFare: parseFloat(item.maxFare),
-      availableDatesCount: parseInt(item.availableDatesCount),
+      availableBusesCount: parseInt(item.availableBusesCount, 10),
     }));
 
     return res.status(200).json({
       success: true,
       data: {
-        items,
-        total: items.length,
-        page: 1,
-        limit: items.length,
+        items: formattedResults,
+        total: formattedResults.length,
         hasNext: false,
+        page: 1,
+        limit: formattedResults.length,
       },
     });
-  } catch (queryError) {
-    logger.error('Raw query failed:', { error: queryError.message });
-    throw queryError;
-  }
-} else {
-      // Case 2: The 'date' query parameter IS provided.
-      // This is for the TripDetailsScreen, so we return individual trips.
-      const whereClause = {
-        ...busTripWhereConditions,
-        departure_time: {
-          [Op.between]: [
-            new Date(date),
-            new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
-          ],
-        },
-      };
 
-      const { count, rows: scheduledBusTrips } = await db.BusTrip.findAndCountAll({
-        where: whereClause,
-        include: [
-          {
-            model: db.Bus,
-            as: 'bus',
-            attributes: ['id', 'plate_number', 'brand', 'capacity', 'seat_arrangement'],
-          },
-          {
-            model: db.Driver,
-            as: 'driver',
-            attributes: ['id', 'name'],
-          },
-          {
-            model: db.Trip,
-            as: 'trip',
-            where: Object.keys(tripWhereConditions).length > 0 ? tripWhereConditions : undefined,
-            attributes: [
-              'id',
-              'estimated_arrival',
-              'fare',
-              'departure_terminal',
-              'arrival_terminal',
-            ],
-            include: [
-              {
-                model: db.Location,
-                as: 'departureLocation',
-                attributes: ['id', 'name', 'state'],
-                where:
-                  Object.keys(departureLocationWhereConditions).length > 0
-                    ? departureLocationWhereConditions
-                    : undefined,
-                required: Object.keys(departureLocationWhereConditions).length > 0,
-              },
-              {
-                model: db.Location,
-                as: 'arrivalLocation',
-                attributes: ['id', 'name', 'state'],
-                where:
-                  Object.keys(arrivalLocationWhereConditions).length > 0
-                    ? arrivalLocationWhereConditions
-                    : undefined,
-                required: Object.keys(arrivalLocationWhereConditions).length > 0,
-              },
-            ],
-          },
-          {
-            model: db.Booking,
-            as: 'outboundBookings',
-            required: false,
-          },
-        ],
-        order: [['departure_time', 'ASC']],
-        offset: (page - 1) * limit,
-        limit,
-        subQuery: false,
-      });
-
-      items = await Promise.all(
-        scheduledBusTrips.map(async busTrip => {
-          const busTripData = busTrip.get({ plain: true });
-
-          const bookings = await db.Booking.findAll({
-            where: {
-              outbound_bus_trip_id: busTripData.id,
-              status: { [Op.in]: ['confirmed', 'paid'] },
-            },
-            include: [
-              {
-                model: db.Passenger,
-                as: 'passengers',
-                attributes: ['seat_number'],
-                where: { seat_number: { [Op.ne]: null } },
-                required: false,
-              },
-            ],
-          });
-
-          const takenSeats = bookings
-            .flatMap(booking => booking.passengers.map(p => p.seat_number))
-            .filter(Boolean);
-
-          const busCapacity = busTripData.bus?.capacity || 0;
-          const actualAvailableSeats = Math.max(0, busCapacity - takenSeats.length);
-
-          if (actualAvailableSeats <= 0) return null;
-
-          return {
-            id: busTripData.id,
-            departure_time: busTripData.departure_time,
-            estimated_arrival: busTripData.trip?.estimated_arrival,
-            fare: parseFloat(busTripData.trip?.fare),
-            status: busTripData.status,
-            departure_location: busTripData.trip?.departureLocation?.name,
-            departure_state: busTripData.trip?.departureLocation?.state,
-            departure_terminal: busTripData.trip?.departure_terminal,
-            arrival_location: busTripData.trip?.arrivalLocation?.name,
-            arrival_state: busTripData.trip?.arrivalLocation?.state,
-            arrival_terminal: busTripData.trip?.arrival_terminal,
-            bus: {
-              plate_number: busTripData.bus?.plate_number,
-              brand: busTripData.bus?.brand,
-              capacity: busTripData.bus?.capacity,
-              seat_arrangement: busTripData.bus?.seat_arrangement,
-              taken_seats: takenSeats,
-            },
-            driver: {
-              name: busTripData.driver?.name,
-            },
-            available_seats: actualAvailableSeats,
-          };
-        }),
-      );
-      items = items.filter(Boolean);
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          items,
-          total: count,
-          page,
-          limit,
-          hasNext: items.length === limit,
-        },
-      });
-    }
   } catch (error) {
-    logger.error('Failed to fetch scheduled bus trips with availability:', {
-      error: error.message,
-      stack: error.stack, // Add stack trace for better debugging
-    });
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    logger.error('Failed to fetch available dates for route:', { error: error.message, stack: error.stack });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 // 5. Get Bus Trip by ID
 // Revised getBusTripById controller function
 const getBusTripById = async (req, res) => {
@@ -545,10 +404,9 @@ const deleteBusTrip = async (req, res) => {
 module.exports = {
   createBusTrip, // New function for specific scheduled trips
   getAllAvailableBusTrips, // Renamed from getAllTrips, now fetches all BusTrips
-  getScheduledBusTrips, // Renamed from getAllScheduledTrips
+  getAvailableDatesForRoute, 
   getBusTripById, // Renamed from getTripById
   updateBusTrip, // Renamed from updateTrip
   deleteBusTrip, // Renamed from deleteTrip
-  // searchTrips is redundant, getScheduledBusTrips handles it
-  // getAvailableSeats is also covered by getBusTripById and getScheduledBusTrips
+  
 };

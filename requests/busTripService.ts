@@ -3,7 +3,7 @@
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { ApiResponse, PaginatedResponse } from '../types/api'; // Ensure you have ApiResponse and PaginatedResponse defined
-import { BusTrip, BusTripFilters } from '../types/bustrip'; // Your updated types
+import { BusTrip, BusTripFilters, GetAvailableDatesForRouteParams, PaginatedAvailableDatesResponse } from '../types/bustrip'; // Your updated types
 
 // Define the new interface for the aggregated data
 export interface UniqueTripRoute {
@@ -18,21 +18,34 @@ export interface UniqueTripRoute {
 
 const BusTripService = {
   
-  getAllBusTrips: async (filters: BusTripFilters = {}): Promise<ApiResponse<PaginatedResponse<BusTrip>>> => {
+  getAllAvailableTrips: async (params?: { page: number; limit: number }): Promise<ApiResponse<PaginatedResponse<UniqueTripRoute>>> => {
     try {
-      // Convert date to ISO string if it's a Date object for backend compatibility
-      if (filters.date instanceof Date) {
-        filters.date = filters.date.toISOString().split('T')[0];
-      }
-      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.BUS_TRIPS_ADMIN, {
-        params: filters,
-      });
+      const response = await api.get<ApiResponse<PaginatedResponse<UniqueTripRoute>>>(
+        ENDPOINTS.ALL_AVAILABLE_TRIPS,
+        { params }
+      );
+  
       return response.data;
     } catch (error) {
       throw error;
     }
   },
 
+ getAvailableDatesForRoute: async (
+    params: GetAvailableDatesForRouteParams
+  ): Promise<ApiResponse<PaginatedAvailableDatesResponse>> => {
+    try {
+      const response = await api.get<ApiResponse<PaginatedAvailableDatesResponse>>(
+        ENDPOINTS.AVAILABLE_DATES,
+        { params }
+      );
+
+      return response.data;
+    } catch (error) {
+      
+      throw error;
+    }
+  },
   // Create a specific Bus Trip (scheduled instance)
   createBusTrip: async (
     busTripData: Omit<BusTrip, 'id' | 'createdAt' | 'updatedAt' | 'bus' | 'driver' | 'trip' | 'available_seats' | 'status'> & { available_seats?: number },
@@ -88,6 +101,7 @@ const BusTripService = {
       const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
         params: filters,
       });
+      console.log(JSON.stringify(response.data,  null, 2))
       return response.data;
     } catch (error) {
       throw error;

@@ -118,35 +118,34 @@ const busTripIdValidator = [
   param('id').isInt({ min: 1 }).withMessage('Invalid bus trip ID.'),
 ];
 
-const getAllAvailableBusTripsValidator = [
-  // Status filtering for BusTrip (scheduled, boarding, departed, arrived, cancelled)
-  query('status')
-    .optional()
-    .isIn(['scheduled', 'boarding', 'departed', 'arrived', 'cancelled'])
-    .withMessage('Invalid bus trip status. Valid values: scheduled, boarding, departed, arrived, cancelled.'),
+const getAvailableDatesForRouteValidator = [
+  query('departureLocationName')
+    .exists()
+    .withMessage('Departure location name is required.')
+    .notEmpty()
+    .withMessage('Departure location name cannot be empty.'),
 
-  // Location-based filtering, these refer to the 'name' of the location (e.g., "Lagos")
-  query('from')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('Departure location name cannot be empty.'),
+  query('departureLocationState')
+    .exists()
+    .withMessage('Departure location state is required.')
+    .notEmpty()
+    .withMessage('Departure location state cannot be empty.'),
 
-  query('to')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('Arrival location name cannot be empty.'),
+  query('arrivalLocationName')
+    .exists()
+    .withMessage('Arrival location name is required.')
+    .notEmpty()
+    .withMessage('Arrival location name cannot be empty.'),
 
-  // Date filtering (for departure_time of BusTrip)
-  query('date')
-    .optional()
-    .isISO8601({ strict: true }).withMessage('Invalid date format. Use ISO format (YYYY-MM-DD).')
-    .toDate(), // Convert to Date object
-
-  // Pagination parameters
+  query('arrivalLocationState')
+    .exists()
+    .withMessage('Arrival location state is required.')
+    .notEmpty()
+    .withMessage('Arrival location state cannot be empty.'),
+    
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100.').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50.').toInt(),
 ];
-
 // --- Validator for getScheduledBusTrips (User/Booking View) ---
 const getScheduledBusTripsValidator = [
   // No status query needed as it's hardcoded to 'scheduled' and future dates
@@ -184,7 +183,7 @@ const getScheduledBusTripsValidator = [
 module.exports = {
   createBusTripValidator,
   updateBusTripValidator,
-  busTripIdValidator, // For getBusTripById and deleteBusTrip
-  getAllAvailableBusTripsValidator,
+  busTripIdValidator, 
+  getAvailableDatesForRouteValidator,
   getScheduledBusTripsValidator,
 };

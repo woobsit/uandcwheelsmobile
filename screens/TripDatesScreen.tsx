@@ -1,5 +1,4 @@
-// screens/TripDatesScreen.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,25 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import useRefreshControl from '../hooks/useRefreshControl'; // Your existing hook
-import { formatDate } from '../utils/dateHelpers'; // Your existing date helper
-import BusTripService from '../requests/busTripService'; // Corrected import path
-import { BusTrip, BusTripFilters } from '../types/bustrip';
-import TopNavBar from '../components/molecules/TopNavBar'; // Your existing component
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList, TripDatesScreenProps } from '../types/screenprops'; // Using your specific props type
+import useRefreshControl from '../hooks/useRefreshControl';
+import { formatDate } from '../utils/dateHelpers';
+import BusTripService from '../requests/busTripService';
+import { TripDatesScreenProps } from '../types/screenprops';
+import TopNavBar from '../components/molecules/TopNavBar';
+import { AvailableDate } from '../types/bustrip'; 
 
-// Define a type for a unique departure date for display
-interface UniqueDepartureDate {
-  dateString: string; // e.g., '2025-07-30' (for internal filtering)
-  displayDate: string; // e.g., 'Wed, Jul 30, 2025' (for display)
-  minFare: number;
-  maxFare: number;
-  availableBusesCount: number; // Number of distinct bus trips on this date for this route
-}
-
-// Using your TripDatesScreenProps directly
 export default function TripDatesScreen({ navigation, route }: TripDatesScreenProps) {
   const {
     departureLocationName,
@@ -40,158 +27,92 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
   } = route.params;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [tripsForRoute, setTripsForRoute] = useState<BusTrip[]>([]); // All trips matching the route
+  const [isPaginating, setIsPaginating] = useState(false);
+  const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(true);
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10, // Fetch enough to cover all dates for a given route typically
-    total: 0,
-    hasNext: false,
-  });
+  // Set a reasonable limit for this screen
+  const limit = 10;
 
-  const { refreshing, onRefresh } = useRefreshControl({
-    refreshAction: async () => {
-      await fetchTripsForRoute(true);
-    },
-  });
-  // Fetch trips specifically for the selected route
-  // Fetch trips specifically for the selected route, fetching all pages if necessary
-  const fetchTripsForRoute = async (resetPage = false) => {
+  const formatPrice = (price: number) => {
+    if (price === undefined || price === null) return '';
+    return price.toLocaleString();
+  };
+
+  const fetchAvailableDates = async (currentPage: number, reset = false) => {
+    if (isPaginating && !reset) return;
+    if (!hasNext && !reset) return;
+
     try {
-      setIsLoading(true);
+      if (reset) {
+        setIsLoading(true);
+      } else {
+        setIsPaginating(true);
+      }
       setError(null);
 
-      let allItems: BusTrip[] = [];
-      let currentPage = 1;
-      let hasNextPage = true;
+      const params = {
+        page: currentPage,
+        limit,
+        departureLocationName,
+        departureLocationState,
+        arrivalLocationName,
+        arrivalLocationState,
+      };
 
-      // Reset trips if this is a refresh or initial load
-      if (resetPage) {
-        setTripsForRoute([]);
+      const response = await BusTripService.getAvailableDatesForRoute(params);
+
+      if (reset) {
+        setAvailableDates(response.data.items);
       } else {
-        allItems = [...tripsForRoute];
+        setAvailableDates(prev => [...prev, ...response.data.items]);
       }
 
-      while (hasNextPage) {
-        const params: BusTripFilters = {
-          status: 'scheduled',
-          page: currentPage,
-          limit: pagination.limit,
-          departureLocationName,
-          departureLocationState,
-          arrivalLocationName,
-          arrivalLocationState,
-        };
-
-          const response = await BusTripService.getScheduledBusTripsByDate(params);
-
-
-        // Append new items to our growing list
-        allItems = [...allItems, ...response.data.items];
-
-        // Update the pagination state based on the last response
-        hasNextPage = response.data.hasNext;
-        currentPage++;
-
-        // Safety break to prevent infinite loops with a misconfigured API
-        if (currentPage > 50) {
-          console.warn('Reached page limit of 50. Breaking fetch loop.');
-          break;
-        }
-      }
-
-      // After fetching all pages, set the final state
-      setTripsForRoute(allItems);
-      setPagination(prev => ({
-        ...prev,
-        page: currentPage - 1,
-        total: allItems.length,
-        hasNext: false, // All data is loaded, so there's no next page
-      }));
+      setHasNext(response.data.hasNext);
+      setPage(response.data.page);
+      
     } catch (err) {
-      setError('Failed to load trips for this route. Please try again.');
-      console.error('Error fetching trips for route:', err);
+      setError('Failed to load available dates. Please try again.');
+      console.error('Error fetching available dates:', err);
     } finally {
       setIsLoading(false);
+      setIsPaginating(false);
     }
   };
 
-  // Remove the second useEffect that listens for pagination.page changes,
-  // as the new fetch function handles it internally.
-  useEffect(() => {
-    fetchTripsForRoute(true);
-  }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]);
-  // Memoize unique departure dates for the selected route
-  const uniqueDepartureDates = useMemo(() => {
-    const datesMap = new Map<string, UniqueDepartureDate>(); // Key: 'yyyy-MM-dd'
+  const { refreshing, onRefresh } = useRefreshControl({
+    refreshAction: async () => {
+      await fetchAvailableDates(1, true);
+    },
+  });
 
-    tripsForRoute.forEach(trip => {
-      // Ensure fare and departure_time exist for aggregation
-      if (!trip.fare || !trip.departure_time) return;
+  const handleLoadMore = () => {
+    if (!isLoading && !isPaginating && hasNext) {
+      fetchAvailableDates(page + 1);
+    }
+  };
 
-      const dateKey = formatDate(trip.departure_time as string, 'yyyy-MM-dd');
-      // Use your existing format for display or adjust as needed
-      const displayDate = formatDate(trip.departure_time as string, 'EEE, MMM d, yyyy'); // Example: "Wed, Jul 30, 2025"
-
-      if (!datesMap.has(dateKey)) {
-        datesMap.set(dateKey, {
-          dateString: dateKey,
-          displayDate: displayDate,
-          minFare: trip.fare,
-          maxFare: trip.fare,
-          availableBusesCount: 0, // Will be counted below
-        });
-      }
-
-      const currentDate = datesMap.get(dateKey)!;
-      currentDate.minFare = Math.min(currentDate.minFare, trip.fare);
-      currentDate.maxFare = Math.max(currentDate.maxFare, trip.fare);
-      currentDate.availableBusesCount++; // Count each individual bus trip on this date
-    });
-
-    const datesArray = Array.from(datesMap.values());
-    // Sort dates chronologically
-    datesArray.sort((a, b) => new Date(a.dateString).getTime() - new Date(b.dateString).getTime());
-    return datesArray;
-  }, [tripsForRoute]); // Re-run memo if tripsForRoute change
-
-  // Navigate to TripDetailsScreen with specific route and date
-  const handleSelectDate = (date: UniqueDepartureDate) => {
+  const handleSelectDate = (date: AvailableDate) => {
     navigation.navigate('TripDetails', {
       departureLocationName,
       departureLocationState,
       arrivalLocationName,
       arrivalLocationState,
-      departureDate: date.dateString, // Pass the selected date string (YYYY-MM-DD)
+      departureDate: date.departureDate,
     });
   };
 
-  // Initial fetch for the route on component mount
   useEffect(() => {
-    fetchTripsForRoute(true);
-  }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]); // Re-fetch if route params change
-
-  // For infinite scrolling: load more data when page changes
-  useEffect(() => {
-    if (pagination.page > 1) {
-      fetchTripsForRoute();
-    }
-  }, [pagination.page]);
-
-  const handleLoadMore = () => {
-    if (pagination.hasNext && !isLoading) {
-      setPagination(prev => ({ ...prev, page: prev.page + 1 }));
-    }
-  };
+    fetchAvailableDates(1, true);
+  }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]);
 
   const screenTitle = `${departureLocationName} to ${arrivalLocationName}`;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      {/* <TopNavBar title={screenTitle} onBackPress={navigation.goBack} /> */}
       <TopNavBar title={screenTitle} />
-
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
@@ -199,15 +120,13 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
         }
         onScroll={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const isCloseToBottom =
-            layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 50;
           if (isCloseToBottom) {
             handleLoadMore();
           }
         }}
-        scrollEventThrottle={400}
-      >
-        {isLoading && tripsForRoute.length === 0 ? (
+        scrollEventThrottle={400}>
+        {isLoading && availableDates.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
             <Text style={styles.loadingText}>Loading available dates...</Text>
@@ -216,16 +135,16 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
           <View style={styles.emptyContainer}>
             <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
             <Text style={styles.emptyText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => fetchTripsForRoute(true)}>
+            <TouchableOpacity style={styles.retryButton} onPress={() => fetchAvailableDates(1, true)}>
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             <Text style={styles.sectionTitle}>
-              Select Departure Date ({uniqueDepartureDates.length})
+              Select Departure Date ({availableDates.length})
             </Text>
-            {uniqueDepartureDates.length === 0 ? (
+            {availableDates.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <MaterialIcons name="calendar-today" size={60} color="#ddd" />
                 <Text style={styles.emptyText}>No available dates for this route.</Text>
@@ -234,16 +153,17 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
                 </Text>
               </View>
             ) : (
-              uniqueDepartureDates.map((date, index) => (
+              availableDates.map((date, index) => (
                 <TouchableOpacity
-                  key={`${date.dateString}-${index}`}
+                  key={`${date.departureDate}-${index}`}
                   style={styles.dateCard}
-                  onPress={() => handleSelectDate(date)}
-                >
+                  onPress={() => handleSelectDate(date)}>
                   <View style={styles.dateInfo}>
                     <MaterialIcons name="event" size={24} color="#007AFF" />
                     <View style={styles.dateTextContainer}>
-                      <Text style={styles.dateDisplay}>{date.displayDate}</Text>
+                      <Text style={styles.dateDisplay}>
+                        {formatDate(date.departureDate, 'EEE, MMM d, yyyy')}
+                      </Text>
                       <Text style={styles.dateBusCount}>
                         {date.availableBusesCount} bus options
                       </Text>
@@ -251,20 +171,15 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
                   </View>
                   <View style={styles.dateAction}>
                     <Text style={styles.datePriceRange}>
-                      ₦{date.minFare?.toLocaleString()}
-                      {date.minFare !== date.maxFare ? ` - ₦${date.maxFare?.toLocaleString()}` : ''}
+                      ₦{formatPrice(date.minFare)}
+                      {date.minFare !== date.maxFare ? ` - ₦${formatPrice(date.maxFare)}` : ''}
                     </Text>
                     <MaterialIcons name="navigate-next" size={24} color="#007AFF" />
                   </View>
                 </TouchableOpacity>
               ))
             )}
-            {pagination.hasNext && !isLoading && (
-              <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
-                <Text style={styles.loadMoreButtonText}>Load More Dates</Text>
-              </TouchableOpacity>
-            )}
-            {isLoading && pagination.page > 1 && (
+            {isPaginating && hasNext && (
               <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 10 }} />
             )}
           </>
@@ -275,6 +190,7 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
 }
 
 const styles = StyleSheet.create({
+  // ... (Your styles remain unchanged)
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
@@ -376,18 +292,6 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: 'white',
-    fontWeight: 'bold',
-  },
-  loadMoreButton: {
-    backgroundColor: '#e0e0e0',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  loadMoreButtonText: {
-    color: '#333',
     fontWeight: 'bold',
   },
 });

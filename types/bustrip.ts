@@ -31,3 +31,30 @@ export interface BusTripFilters {
   page?: number;
   limit?: number;
 }
+
+export interface AvailableDate {
+  departureDate: string;
+  minFare: number;
+  maxFare: number;
+  availableBusesCount: number;
+}
+
+
+// Defines the paginated structure of the response
+export interface PaginatedAvailableDatesResponse {
+  items: AvailableDate[];
+  total: number;
+  page: number;
+  limit: number;
+  hasNext: boolean;
+}
+
+// Define the parameters for the function
+export interface GetAvailableDatesForRouteParams {
+  departureLocationName: string;
+  departureLocationState: string;
+  arrivalLocationName: string;
+  arrivalLocationState: string;
+  page?: number; // Add optional page parameter
+  limit?: number; // Add optional limit parameter
+}

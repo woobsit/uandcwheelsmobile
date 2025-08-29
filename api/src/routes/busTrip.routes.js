@@ -3,7 +3,7 @@ const { Router } = require('express');
 const {
   createBusTrip,
   getAllAvailableBusTrips,
-  getScheduledBusTrips,
+  getAvailableDatesForRoute,
   getBusTripById,
   updateBusTrip,
   deleteBusTrip,
@@ -14,14 +14,14 @@ const {
   createBusTripValidator,
   updateBusTripValidator,
   busTripIdValidator,
-  //getAllAvailableBusTripsValidator,
-  getScheduledBusTripsValidator,
+  getAllAvailableBusTripsValidator,
+  getAvailableDatesForRouteValidator,
 } = require('../middlewares/validators/busTrip.validator');
 
 const router = Router();
 
 router.post('/create-scheduled', createBusTripValidator, validateRequest, createBusTrip);
-router.get('/all', getAllAvailableBusTrips);
+router.get('/all', getAllAvailableBusTripsValidator, validateRequest, getAllAvailableBusTrips);
 router.get(
   '/one-scheduled-bus-trip-with-details/:id',
   busTripIdValidator,
@@ -30,10 +30,10 @@ router.get(
 );
 router.put('/update/:id', updateBusTripValidator, validateRequest, updateBusTrip);
 router.get(
-  '/scheduled-bus-trips',
-  getScheduledBusTripsValidator,
+  '/available-dates',
+  getAvailableDatesForRouteValidator,
   validateRequest,
-  getScheduledBusTrips,
+  getAvailableDatesForRoute,
 );
 router.delete('/delete/:id', updateBusTripValidator, validateRequest, deleteBusTrip);
 
