@@ -53,7 +53,7 @@ const getAllAvailableBusTrips = async (req, res) => {
   try {
     // 1. Get and sanitize query parameters from the request
     const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.min(parseInt(req.query.limit) || 10, 50); // Set a reasonable limit
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const offset = (page - 1) * limit;
 
     const searchTerm = req.query.searchTerm ? req.query.searchTerm.toLowerCase() : null;
@@ -70,14 +70,18 @@ const getAllAvailableBusTrips = async (req, res) => {
         )`;
     }
 
-    // 3. Define the count and data queries
+    // 3. Define the count query to match the GROUP BY of the data query
     const countQuery = `
-      SELECT COUNT(DISTINCT CONCAT(dl.name, al.name)) AS totalRoutes
-      FROM bus_trips bt
-      INNER JOIN trips t ON bt.trip_id = t.id
-      INNER JOIN locations dl ON t.departure_location_id = dl.id
-      INNER JOIN locations al ON t.arrival_location_id = al.id
-      ${whereClause};
+      SELECT COUNT(*) as totalRoutes
+      FROM (
+        SELECT 1
+        FROM bus_trips bt
+        INNER JOIN trips t ON bt.trip_id = t.id
+        INNER JOIN locations dl ON t.departure_location_id = dl.id
+        INNER JOIN locations al ON t.arrival_location_id = al.id
+        ${whereClause}
+        GROUP BY dl.name, dl.state, al.name, al.state
+      ) as grouped_routes;
     `;
 
     const dataQuery = `
@@ -107,20 +111,28 @@ const getAllAvailableBusTrips = async (req, res) => {
       offset,
     };
     if (searchTerm) {
-      replacements.searchTerm = `%${searchTerm}%`; // Use a wildcard for `LIKE`
+      replacements.searchTerm = `%${searchTerm}%`;
     }
 
     // 5. Execute both queries
     const [totalResults] = await db.sequelize.query(countQuery, {
-      replacements, // Use the unified replacements object
+      replacements,
       type: db.sequelize.QueryTypes.SELECT,
     });
-    const total = totalResults.totalRoutes;
     
-    const [paginatedResults] = await db.sequelize.query(dataQuery, {
-      replacements, // Use the unified replacements object
+    const total = totalResults?.totalRoutes || 0;
+    
+    const paginatedResults = await db.sequelize.query(dataQuery, {
+      replacements,
       type: db.sequelize.QueryTypes.SELECT,
     });
+    
+    const formattedResults = paginatedResults.map(item => ({
+      ...item,
+      minFare: parseFloat(item.minFare),
+      maxFare: parseFloat(item.maxFare),
+      availableDatesCount: parseInt(item.availableDatesCount, 10),
+    }));
 
     // 6. Calculate hasNext based on the fetched data and total count
     const hasNext = offset + paginatedResults.length < total;
@@ -129,7 +141,7 @@ const getAllAvailableBusTrips = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        items: paginatedResults,
+        items: formattedResults,
         total: total,
         page,
         limit,
@@ -147,27 +159,46 @@ const getAllAvailableBusTrips = async (req, res) => {
 
 // 4. Get All Scheduled Bus Trips (for Users/Booking)
 
-// New file or new function in controllers/busTripController.js
-
 const getAvailableDatesForRoute = async (req, res) => {
   try {
     const { 
+      page = 1, 
+      limit = 10,
       departureLocationName, 
       departureLocationState, 
       arrivalLocationName, 
       arrivalLocationState 
     } = req.query;
 
-    if (!departureLocationName || !arrivalLocationName) {
+    if (!departureLocationName || !departureLocationState || !arrivalLocationName || !arrivalLocationState) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required parameters: departureLocationName and arrivalLocationName.',
+        message: 'Missing required parameters: departureLocationName, departureLocationState, arrivalLocationName, and arrivalLocationState.',
       });
     }
 
+    const offset = (parseInt(page) - 1) * parseInt(limit);
     const now = new Date();
 
-    const query = `
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM (
+        SELECT 1
+        FROM bus_trips bt
+        INNER JOIN trips t ON bt.trip_id = t.id
+        INNER JOIN locations dl ON t.departure_location_id = dl.id
+        INNER JOIN locations al ON t.arrival_location_id = al.id
+        WHERE bt.status = 'scheduled' 
+        AND bt.departure_time >= :now
+        AND dl.name = :departureLocationName
+        AND dl.state = :departureLocationState
+        AND al.name = :arrivalLocationName
+        AND al.state = :arrivalLocationState
+        GROUP BY DATE(bt.departure_time)
+      ) AS count_table;
+    `;
+
+    const dataQuery = `
       SELECT
         DATE(bt.departure_time) AS departureDate,
         MIN(t.fare) AS minFare,
@@ -184,7 +215,9 @@ const getAvailableDatesForRoute = async (req, res) => {
       AND al.name = :arrivalLocationName
       AND al.state = :arrivalLocationState
       GROUP BY departureDate
-      ORDER BY departureDate ASC;
+      ORDER BY departureDate ASC
+      LIMIT :limit
+      OFFSET :offset;
     `;
 
     const replacements = {
@@ -193,29 +226,41 @@ const getAvailableDatesForRoute = async (req, res) => {
       departureLocationState,
       arrivalLocationName,
       arrivalLocationState,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
     };
-
-    const [results] = await db.sequelize.query(query, {
+    
+    const [totalResult] = await db.sequelize.query(countQuery, {
       replacements,
       type: db.sequelize.QueryTypes.SELECT,
     });
+    
+    const total = totalResult[0]?.total || 0;
 
-    // Process the raw results into the desired format
+    // Use a default empty array to prevent the TypeError
+    const [results = []] = await db.sequelize.query(dataQuery, {
+      replacements,
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    
+    // The .map() function will now safely run on an empty array
     const formattedResults = results.map(item => ({
       ...item,
       minFare: parseFloat(item.minFare),
       maxFare: parseFloat(item.maxFare),
       availableBusesCount: parseInt(item.availableBusesCount, 10),
     }));
+    
+    const hasNext = offset + formattedResults.length < total;
 
     return res.status(200).json({
       success: true,
       data: {
         items: formattedResults,
-        total: formattedResults.length,
-        hasNext: false,
-        page: 1,
-        limit: formattedResults.length,
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        hasNext,
       },
     });
 

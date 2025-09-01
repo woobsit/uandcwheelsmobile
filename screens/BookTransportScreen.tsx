@@ -1,6 +1,6 @@
 // screens/BookTransportScreen.tsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -39,7 +39,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
   const [hasNext, setHasNext] = useState(true);
 
   // Set the limit here to a small number for testing
-  const limit = 5;
+  const limit = 10;
 
   const handleSelectRoute = (route: UniqueTripRoute) => {
     navigation.navigate('TripDates', {
@@ -67,6 +67,7 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
         page: currentPage,
         limit: limit,
       });
+      //console.log(JSON.stringify(response, null, 2))
 
       if (reset) {
         setTripRoutes(response.data.items);

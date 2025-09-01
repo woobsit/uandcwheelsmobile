@@ -118,6 +118,36 @@ const busTripIdValidator = [
   param('id').isInt({ min: 1 }).withMessage('Invalid bus trip ID.'),
 ];
 
+const getAllAvailableBusTripsValidator = [
+  // Status filtering for BusTrip (scheduled, boarding, departed, arrived, cancelled)
+  query('status')
+    .optional()
+    .isIn(['scheduled', 'boarding', 'departed', 'arrived', 'cancelled'])
+    .withMessage('Invalid bus trip status. Valid values: scheduled, boarding, departed, arrived, cancelled.'),
+
+  // Location-based filtering, these refer to the 'name' of the location (e.g., "Lagos")
+  query('from')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Departure location name cannot be empty.'),
+
+  query('to')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Arrival location name cannot be empty.'),
+
+  // Date filtering (for departure_time of BusTrip)
+  query('date')
+    .optional()
+    .isISO8601({ strict: true }).withMessage('Invalid date format. Use ISO format (YYYY-MM-DD).')
+    .toDate(), // Convert to Date object
+
+  // Pagination parameters
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100.').toInt(),
+];
+
+
 const getAvailableDatesForRouteValidator = [
   query('departureLocationName')
     .exists()
@@ -184,6 +214,7 @@ module.exports = {
   createBusTripValidator,
   updateBusTripValidator,
   busTripIdValidator, 
+  getAllAvailableBusTripsValidator,
   getAvailableDatesForRouteValidator,
   getScheduledBusTripsValidator,
 };

@@ -63,6 +63,7 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
       };
 
       const response = await BusTripService.getAvailableDatesForRoute(params);
+console.log(JSON.stringify(response))
 
       if (reset) {
         setAvailableDates(response.data.items);

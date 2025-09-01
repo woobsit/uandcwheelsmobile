@@ -7,7 +7,6 @@ const {
   getBusTripById,
   updateBusTrip,
   deleteBusTrip,
-  //searchTrips,
 } = require('../controllers/busTrip');
 const { validateRequest } = require('../middlewares/validate-request');
 const {

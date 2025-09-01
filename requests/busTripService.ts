@@ -24,14 +24,13 @@ const BusTripService = {
         ENDPOINTS.ALL_AVAILABLE_TRIPS,
         { params }
       );
-  
       return response.data;
     } catch (error) {
       throw error;
     }
   },
 
- getAvailableDatesForRoute: async (
+getAvailableDatesForRoute: async (
     params: GetAvailableDatesForRouteParams
   ): Promise<ApiResponse<PaginatedAvailableDatesResponse>> => {
     try {
@@ -39,10 +38,11 @@ const BusTripService = {
         ENDPOINTS.AVAILABLE_DATES,
         { params }
       );
+console.log(JSON.stringify(response))
 
       return response.data;
     } catch (error) {
-      
+      // Re-throw the error
       throw error;
     }
   },
@@ -101,7 +101,7 @@ const BusTripService = {
       const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
         params: filters,
       });
-      console.log(JSON.stringify(response.data,  null, 2))
+     // console.log(JSON.stringify(response.data,  null, 2))
       return response.data;
     } catch (error) {
       throw error;
