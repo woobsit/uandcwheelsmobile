@@ -31,3 +31,34 @@ export const formatDate = (dateInput: Date | string | number, dateFormat: string
     return 'Formatting Error';
   }
 };
+
+/**
+ * Formats a date or date-like string/number into a time string.
+ * @param {Date | string | number} dateInput The date to format.
+ * @param {string} [timeFormat='p'] The format string (e.g., 'hh:mm a'). Defaults to a short time format.
+ * @returns {string} The formatted time string.
+ */
+export const formatTime = (dateInput: Date | string | number, timeFormat: string = 'p'): string => {
+  let date: Date;
+
+  if (dateInput instanceof Date) {
+    date = dateInput;
+  } else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes(':')) {
+    date = parseISO(dateInput);
+  } else if (typeof dateInput === 'string' || typeof dateInput === 'number') {
+    date = new Date(dateInput);
+  } else {
+    return 'Invalid Time Input';
+  }
+
+  if (!isValid(date)) {
+    return 'Invalid Time';
+  }
+
+  try {
+    return format(date, timeFormat);
+  } catch (e) {
+    console.error('Error formatting time:', e, 'Input:', dateInput, 'Format:', timeFormat);
+    return 'Formatting Error';
+  }
+};

@@ -176,6 +176,43 @@ const getAvailableDatesForRouteValidator = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50.').toInt(),
 ];
+
+const getAvailableBusesForRouteValidator = [
+  query('departureLocationName')
+    .exists()
+    .withMessage('Departure location name is required.')
+    .notEmpty()
+    .withMessage('Departure location name cannot be empty.'),
+
+  query('departureLocationState')
+    .exists()
+    .withMessage('Departure location state is required.')
+    .notEmpty()
+    .withMessage('Departure location state cannot be empty.'),
+
+  query('arrivalLocationName')
+    .exists()
+    .withMessage('Arrival location name is required.')
+    .notEmpty()
+    .withMessage('Arrival location name cannot be empty.'),
+
+  query('arrivalLocationState')
+    .exists()
+    .withMessage('Arrival location state is required.')
+    .notEmpty()
+    .withMessage('Arrival location state cannot be empty.'),
+    
+   query('departureDate')
+    .exists()
+    .withMessage('Departure date is required.')
+    .notEmpty()
+    .withMessage('Departure date cannot be empty.')
+    .isISO8601()
+    .withMessage('Departure date must be a valid date in YYYY-MM-DD format.'),
+    
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50.').toInt(),
+];
 // --- Validator for getScheduledBusTrips (User/Booking View) ---
 const getScheduledBusTripsValidator = [
   // No status query needed as it's hardcoded to 'scheduled' and future dates
@@ -216,5 +253,6 @@ module.exports = {
   busTripIdValidator, 
   getAllAvailableBusTripsValidator,
   getAvailableDatesForRouteValidator,
+  getAvailableBusesForRouteValidator,
   getScheduledBusTripsValidator,
 };

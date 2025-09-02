@@ -6,7 +6,7 @@ import { DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/screenprops';
 
-export default function TopNavBar({ title }: { title: string }) {
+export default function TopNavBar({ title }: { title: string; subtitle?: string }) {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   return (

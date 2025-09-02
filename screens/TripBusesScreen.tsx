@@ -10,25 +10,26 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import useRefreshControl from '../hooks/useRefreshControl';
-import { formatDate } from '../utils/dateHelpers';
+import { formatTime, formatDate } from '../utils/dateHelpers';
 import BusTripService from '../requests/busTripService';
-import { TripDatesScreenProps } from '../types/screenprops';
+import { TripBusesScreenProps } from '../types/screenprops';
 import TopNavBar from '../components/molecules/TopNavBar';
-import { AvailableDate } from '../types/bustrip'; 
+import { AvailableBus } from '../types/bustrip';
 
-export default function TripDatesScreen({ navigation, route }: TripDatesScreenProps) {
+export default function TripBusesScreen({ navigation, route }: TripBusesScreenProps) {
   const {
     departureLocationName,
     departureLocationState,
     arrivalLocationName,
     arrivalLocationState,
+    departureDate,
   } = route.params;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginating, setIsPaginating] = useState(false);
-  const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
+  const [availableBuses, setAvailableBuses] = useState<AvailableBus[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(true);
@@ -41,7 +42,7 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
     return price.toLocaleString();
   };
 
-  const fetchAvailableDates = async (currentPage: number, reset = false) => {
+  const fetchAvailableBuses = async (currentPage: number, reset = false) => {
     if (isPaginating && !reset) return;
     if (!hasNext && !reset) return;
 
@@ -60,22 +61,22 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
         departureLocationState,
         arrivalLocationName,
         arrivalLocationState,
+        departureDate,
       };
 
-      const response = await BusTripService.getAvailableDatesForRoute(params);
-
+      // Ensure this service call matches your backend controller name
+      const response = await BusTripService.getAvailableBusesForDate(params);
       if (reset) {
-        setAvailableDates(response.data.items);
+        setAvailableBuses(response.data.items);
       } else {
-        setAvailableDates(prev => [...prev, ...response.data.items]);
+        setAvailableBuses(prev => [...prev, ...response.data.items]);
       }
 
       setHasNext(response.data.hasNext);
       setPage(response.data.page);
-      
     } catch (err) {
-      setError('Failed to load available dates. Please try again.');
-      console.error('Error fetching available dates:', err);
+      setError('Failed to load available buses. Please try again.');
+      console.error('Error fetching available buses:', err);
     } finally {
       setIsLoading(false);
       setIsPaginating(false);
@@ -84,35 +85,36 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
 
   const { refreshing, onRefresh } = useRefreshControl({
     refreshAction: async () => {
-      await fetchAvailableDates(1, true);
+      await fetchAvailableBuses(1, true);
     },
   });
 
   const handleLoadMore = () => {
     if (!isLoading && !isPaginating && hasNext) {
-      fetchAvailableDates(page + 1);
+      fetchAvailableBuses(page + 1);
     }
   };
 
-  const handleSelectDate = (date: AvailableDate) => {
-    navigation.navigate('TripBuses', {
-      departureLocationName,
-      departureLocationState,
-      arrivalLocationName,
-      arrivalLocationState,
-      departureDate: date.departureDate,
-    });
+  const handleSelectBus = (busTripId: string) => {
+    // Navigate to the next screen, likely for seat selection or booking, passing the bus trip ID
+  //  navigation.navigate('SeatSelection', {
+  //    busTripId,
+//departureLocationName,
+   //   arrivalLocationName,
+  //    departureDate,
+  //  });
   };
 
   useEffect(() => {
-    fetchAvailableDates(1, true);
-  }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]);
+    fetchAvailableBuses(1, true);
+  }, [departureDate, departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]);
 
   const screenTitle = `${departureLocationName} to ${arrivalLocationName}`;
+  const subtitle = `${formatDate(departureDate, 'EEE, MMM d, yyyy')}`;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <TopNavBar title={screenTitle} />
+      <TopNavBar title={screenTitle} subtitle={subtitle} />
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
@@ -125,56 +127,58 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
             handleLoadMore();
           }
         }}
-        scrollEventThrottle={400}>
-        {isLoading && availableDates.length === 0 ? (
+        scrollEventThrottle={400}
+      >
+        {isLoading && availableBuses.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading available dates...</Text>
+            <Text style={styles.loadingText}>Loading bus options...</Text>
           </View>
         ) : error ? (
           <View style={styles.emptyContainer}>
             <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
             <Text style={styles.emptyText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => fetchAvailableDates(1, true)}>
+            <TouchableOpacity style={styles.retryButton} onPress={() => fetchAvailableBuses(1, true)}>
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             <Text style={styles.sectionTitle}>
-              Select Departure Date ({availableDates.length})
+              Available Buses ({availableBuses.length})
             </Text>
-            {availableDates.length === 0 ? (
+            {availableBuses.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <MaterialIcons name="calendar-today" size={60} color="#ddd" />
-                <Text style={styles.emptyText}>No available dates for this route.</Text>
+                <MaterialCommunityIcons name="bus" size={60} color="#ddd" />
+                <Text style={styles.emptyText}>No available buses for this date.</Text>
                 <Text style={styles.emptySubtext}>
-                  Please try another route or check back later.
+                  Please try another date or check back later.
                 </Text>
               </View>
             ) : (
-              availableDates.map((date, index) => (
+              availableBuses.map((bus, index) => (
                 <TouchableOpacity
-                  key={`${date.departureDate}-${index}`}
-                  style={styles.dateCard}
-                  onPress={() => handleSelectDate(date)}>
-                  <View style={styles.dateInfo}>
-                    <MaterialIcons name="event" size={24} color="#007AFF" />
-                    <View style={styles.dateTextContainer}>
-                      <Text style={styles.dateDisplay}>
-                        {formatDate(date.departureDate, 'EEE, MMM d, yyyy')}
+                  key={bus.id}
+                  style={styles.busCard}
+                  onPress={() => handleSelectBus(bus.id)}
+                >
+                  <View style={styles.busInfo}>
+                    <MaterialCommunityIcons name="bus-side" size={30} color="#007AFF" />
+                    <View style={styles.busTextContainer}>
+                      <Text style={styles.busBrand}>
+                        {bus.bus_details.brand} ({bus.bus_details.plate_number})
                       </Text>
-                      <Text style={styles.dateBusCount}>
-                        {date.availableBusesCount} bus options
+                      <Text style={styles.busDepartureTime}>
+                        Departure: **{formatTime(bus.departure_time)}**
+                      </Text>
+                      <Text style={styles.busDetails}>
+                        Capacity: {bus.bus_details.capacity} seats | Available: {bus.available_seats}
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.dateAction}>
-                    <Text style={styles.datePriceRange}>
-                      ₦{formatPrice(date.minFare)}
-                      {date.minFare !== date.maxFare ? ` - ₦${formatPrice(date.maxFare)}` : ''}
-                    </Text>
-                    <MaterialIcons name="navigate-next" size={24} color="#007AFF" />
+                  <View style={styles.busAction}>
+                    <Text style={styles.busFare}>₦{formatPrice(bus.fare)}</Text>
+                    <MaterialIcons name="chevron-right" size={24} color="#007AFF" />
                   </View>
                 </TouchableOpacity>
               ))
@@ -190,7 +194,6 @@ export default function TripDatesScreen({ navigation, route }: TripDatesScreenPr
 }
 
 const styles = StyleSheet.create({
-  // ... (Your styles remain unchanged)
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
@@ -206,7 +209,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#444',
   },
-  dateCard: {
+  busCard: {
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 16,
@@ -226,32 +229,39 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  dateInfo: {
+  busInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  dateTextContainer: {
+  busTextContainer: {
     marginLeft: 10,
+    flexShrink: 1,
   },
-  dateDisplay: {
+  busBrand: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
-  dateBusCount: {
+  busDepartureTime: {
     fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  busDetails: {
+    fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
-  dateAction: {
+  busAction: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  datePriceRange: {
+  busFare: {
     fontSize: 15,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: '#444',
+    fontWeight: 'bold',
     marginRight: 8,
   },
   loadingContainer: {

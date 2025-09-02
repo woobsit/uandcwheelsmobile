@@ -165,17 +165,17 @@ const getAvailableDatesForRoute = async (req, res) => {
       page = 1, 
       limit = 10,
       departureLocationName, 
-      departureLocationState, 
+      //departureLocationState, 
       arrivalLocationName, 
-      arrivalLocationState 
+      //arrivalLocationState 
     } = req.query;
 
-    if (!departureLocationName || !departureLocationState || !arrivalLocationName || !arrivalLocationState) {
+  /* if (!departureLocationName || !departureLocationState || !arrivalLocationName || !arrivalLocationState) {
       return res.status(400).json({
         success: false,
         message: 'Missing required parameters: departureLocationName, departureLocationState, arrivalLocationName, and arrivalLocationState.',
       });
-    }
+    }*/
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const now = new Date();
@@ -190,10 +190,10 @@ const getAvailableDatesForRoute = async (req, res) => {
         INNER JOIN locations al ON t.arrival_location_id = al.id
         WHERE bt.status = 'scheduled' 
         AND bt.departure_time >= :now
-        AND dl.name = :departureLocationName
-        AND dl.state = :departureLocationState
-        AND al.name = :arrivalLocationName
-        AND al.state = :arrivalLocationState
+        AND LOWER(dl.name) = LOWER(:departureLocationName)
+        
+        AND LOWER(al.name) = LOWER(:arrivalLocationName)
+        
         GROUP BY DATE(bt.departure_time)
       ) AS count_table;
     `;
@@ -210,10 +210,10 @@ const getAvailableDatesForRoute = async (req, res) => {
       INNER JOIN locations al ON t.arrival_location_id = al.id
       WHERE bt.status = 'scheduled' 
       AND bt.departure_time >= :now
-      AND dl.name = :departureLocationName
-      AND dl.state = :departureLocationState
-      AND al.name = :arrivalLocationName
-      AND al.state = :arrivalLocationState
+      AND LOWER(dl.name) = LOWER(:departureLocationName)
+      
+      AND LOWER(al.name) = LOWER(:arrivalLocationName)
+      
       GROUP BY departureDate
       ORDER BY departureDate ASC
       LIMIT :limit
@@ -223,9 +223,9 @@ const getAvailableDatesForRoute = async (req, res) => {
     const replacements = {
       now,
       departureLocationName,
-      departureLocationState,
+     // departureLocationState,
       arrivalLocationName,
-      arrivalLocationState,
+     // arrivalLocationState,
       limit: parseInt(limit),
       offset: parseInt(offset),
     };
@@ -237,19 +237,17 @@ const getAvailableDatesForRoute = async (req, res) => {
     
     const total = totalResult[0]?.total || 0;
 
-    // Use a default empty array to prevent the TypeError
-    const [results = []] = await db.sequelize.query(dataQuery, {
+    const results = await db.sequelize.query(dataQuery, {
       replacements,
       type: db.sequelize.QueryTypes.SELECT,
     });
     
-    // The .map() function will now safely run on an empty array
     const formattedResults = results.map(item => ({
       ...item,
       minFare: parseFloat(item.minFare),
       maxFare: parseFloat(item.maxFare),
       availableBusesCount: parseInt(item.availableBusesCount, 10),
-    }));
+    }));   
     
     const hasNext = offset + formattedResults.length < total;
 
@@ -269,9 +267,140 @@ const getAvailableDatesForRoute = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-
 // 5. Get Bus Trip by ID
 // Revised getBusTripById controller function
+const getAvailableBusesForDate = async (req, res) => {
+  try {
+    // 1. Get and sanitize query parameters from the request
+    const {
+      page = 1,
+      limit = 10,
+      departureLocationName,
+      departureLocationState,
+      arrivalLocationName,
+      arrivalLocationState,
+      departureDate,
+    } = req.query;
+
+    // 2. Validate required parameters
+  /*  if (
+      !departureLocationName ||
+      !departureLocationState ||
+      !arrivalLocationName ||
+      !arrivalLocationState ||
+      !departureDate
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Missing required parameters: departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState, and departureDate.',
+      });
+    }*/
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    // 3. Define the base WHERE clause with case-insensitive checks
+    let whereClause = `
+      WHERE bt.status = 'scheduled' 
+      AND DATE(bt.departure_time) = :departureDate
+      AND LOWER(dl.name) = LOWER(:departureLocationName)
+      
+      AND LOWER(al.name) = LOWER(:arrivalLocationName)
+      
+    `;
+
+    // 4. Define the count query
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM bus_trips bt
+      INNER JOIN trips t ON bt.trip_id = t.id
+      INNER JOIN locations dl ON t.departure_location_id = dl.id
+      INNER JOIN locations al ON t.arrival_location_id = al.id
+      ${whereClause};
+    `;
+
+    // 5. Define the data query
+    const dataQuery = `
+      SELECT
+        bt.id,
+        bt.available_seats,
+        bt.departure_time,
+        t.fare,
+        t.estimated_arrival,
+        t.departure_terminal,
+        t.arrival_terminal,
+        b.plate_number,
+        b.brand,
+        b.capacity
+      FROM bus_trips bt
+      INNER JOIN trips t ON bt.trip_id = t.id
+      INNER JOIN locations dl ON t.departure_location_id = dl.id
+      INNER JOIN locations al ON t.arrival_location_id = al.id
+      INNER JOIN buses b ON bt.bus_id = b.id
+      ${whereClause}
+      ORDER BY bt.departure_time ASC
+      LIMIT :limit
+      OFFSET :offset;
+    `;
+
+    // 6. Create the replacements object for both queries
+    const replacements = {
+      departureDate,
+      departureLocationName,
+      //departureLocationState,
+      arrivalLocationName,
+      //arrivalLocationState,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+    };
+    // 7. Execute both queries
+    const [totalResult] = await db.sequelize.query(countQuery, {
+      replacements,
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    const total = totalResult[0]?.total || 0;
+
+    const [results] = await db.sequelize.query(dataQuery, {
+      replacements,
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    
+    // 8. Format the results
+    const formattedResults = [results].map(item => ({
+      id: item.id,
+      available_seats: parseInt(item.available_seats, 10),
+      departure_time: item.departure_time,
+      fare: parseFloat(item.fare),
+      estimated_arrival: item.estimated_arrival,
+      departure_terminal: item.departure_terminal,
+      arrival_terminal: item.arrival_terminal,
+      bus_details: {
+        plate_number: item.plate_number,
+        brand: item.brand,
+        capacity: item.capacity,
+      },
+    }));
+
+    // 9. Calculate hasNext
+    const hasNext = offset + formattedResults.length < total;
+
+    // 10. Send the response
+    return res.status(200).json({
+      success: true,
+      data: {
+        items: formattedResults,
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        hasNext,
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to fetch available buses for date:', { error: error.message, stack: error.stack });
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 const getBusTripById = async (req, res) => {
   try {
     const busTrip = await db.BusTrip.findByPk(req.params.id, {
@@ -449,7 +578,8 @@ const deleteBusTrip = async (req, res) => {
 module.exports = {
   createBusTrip, // New function for specific scheduled trips
   getAllAvailableBusTrips, // Renamed from getAllTrips, now fetches all BusTrips
-  getAvailableDatesForRoute, 
+  getAvailableDatesForRoute,
+  getAvailableBusesForDate, 
   getBusTripById, // Renamed from getTripById
   updateBusTrip, // Renamed from updateTrip
   deleteBusTrip, // Renamed from deleteTrip

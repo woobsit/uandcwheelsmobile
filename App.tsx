@@ -13,6 +13,7 @@ import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; //
 import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
 import BookTransportScreen from './screens/BookTransportScreen';
 import TripDatesScreen from './screens/TripDatesScreen'; // NEW
+import TripBusesScreen from './screens/TripBusesScreen'; // NEW
 import TripDetailsScreen from './screens/TripDetailsScreen'; // Existing, but logic updated
 import PassengerDetailsAndSeatSelectionScreen from './screens/PassengerDetailsAndSeatSelectionScreen';
 import PaymentScreen from './screens/PaymentScreen';
@@ -39,6 +40,7 @@ function DashboardDrawer() {
       {/* Add other logistics screens here */}
       <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
       <Drawer.Screen name="TripDates" component={TripDatesScreen} />
+       <Drawer.Screen name="TripBuses" component={TripBusesScreen} />
       <Drawer.Screen name="TripDetails" component={TripDetailsScreen} />
 
       {/* ... your existing screens */}

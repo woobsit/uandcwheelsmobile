@@ -10,7 +10,10 @@ export const ENDPOINTS = {
   FORGOT_PASSWORD: '/auth/forgot-password',
   PASSWORD_RESET: (token: string) => `/auth/reset-password/${token}`,
   ALL_AVAILABLE_TRIPS: '/bus-trip/all',
-  TRIPS_ROUTES_CREATE:'/create',
+  AVAILABLE_DATES: '/bus-trip/available-dates', 
+  AVAILABLE_BUSES_FOR_DATE: '/bus-trip/available-buses', 
+
+  //TRIPS_ROUTES_CREATE:'/create',
   BUS_TRIPS_ADMIN:'',
   BUS_TRIPS_CREATE:'',
   BUS_TRIP_UPDATE:(id: string) => `/update-bus-trip/${id}`,

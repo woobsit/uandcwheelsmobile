@@ -3,7 +3,7 @@
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { ApiResponse, PaginatedResponse } from '../types/api'; // Ensure you have ApiResponse and PaginatedResponse defined
-import { BusTrip, BusTripFilters, GetAvailableDatesForRouteParams, PaginatedAvailableDatesResponse } from '../types/bustrip'; // Your updated types
+import { BusTrip, BusTripFilters, GetAvailableDatesForRouteParams, PaginatedAvailableDatesResponse, PaginatedAvailableBusesResponse, GetAvailableBusesForDateParams } from '../types/bustrip';
 
 // Define the new interface for the aggregated data
 export interface UniqueTripRoute {
@@ -38,7 +38,6 @@ getAvailableDatesForRoute: async (
         ENDPOINTS.AVAILABLE_DATES,
         { params }
       );
-console.log(JSON.stringify(response))
 
       return response.data;
     } catch (error) {
@@ -46,6 +45,25 @@ console.log(JSON.stringify(response))
       throw error;
     }
   },
+
+// --- NEW SERVICE FUNCTION ---
+  /**
+   * Fetches available buses for a specific route and a selected date.
+   */
+  getAvailableBusesForDate: async (
+    params: GetAvailableBusesForDateParams
+  ): Promise<ApiResponse<PaginatedAvailableBusesResponse>> => {
+    try {
+      const response = await api.get<ApiResponse<PaginatedAvailableBusesResponse>>(
+        ENDPOINTS.AVAILABLE_BUSES_FOR_DATE, // This endpoint needs to be defined
+        { params }
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Create a specific Bus Trip (scheduled instance)
   createBusTrip: async (
     busTripData: Omit<BusTrip, 'id' | 'createdAt' | 'updatedAt' | 'bus' | 'driver' | 'trip' | 'available_seats' | 'status'> & { available_seats?: number },

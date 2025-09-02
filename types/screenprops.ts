@@ -34,6 +34,13 @@ export type AuthStackParamList = {
     arrivalLocationName: string;
     arrivalLocationState: string;
   };
+    TripBuses: {
+    departureLocationName: string;
+    departureLocationState: string;
+    arrivalLocationName: string;
+    arrivalLocationState: string;
+    departureDate: string;
+  };
   TripDetails: {
     departureLocationName: string;
     departureLocationState: string;
@@ -100,6 +107,11 @@ export type BookTransportScreenProps = NativeStackScreenProps<AuthStackParamList
 export type TripDatesScreenProps = NativeStackScreenProps<
   AuthStackParamList,
   'TripDates'
+>;
+
+export type TripBusesScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'TripBuses'
 >;
 
 // ForgotPasswordScreen screen props type
