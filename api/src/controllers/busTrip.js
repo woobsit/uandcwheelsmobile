@@ -401,6 +401,91 @@ const getAvailableBusesForDate = async (req, res) => {
   }
 };
 
+const getBusTripDetails = async (req, res) => {
+  try {
+    const { busTripId } = req.params;
+    // 1. Define the SQL query to get all necessary bus trip data
+    const query = `
+      SELECT
+        bt.id,
+        bt.departure_time,
+        t.fare,
+        bt.available_seats,
+        t.departure_terminal,
+        t.arrival_terminal,
+        t.departure_location_id,
+        t.arrival_location_id,
+        dl.name AS departure_location,
+        dl.state AS departure_location_state,
+        al.name AS arrival_location,
+        al.state AS arrival_location_state,
+        b.id AS bus_id,
+        b.brand AS bus_brand,
+        b.plate_number AS bus_plate_number,
+        b.capacity AS bus_capacity,
+        b.seat_arrangement AS bus_seat_arrangement,
+        d.id AS driver_id,
+        d.name AS driver_name
+      FROM bus_trips bt
+      INNER JOIN trips t ON bt.trip_id = t.id
+      INNER JOIN buses b ON bt.bus_id = b.id
+      INNER JOIN locations dl ON t.departure_location_id = dl.id
+      INNER JOIN locations al ON t.arrival_location_id = al.id
+      LEFT JOIN drivers d ON bt.driver_id = d.id
+      WHERE bt.id = :busTripId
+    `;
+
+    // 2. Execute the query
+    const [result] = await db.sequelize.query(query, {
+      replacements: { busTripId: parseInt(busTripId, 10) },
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+
+    // 3. Handle case where no bus trip is found
+    if (!result || result.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Bus trip not found or not available.',
+      });
+    }
+
+   // 4. Format the result into a clean, nested object
+    const formattedResult = {
+      id: result.id,
+      available_seats: result.available_seats,
+      departure_time: result.departure_time,
+      fare: parseFloat(result.fare),
+       departure_terminal: result.departure_terminal,
+       arrival_terminal: result.arrival_terminal,
+       departure_location: result.departure_location,
+       departure_location_state: result.departure_location_state,
+       arrival_location: result.arrival_location,
+       arrival_location_state: result.arrival_location_state,
+       bus: {
+         id: result.bus_id,
+         brand: result.bus_brand,
+         plate_number: result.bus_plate_number,
+         capacity: result.bus_capacity,
+         seat_arrangement: result.bus_seat_arrangement,
+      
+       },
+       driver: {
+         id: result.driver_id,
+         name: result.driver_name,
+       },
+    };
+
+    // 5. Send the success response
+    return res.status(200).json({
+      success: true,
+      data: formattedResult,
+    });
+  } catch (error) {
+    logger.error('Failed to fetch trip details:', { error: error.message, stack: error.stack });
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
 const getBusTripById = async (req, res) => {
   try {
     const busTrip = await db.BusTrip.findByPk(req.params.id, {
@@ -580,6 +665,7 @@ module.exports = {
   getAllAvailableBusTrips, // Renamed from getAllTrips, now fetches all BusTrips
   getAvailableDatesForRoute,
   getAvailableBusesForDate, 
+  getBusTripDetails,
   getBusTripById, // Renamed from getTripById
   updateBusTrip, // Renamed from updateTrip
   deleteBusTrip, // Renamed from deleteTrip

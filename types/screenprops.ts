@@ -41,6 +41,10 @@ export type AuthStackParamList = {
     arrivalLocationState: string;
     departureDate: string;
   };
+    SeatSelection: {
+    busTripId: string;
+    
+  };
   TripDetails: {
     departureLocationName: string;
     departureLocationState: string;
@@ -52,7 +56,7 @@ export type AuthStackParamList = {
   // ----------------------------------------
 // --- NEW SCREENS FOR BOOKING FLOW ---
   PassengerDetailsAndSeatSelection: {
-    selectedBusTrip: BusTrip; // Pass the *entire* selected BusTrip object, which includes `bus` and `fare`
+     busTripId: string;
   };
   Payment: {
     bookingPayload: CreateBookingPayload; // The full payload to send to the backend

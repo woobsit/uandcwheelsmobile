@@ -1,5 +1,5 @@
 // screens/PassengerDetailsAndSeatSelectionScreen.tsx
-// screens/PassengerDetailsAndSeatSelectionScreen.tsx
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Alert,
   Switch,
-  ActivityIndicator, // <-- Add ActivityIndicator for loading state
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,8 +21,9 @@ import { PassengerPayload } from '../types/passenger';
 import { CreateBookingPayload, PaymentMethod } from '../types/booking';
 import { BusTrip } from '../types/bustrip';
 
-import BusTripService from '../requests/busTripService'; // <-- We need a service function to fetch the data
-import { formatCurrency } from '../utils/formatCurrency'; // Assuming you have a formatCurrency helper
+// Update the import to use the new service function
+import BusTripService from '../requests/busTripService';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function PassengerDetailsAndSeatSelectionScreen() {
   const navigation = useNavigation<PassengerDetailsAndSeatSelectionScreenProps['navigation']>();
@@ -33,7 +34,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
 
   // State to hold the full, detailed bus trip object
   const [busTripDetails, setBusTripDetails] = useState<BusTrip | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // <-- Now we need a loading state
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // --- NEW: Fetch bus trip details on component mount ---
@@ -42,7 +43,8 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
       try {
         setIsLoading(true);
         // Call the new, detailed API endpoint
-        const fullTripDetails = await BusTripService.getBusTripWithDetails(partialBusTrip.id);
+        const response = await BusTripService.getBusTripDetails(partialBusTrip.id);
+        const fullTripDetails = response.data;
 
         if (!fullTripDetails) {
           setError('Bus trip details not found.');
@@ -106,15 +108,8 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   const takenSeats = busTripDetails?.bus?.taken_seats || [];
   const seatArrangement = busTripDetails?.bus?.seat_arrangement;
 
-  // --- (The rest of your component logic remains the same) ---
-  // The `useEffect` for building passenger forms and the `useCallback` functions
-  // for handling input and seat selection are correct and don't need changes.
-
   // New useEffect to adjust selected seats when count changes
   useEffect(() => {
-    // ... (Your existing logic for adjusting passenger forms and selected seats is correct here) ...
-    // The previous useEffect logic for passengers and seats is fine and can remain.
-    // It will run when adultCount, etc., changes.
     const newPassengers: PassengerPayload[] = [];
 
     // Primary passenger (always one adult)
@@ -288,13 +283,31 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   }, [busTripDetails]);
 
   const handleProceedToPayment = () => {
-    // ... (Your existing validation logic is correct and stays the same) ...
+    // Validation logic
     if (totalPassengersRequiringSeats === 0 && lapChildCount === 0) {
       Alert.alert('No Passengers', 'Please add at least one passenger.');
       return;
     }
 
-    // ... (rest of your validation) ...
+    // Check for empty passenger names
+    const emptyNamePassenger = passengers.find(p => !p.name);
+    if (emptyNamePassenger) {
+      Alert.alert('Missing Details', 'Please enter a name for all passengers.');
+      return;
+    }
+
+    // Check for zero or invalid age
+    const invalidAgePassenger = passengers.find(p => !p.age || p.age <= 0);
+    if (invalidAgePassenger) {
+      Alert.alert('Invalid Age', 'Please enter a valid age for all passengers.');
+      return;
+    }
+
+    // Validation for emergency contact
+    if (!emergencyContactName || !emergencyContactPhone) {
+      Alert.alert('Emergency Contact Required', 'Please provide a name and phone number for the emergency contact.');
+      return;
+    }
 
     if (selectedSeats.length !== totalPassengersRequiringSeats) {
       Alert.alert(
@@ -380,7 +393,60 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
 
         {/* ... (The rest of your JSX remains largely the same, but now references `busTripDetails` for `takenSeats`, `seatArrangement`, `busCapacity`, etc.) ... */}
         <Text style={styles.sectionTitle}>Number of Passengers</Text>
-        {/* ... (your passenger count selectors) ... */}
+        <View style={styles.passengerCountContainer}>
+          <Text style={styles.passengerCountLabel}>Adults (18+)</Text>
+          <View style={styles.countStepper}>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => setAdultCount(Math.max(1, adultCount - 1))}
+            >
+              <Text style={styles.stepperButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.stepperValue}>{adultCount}</Text>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => setAdultCount(adultCount + 1)}
+            >
+              <Text style={styles.stepperButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.passengerCountContainer}>
+          <Text style={styles.passengerCountLabel}>Seated Children (2-17)</Text>
+          <View style={styles.countStepper}>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => setSeatedChildCount(Math.max(0, seatedChildCount - 1))}
+            >
+              <Text style={styles.stepperButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.stepperValue}>{seatedChildCount}</Text>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => setSeatedChildCount(seatedChildCount + 1)}
+            >
+              <Text style={styles.stepperButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.passengerCountContainer}>
+          <Text style={styles.passengerCountLabel}>Lap Children (0-2)</Text>
+          <View style={styles.countStepper}>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => setLapChildCount(Math.max(0, lapChildCount - 1))}
+            >
+              <Text style={styles.stepperButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.stepperValue}>{lapChildCount}</Text>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => setLapChildCount(lapChildCount + 1)}
+            >
+              <Text style={styles.stepperButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Guest Booking Toggle */}
         <View style={styles.guestToggleContainer}>
@@ -460,6 +526,33 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
             </View>
           </View>
         ))}
+        {/* Emergency Contact outside passenger loop as a general requirement */}
+        {!isGuest && (
+          <>
+            <Text style={styles.sectionTitle}>Emergency Contact (Required)</Text>
+            <View style={styles.passengerCard}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Name</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Emergency contact name"
+                  value={emergencyContactName}
+                  onChangeText={setEmergencyContactName}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Phone Number</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Emergency contact phone number"
+                  value={emergencyContactPhone}
+                  onChangeText={setEmergencyContactPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+            </View>
+          </>
+        )}
 
         {/* Seat Selection */}
         <Text style={styles.sectionTitle}>

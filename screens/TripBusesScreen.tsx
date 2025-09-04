@@ -97,12 +97,9 @@ export default function TripBusesScreen({ navigation, route }: TripBusesScreenPr
 
   const handleSelectBus = (busTripId: string) => {
     // Navigate to the next screen, likely for seat selection or booking, passing the bus trip ID
-  //  navigation.navigate('SeatSelection', {
-  //    busTripId,
-//departureLocationName,
-   //   arrivalLocationName,
-  //    departureDate,
-  //  });
+    navigation.navigate('PassengerDetailsAndSeatSelection', {
+      busTripId,
+    });
   };
 
   useEffect(() => {

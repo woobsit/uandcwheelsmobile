@@ -8,6 +8,7 @@ const {
   updateBusTrip,
   deleteBusTrip,
   getAvailableBusesForDate,
+  getBusTripDetails
 } = require('../controllers/busTrip');
 const { validateRequest } = require('../middlewares/validate-request');
 const {
@@ -17,6 +18,7 @@ const {
   getAllAvailableBusTripsValidator,
   getAvailableBusesForRouteValidator,
   getAvailableDatesForRouteValidator,
+  getBusTripDetailsValidator,
 } = require('../middlewares/validators/busTrip.validator');
 
 const router = Router();
@@ -35,6 +37,10 @@ router.get(
   validateRequest,
   getAvailableBusesForDate,
 );
+
+router.get('/:busTripId/details', getBusTripDetailsValidator,validateRequest, getBusTripDetails);
+
+
 router.get(
   '/one-scheduled-bus-trip-with-details/:id',
   busTripIdValidator,

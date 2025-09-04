@@ -12,7 +12,7 @@ export const ENDPOINTS = {
   ALL_AVAILABLE_TRIPS: '/bus-trip/all',
   AVAILABLE_DATES: '/bus-trip/available-dates', 
   AVAILABLE_BUSES_FOR_DATE: '/bus-trip/available-buses', 
-
+  BUS_TRIPS: "/bus-trip",
   //TRIPS_ROUTES_CREATE:'/create',
   BUS_TRIPS_ADMIN:'',
   BUS_TRIPS_CREATE:'',

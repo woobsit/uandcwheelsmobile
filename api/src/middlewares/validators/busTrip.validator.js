@@ -209,11 +209,20 @@ const getAvailableBusesForRouteValidator = [
     .withMessage('Departure date cannot be empty.')
     .isISO8601()
     .withMessage('Departure date must be a valid date in YYYY-MM-DD format.'),
-    
+
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.').toInt(),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50.').toInt(),
 ];
-// --- Validator for getScheduledBusTrips (User/Booking View) ---
+
+const getBusTripDetailsValidator = [
+  param('busTripId')
+    .exists()
+    .withMessage('Bus trip ID is required.')
+    .isInt({ min: 1 })
+    .withMessage('Bus trip ID must be a valid integer.')
+    .toInt(),
+];
+
 const getScheduledBusTripsValidator = [
   // No status query needed as it's hardcoded to 'scheduled' and future dates
   // You might want to allow filtering by status for other purposes, but not for "bookable" trips
@@ -254,5 +263,6 @@ module.exports = {
   getAllAvailableBusTripsValidator,
   getAvailableDatesForRouteValidator,
   getAvailableBusesForRouteValidator,
+  getBusTripDetailsValidator,
   getScheduledBusTripsValidator,
 };
