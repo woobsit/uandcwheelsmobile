@@ -6,31 +6,6 @@
     "auditLog": "src\\config\\logs\\.67789b56da4b51a97aa194326d17346d562c0436-audit.json",
     "files": [
         {
-            "date": 1754302545490,
-            "name": "src\\config\\logs\\error-2025-08-04.log",
-            "hash": "814f87ea7693ceb0a243c71e5a2cdf7042774dfe0857a5dbb7a50e6ab04ecb1a"
-        },
-        {
-            "date": 1754378008961,
-            "name": "src\\config\\logs\\error-2025-08-05.log",
-            "hash": "520649458ddd312868f86f41bb70eb070495dabf4cf49ab630139b5e90762f12"
-        },
-        {
-            "date": 1754472481946,
-            "name": "src\\config\\logs\\error-2025-08-06.log",
-            "hash": "3fd4dbc3bc262428c78a0a63f19b8f436f823df6c98c00b5b91c2c0c690e684f"
-        },
-        {
-            "date": 1754558223080,
-            "name": "src\\config\\logs\\error-2025-08-07.log",
-            "hash": "3f1c2b4ed4a9f5b7e706a0ec7ee214aebecf6159bb0b73549521b666e80ea88e"
-        },
-        {
-            "date": 1754638095875,
-            "name": "src\\config\\logs\\error-2025-08-08.log",
-            "hash": "afcbc609a1771d9205d12a14bf447b8eb6fe03397f77e237548f2121a4687ae4"
-        },
-        {
             "date": 1754903195979,
             "name": "src\\config\\logs\\error-2025-08-11.log",
             "hash": "0a174c9f978e4e92276e95bd98f9d554a5c9c7bfd7da5b594de564d3b2d543f8"
@@ -94,6 +69,16 @@
             "date": 1756887217802,
             "name": "src\\config\\logs\\error-2025-09-03.log",
             "hash": "5ba835a2e25564dae5be7af0457e2bb4ea8307bfb0f8ce7021bd97a19fd2914a"
+        },
+        {
+            "date": 1757164690125,
+            "name": "src\\config\\logs\\error-2025-09-06.log",
+            "hash": "a322fb4ae5ec63d0f9b9014721110e92a03ea6e471a10c613cc1253eeb01f6fb"
+        },
+        {
+            "date": 1757413414479,
+            "name": "src\\config\\logs\\error-2025-09-09.log",
+            "hash": "a309e3888878f2275d2289625105187de8d271e4419ec8eaffd51c64be62311d"
         }
     ],
     "hashType": "sha256"

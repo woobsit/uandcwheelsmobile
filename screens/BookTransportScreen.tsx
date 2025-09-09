@@ -18,6 +18,8 @@ import useRefreshControl from '../hooks/useRefreshControl';
 import BusTripService from '../requests/busTripService';
 import TopNavBar from '../components/molecules/TopNavBar';
 import { BookTransportScreenProps } from '../types/screenprops';
+import { useNavigation } from '@react-navigation/native';
+
 
 interface UniqueTripRoute {
   departureLocationName: string;
@@ -29,7 +31,10 @@ interface UniqueTripRoute {
   availableDatesCount: number;
 }
 
-export default function BookTransportScreen({ navigation }: BookTransportScreenProps) {
+export default function BookTransportScreen() {
+  
+  const navigation = useNavigation<BookTransportScreenProps['navigation']>();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginating, setIsPaginating] = useState(false); // New state for lazy loading
@@ -67,7 +72,6 @@ export default function BookTransportScreen({ navigation }: BookTransportScreenP
         page: currentPage,
         limit: limit,
       });
-      //console.log(JSON.stringify(response, null, 2))
 
       if (reset) {
         setTripRoutes(response.data.items);

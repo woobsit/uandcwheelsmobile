@@ -64,6 +64,19 @@ getAvailableDatesForRoute: async (
     }
   },
 
+    /**
+   * Fetches the full details of a specific bus trip by its ID.
+   * @param busTripId The ID of the bus trip to fetch.
+   */
+  getBusTripDetails: async (busTripId: number): Promise<ApiResponse<BusTrip>> => {
+    try {
+      const response = await api.get<ApiResponse<BusTrip>>(`${ENDPOINTS.BUS_TRIPS}/${busTripId}/details`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Create a specific Bus Trip (scheduled instance)
   createBusTrip: async (
     busTripData: Omit<BusTrip, 'id' | 'createdAt' | 'updatedAt' | 'bus' | 'driver' | 'trip' | 'available_seats' | 'status'> & { available_seats?: number },

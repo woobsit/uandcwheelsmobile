@@ -30,8 +30,8 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   const route = useRoute<PassengerDetailsAndSeatSelectionScreenProps['route']>();
 
   // Use a state variable for the full BusTrip object, initialized with partial data from route
-  const { selectedBusTrip: partialBusTrip } = route.params;
-
+  const { busTripId: partialBusTrip } = route.params;
+ 
   // State to hold the full, detailed bus trip object
   const [busTripDetails, setBusTripDetails] = useState<BusTrip | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,9 +43,9 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
       try {
         setIsLoading(true);
         // Call the new, detailed API endpoint
-        const response = await BusTripService.getBusTripDetails(partialBusTrip.id);
+        const response = await BusTripService.getBusTripDetails(partialBusTrip);
         const fullTripDetails = response.data;
-
+        console.log(JSON.stringify(fullTripDetails.bus?.seat_arrangement));
         if (!fullTripDetails) {
           setError('Bus trip details not found.');
         } else if (
@@ -65,13 +65,13 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
       }
     }
 
-    if (partialBusTrip?.id) {
+    if (partialBusTrip) {
       fetchBusTripDetails();
     } else {
       setIsLoading(false);
       setError('No bus trip ID provided.');
     }
-  }, [partialBusTrip?.id]);
+  }, [partialBusTrip]);
 
   // Use a memoized value for the current trip data
   const currentTrip = useMemo(

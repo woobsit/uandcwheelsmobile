@@ -58,3 +58,39 @@ export interface GetAvailableDatesForRouteParams {
   page?: number; // Add optional page parameter
   limit?: number; // Add optional limit parameter
 }
+
+// This is the interface for a single available bus trip
+export interface AvailableBus {
+  id: number;
+  available_seats: number;
+  departure_time: string;
+  fare: number;
+  estimated_arrival: string;
+  departure_terminal: string;
+  arrival_terminal: string;
+  bus_details: {
+    plate_number: string;
+    brand: string;
+    capacity: number;
+  };
+}
+
+// This defines the parameters for the new service function
+export interface GetAvailableBusesForDateParams {
+  page?: number;
+  limit?: number;
+  departureLocationName: string;
+  departureLocationState: string;
+  arrivalLocationName: string;
+  arrivalLocationState: string;
+  departureDate: string;
+}
+
+// This defines the structure of the API response
+export interface PaginatedAvailableBusesResponse {
+  items: AvailableBus[];
+  total: number;
+  page: number;
+  limit: number;
+  hasNext: boolean;
+}

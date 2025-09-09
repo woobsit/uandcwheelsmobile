@@ -14,11 +14,19 @@ import { MaterialIcons } from '@expo/vector-icons';
 import useRefreshControl from '../hooks/useRefreshControl';
 import { formatDate } from '../utils/dateHelpers';
 import BusTripService from '../requests/busTripService';
-import { TripDatesScreenProps } from '../types/screenprops';
 import TopNavBar from '../components/molecules/TopNavBar';
 import { AvailableDate } from '../types/bustrip'; 
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList, TripDatesScreenRouteProps, } from '../types/screenprops';
 
-export default function TripDatesScreen({ navigation, route }: TripDatesScreenProps) {
+
+export default function TripDatesScreen() {
+
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const route = useRoute<TripDatesScreenRouteProps>();
+  
+
   const {
     departureLocationName,
     departureLocationState,

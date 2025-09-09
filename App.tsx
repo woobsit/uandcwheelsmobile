@@ -14,7 +14,6 @@ import CustomDrawerContent from './components/molecules/CustomDrawerContent'; //
 import BookTransportScreen from './screens/BookTransportScreen';
 import TripDatesScreen from './screens/TripDatesScreen'; // NEW
 import TripBusesScreen from './screens/TripBusesScreen'; // NEW
-import TripDetailsScreen from './screens/TripDetailsScreen'; // Existing, but logic updated
 import PassengerDetailsAndSeatSelectionScreen from './screens/PassengerDetailsAndSeatSelectionScreen';
 import PaymentScreen from './screens/PaymentScreen';
 import BookingConfirmationScreen from './screens/BookingConfirmationScreen';
@@ -41,7 +40,6 @@ function DashboardDrawer() {
       <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
       <Drawer.Screen name="TripDates" component={TripDatesScreen} />
        <Drawer.Screen name="TripBuses" component={TripBusesScreen} />
-      <Drawer.Screen name="TripDetails" component={TripDetailsScreen} />
 
       {/* ... your existing screens */}
       <Drawer.Screen

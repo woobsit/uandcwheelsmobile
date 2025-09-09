@@ -45,18 +45,11 @@ export type AuthStackParamList = {
     busTripId: string;
     
   };
-  TripDetails: {
-    departureLocationName: string;
-    departureLocationState: string;
-    arrivalLocationName: string;
-    arrivalLocationState: string;
-    departureDate: string; // Add this for filtering specific buses
-    selectedTripId?: number;
-  };
+
   // ----------------------------------------
 // --- NEW SCREENS FOR BOOKING FLOW ---
   PassengerDetailsAndSeatSelection: {
-     busTripId: string;
+     busTripId: number;
   };
   Payment: {
     bookingPayload: CreateBookingPayload; // The full payload to send to the backend
@@ -98,25 +91,12 @@ export type EmailVerificationScreenProps = NativeStackScreenProps<
 
 export type EmailVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'EmailVerification'>;
 
-// TripDetailsScreen screen props type (UPDATED)
-export type TripDetailsScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'TripDetails'
->;
 
 // BookTransport screen props type
 export type BookTransportScreenProps = NativeStackScreenProps<AuthStackParamList, 'BookTransport'>;
 
-// NEW: TripDatesScreen props type
-export type TripDatesScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'TripDates'
->;
 
-export type TripBusesScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'TripBuses'
->;
+
 
 // ForgotPasswordScreen screen props type
 export type ForgotPasswordScreenProps = NativeStackScreenProps<
@@ -136,6 +116,21 @@ export type ForgotPasswordScreenProps = NativeStackScreenProps<
 export type ResetPasswordScreenProps = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 export type EmailResetScreenRouteProp = RouteProp<AuthStackParamList, 'ResetPassword'>;
+
+// NEW: TripDatesScreen props type
+export type TripDatesScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'TripDates'
+>;
+
+export type TripDatesScreenRouteProps = RouteProp<AuthStackParamList, 'TripDates'>;
+
+export type TripBusesScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  'TripBuses'
+>;
+
+export type TripBusesScreenRouteProps = RouteProp<AuthStackParamList, 'TripBuses'>;
 
 export type PassengerDetailsAndSeatSelectionScreenProps = NativeStackScreenProps<
   AuthStackParamList,

@@ -14,11 +14,17 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import useRefreshControl from '../hooks/useRefreshControl';
 import { formatTime, formatDate } from '../utils/dateHelpers';
 import BusTripService from '../requests/busTripService';
-import { TripBusesScreenProps } from '../types/screenprops';
+import { AuthStackParamList, TripBusesScreenRouteProps } from '../types/screenprops';
 import TopNavBar from '../components/molecules/TopNavBar';
 import { AvailableBus } from '../types/bustrip';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-export default function TripBusesScreen({ navigation, route }: TripBusesScreenProps) {
+export default function TripBusesScreen() {
+
+const navigation =   useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+    const route = useRoute<TripBusesScreenRouteProps>();
+
   const {
     departureLocationName,
     departureLocationState,
@@ -95,7 +101,7 @@ export default function TripBusesScreen({ navigation, route }: TripBusesScreenPr
     }
   };
 
-  const handleSelectBus = (busTripId: string) => {
+  const handleSelectBus = (busTripId: number) => {
     // Navigate to the next screen, likely for seat selection or booking, passing the bus trip ID
     navigation.navigate('PassengerDetailsAndSeatSelection', {
       busTripId,
