@@ -45,7 +45,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
         // Call the new, detailed API endpoint
         const response = await BusTripService.getBusTripDetails(partialBusTrip);
         const fullTripDetails = response.data;
-        console.log(JSON.stringify(fullTripDetails.bus?.seat_arrangement));
+
         if (!fullTripDetails) {
           setError('Bus trip details not found.');
         } else if (
