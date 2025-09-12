@@ -29,29 +29,25 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   const navigation = useNavigation<PassengerDetailsAndSeatSelectionScreenProps['navigation']>();
   const route = useRoute<PassengerDetailsAndSeatSelectionScreenProps['route']>();
 
-  // Use a state variable for the full BusTrip object, initialized with partial data from route
   const { busTripId: partialBusTrip } = route.params;
- 
-  // State to hold the full, detailed bus trip object
+
   const [busTripDetails, setBusTripDetails] = useState<BusTrip | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- NEW: Fetch bus trip details on component mount ---
+  console.log(JSON.stringify(route.params));
+
   useEffect(() => {
     async function fetchBusTripDetails() {
       try {
         setIsLoading(true);
-        // Call the new, detailed API endpoint
         const response = await BusTripService.getBusTripDetails(partialBusTrip);
         const fullTripDetails = response.data;
-
-        if (!fullTripDetails) {
-          setError('Bus trip details not found.');
-        } else if (
+        if (
+          !fullTripDetails ||
           !fullTripDetails.bus?.capacity ||
           !fullTripDetails.bus?.seat_arrangement ||
-          fullTripDetails.bus?.taken_seats === undefined
+          !Array.isArray(fullTripDetails.bus?.taken_seats) // Check if taken_seats is an array
         ) {
           setError('Incomplete bus configuration received. Please select another trip.');
         } else {
@@ -73,45 +69,34 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
     }
   }, [partialBusTrip]);
 
-  // Use a memoized value for the current trip data
   const currentTrip = useMemo(
-    () => busTripDetails || partialBusTrip,
-    [busTripDetails, partialBusTrip],
+    () => busTripDetails,
+    [busTripDetails],
   );
 
-  // Passenger Counts
   const [adultCount, setAdultCount] = useState(1);
   const [seatedChildCount, setSeatedChildCount] = useState(0);
   const [lapChildCount, setLapChildCount] = useState(0);
-
-  // Passenger Details state
   const [passengers, setPassengers] = useState<PassengerPayload[]>([]);
-
-  // Seat Selection state
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-
-  // Guest Booking state
   const [isGuest, setIsGuest] = useState(false);
   const [guestEmail, setGuestEmail] = useState('');
-
-  // Emergency Contact
   const [emergencyContactName, setEmergencyContactName] = useState('');
   const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
 
-  // Use currentTrip data
   const totalPassengersRequiringSeats = adultCount + seatedChildCount;
   const totalPassengers = totalPassengersRequiringSeats + lapChildCount;
-  const totalFare = currentTrip.fare * totalPassengersRequiringSeats;
+const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats : 0;
 
-  // Use the detailed data only if it has been fetched
   const busCapacity = busTripDetails?.bus?.capacity || 0;
-  const takenSeats = busTripDetails?.bus?.taken_seats || [];
+  const takenSeats = busTripDetails?.bus?.taken_seats || []; // Now this will be populated
   const seatArrangement = busTripDetails?.bus?.seat_arrangement;
 
-  // New useEffect to adjust selected seats when count changes
   useEffect(() => {
+    // This effect handles passenger list and seat count
     const newPassengers: PassengerPayload[] = [];
-
+    // ... (rest of the useEffect logic remains the same) ...
+    
     // Primary passenger (always one adult)
     const existingPrimary = passengers.find(p => p.is_primary);
     newPassengers.push(
@@ -226,10 +211,13 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
         Alert.alert('Loading...', 'Please wait for trip details to load.');
         return;
       }
-      if ((busTripDetails?.bus?.taken_seats ?? []).includes(seatNumber)) {
+      
+      // Use the 'takenSeats' variable which is now populated by the API response
+      if (takenSeats.includes(seatNumber)) {
         Alert.alert('Seat Taken', `Seat ${seatNumber} is already taken.`);
         return;
       }
+
       setSelectedSeats(prevSeats => {
         if (prevSeats.includes(seatNumber)) {
           return prevSeats.filter(seat => seat !== seatNumber);
@@ -246,10 +234,11 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
         }
       });
     },
-    [totalPassengersRequiringSeats, busTripDetails],
+    [totalPassengersRequiringSeats, busTripDetails, takenSeats], // Add takenSeats to dependency array
   );
-
+  
   const seatGrid = useMemo(() => {
+    // Logic for generating seat grid
     const grid: string[][] = [];
     if (!busTripDetails?.bus?.capacity || !busTripDetails?.bus?.seat_arrangement) {
       return grid;
@@ -282,7 +271,10 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
     return grid;
   }, [busTripDetails]);
 
+
   const handleProceedToPayment = () => {
+    // ... (rest of the handleProceedToPayment function remains the same) ...
+
     // Validation logic
     if (totalPassengersRequiringSeats === 0 && lapChildCount === 0) {
       Alert.alert('No Passengers', 'Please add at least one passenger.');
@@ -344,6 +336,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
 
     navigation.navigate('Payment', { bookingPayload });
   };
+
 
   if (isLoading) {
     return (
@@ -571,9 +564,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
                   {row.map((seatNumber, colIndex) => {
                     const isAisle = seatNumber === 'AISLE';
                     // Use the fetched data
-                    const isTaken =
-                      (busTripDetails.bus.taken_seats ?? []).includes(seatNumber) &&
-                      !selectedSeats.includes(seatNumber);
+                    const isTaken = takenSeats.includes(seatNumber) && !selectedSeats.includes(seatNumber);
                     const isSelected = selectedSeats.includes(seatNumber);
 
                     return (
@@ -630,9 +621,6 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
     </SafeAreaView>
   );
 }
-
-// Your styles are fine and do not need to be changed.
-// ... (The styles remain the same) ...
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f0f2f5' },

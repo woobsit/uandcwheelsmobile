@@ -8,15 +8,20 @@ const EmailService = require('../email/email.service');
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
-    const {
-      outbound_bus_trip_id,
-      return_bus_trip_id,
-      passengers,
-      payment_method,
-      user_email,
-      emergency_contact_name,
-      emergency_contact_phone,
-    } = req.body;
+   const {
+ outbound_bus_trip_id,
+ return_bus_trip_id,
+ passengers,
+ payment_method,
+ is_guest,
+ guest_email,
+ emergency_contact_name,
+ emergency_contact_phone,
+ total_amount, // Add this
+ adult_count, // Add this
+ lap_child_count, // Add this
+ seated_child_count, // Add this
+} = req.body;
 
     const userId = req.user ? req.user.id : null;
 

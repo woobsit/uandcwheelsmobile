@@ -2,7 +2,19 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/config');
 const { generateBookingRef } = require('../utils/bookingHelpers');
-const db = require('../models');
+
+async function updateBusTripSeats(busTripId, seatDelta) {
+  // Use the imported sequelize instance to get the model
+  const BusTrip = sequelize.models.BusTrip;
+  if (BusTrip) {
+    const busTrip = await BusTrip.findByPk(busTripId);
+    if (busTrip) {
+      await busTrip.update({
+        available_seats: busTrip.available_seats + seatDelta,
+      });
+    }
+  }
+}
 
 class Booking extends Model {
   static async createBooking(bookingData) {
@@ -192,19 +204,20 @@ Booking.init(
 
         if (booking.notes) booking.notes = booking.notes.trim();
       },
-      afterCreate: async booking => {
-        // Use the newly calculated total_seats_booked
-        await updateBusTripSeats(booking.outbound_bus_trip_id, -booking.total_seats_booked);
+       afterCreate: async (booking) => {
+        // Call the function directly, as it now has access to the db object
+        const totalSeats = booking.adult_count + booking.seated_child_count;
+        await updateBusTripSeats(booking.outbound_bus_trip_id, -totalSeats);
         if (booking.return_bus_trip_id) {
-          await updateBusTripSeats(booking.return_bus_trip_id, -booking.total_seats_booked);
+          await updateBusTripSeats(booking.return_bus_trip_id, -totalSeats);
         }
       },
-      afterUpdate: async booking => {
+  afterUpdate: async (booking) => {
         if (booking.changed('status') && booking.status === 'cancelled') {
-          // Use the newly calculated total_seats_booked
-          await updateBusTripSeats(booking.outbound_bus_trip_id, booking.total_seats_booked);
+          const totalSeats = booking.adult_count + booking.seated_child_count;
+          await updateBusTripSeats(booking.outbound_bus_trip_id, totalSeats);
           if (booking.return_bus_trip_id) {
-            await updateBusTripSeats(booking.return_bus_trip_id, booking.total_seats_booked);
+            await updateBusTripSeats(db, booking.return_bus_trip_id, totalSeats);
           }
         }
       },
@@ -221,14 +234,6 @@ Booking.init(
   },
 );
 
-async function updateBusTripSeats(busTripId, seatDelta) {
-  const busTrip = await db.BusTrip.findByPk(busTripId);
-  if (busTrip) {
-    await busTrip.update({
-      available_seats: busTrip.available_seats + seatDelta,
-    });
-  }
-}
 
 // Define associations
 Booking.associate = models => {
