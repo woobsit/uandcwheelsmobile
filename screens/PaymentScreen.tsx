@@ -16,7 +16,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 
 import TopNavBar from '../components/molecules/TopNavBar';
 import { PaymentScreenProps } from '../types/screenprops';
-import { CreateBookingPayload } from '../types/booking';
 import { PaymentMethod } from '../types/booking';
 import BookingService from '../requests/bookingService'; // You'll create this service
 
@@ -44,7 +43,7 @@ export default function PaymentScreen() {
 
     try {
       // Modify payload to include selected payment method
-      const finalBookingPayload: CreateBookingPayload = {
+      const finalBookingPayload = {
         ...bookingPayload,
         payment_method: selectedPaymentMethod,
       };
@@ -141,19 +140,6 @@ export default function PaymentScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Add more payment methods here as supported by your backend */}
-          {/* Example:
-          <TouchableOpacity
-            style={[
-              styles.paymentMethodCard,
-              selectedPaymentMethod === PaymentMethod.CREDIT_CARD && styles.paymentMethodSelected,
-            ]}
-            onPress={() => setSelectedPaymentMethod(PaymentMethod.CREDIT_CARD)}
-          >
-            <MaterialIcons name="credit-card" size={30} color={selectedPaymentMethod === PaymentMethod.CREDIT_CARD ? 'white' : '#007AFF'} />
-            <Text style={[styles.paymentMethodText, selectedPaymentMethod === PaymentMethod.CREDIT_CARD && { color: 'white' }]}>Credit/Debit Card</Text>
-          </TouchableOpacity>
-          */}
         </View>
 
         {error && <Text style={styles.errorMessage}>{error}</Text>}

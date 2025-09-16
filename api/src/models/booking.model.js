@@ -17,11 +17,11 @@ async function updateBusTripSeats(busTripId, seatDelta) {
 }
 
 class Booking extends Model {
-  static async createBooking(bookingData) {
+  static async createBooking(bookingData, options = {}) {
     return await this.create({
       ...bookingData,
       booking_reference: generateBookingRef(),
-    });
+    }, options);
   }
 
   static async getBookingsByUser(userId) {

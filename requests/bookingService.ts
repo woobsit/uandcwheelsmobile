@@ -1,13 +1,15 @@
 import api from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { ApiResponse } from '../types/api';
+import { CreateBookingPayload } from '../types/booking';
 
 export interface Booking {
-  id: string;
+  id: number;
   userId: string;
   tripId: string;
   seats: number[];
   totalAmount: number;
+  booking_reference: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -20,7 +22,7 @@ export interface CreateBookingData {
 }
 
 const BookingService = {
-  createBooking: async (bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
+  createBooking: async (bookingData: CreateBookingPayload): Promise<ApiResponse<Booking>> => {
     try {
       const response = await api.post<ApiResponse<Booking>>(ENDPOINTS.BOOKINGS, bookingData);
       return response.data;

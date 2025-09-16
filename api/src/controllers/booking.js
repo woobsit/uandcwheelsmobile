@@ -2,44 +2,36 @@ const db = require('../models/index');
 const logger = require('../config/logger');
 const EmailService = require('../email/email.service');
 
-//const { Booking, BusTrip, Passenger } = require('../models');
+const { Booking, BusTrip, Passenger } = require('../models');
 //const { calculateGroupFare } = require('../utils/priceCalculator');
 
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
-   const {
- outbound_bus_trip_id,
- return_bus_trip_id,
- passengers,
- payment_method,
- is_guest,
- guest_email,
- emergency_contact_name,
- emergency_contact_phone,
- total_amount, // Add this
- adult_count, // Add this
- lap_child_count, // Add this
- seated_child_count, // Add this
-} = req.body;
+    const {
+      outbound_bus_trip_id,
+      return_bus_trip_id,
+      passengers,
+      payment_method,
+      is_guest,
+      guest_email,
+      emergency_contact_name,
+      emergency_contact_phone,
+      total_amount,
+      adult_count,
+      lap_child_count,
+      seated_child_count,
+    } = req.body;
 
     const userId = req.user ? req.user.id : null;
 
-    // Validate passengers
-    const adults = passengers.filter(p => p.type === 'adult').length;
-    const lapChildren = passengers.filter(p => p.type === 'lap-child').length;
-    const seatedChildren = passengers.filter(p => p.type === 'seated-child').length;
-    const totalChildren = lapChildren + seatedChildren;
-
-    // Validation rules
-    if (lapChildren > adults) {
-      return res.status(400).json({ message: 'Maximum 1 lap child per adult' });
+    // Validate if the user is a guest and provide a guest email
+    if (is_guest && !guest_email) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Guest email is required for guest bookings.' });
     }
 
-    // Calculate seats needed
-    const seatsNeeded = adults + seatedChildren + Math.ceil(lapChildren / 2);
-
-    // 1. Fetch bus trips
+    // 1. Fetch bus trip and validate availability
     const outboundBusTrip = await BusTrip.findByPk(outbound_bus_trip_id, {
       transaction,
       include: [
@@ -54,18 +46,42 @@ const createBooking = async (req, res) => {
       ],
     });
 
-    if (!outboundBusTrip || outboundBusTrip.status !== 'scheduled') {
+    if (!outboundBusTrip || outboundBusTrip.status !== 'scheduled' || !outboundBusTrip.bus) {
       await transaction.rollback();
-      return res.status(400).json({ message: 'Outbound trip not available' });
+      return res.status(400).json({ message: 'Outbound trip not available or bus details are missing.' });
     }
 
-    if (outboundBusTrip.available_seats < seatsNeeded) {
+    // Extract selected seats from the passengers array
+    const seatsToReserve = passengers
+      .filter(p => p.requires_seat && p.seat_number)
+      .map(p => p.seat_number);
+
+    const totalSeatsNeeded = adult_count + seated_child_count;
+
+    // A. Validate that the number of selected seats matches the number of seats needed
+    if (seatsToReserve.length !== totalSeatsNeeded) {
       await transaction.rollback();
       return res.status(400).json({
-        message: `Only ${outboundBusTrip.available_seats} seats available on outbound trip`,
+        message: 'The number of selected seats does not match the number of passengers requiring a seat.',
       });
     }
 
+    // B. Check for duplicate seats in the incoming request
+    const uniqueSeats = new Set(seatsToReserve);
+    if (uniqueSeats.size !== seatsToReserve.length) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Duplicate seats selected in request.' });
+    }
+
+    // C. Validate that the selected seats are not already taken
+    const takenSeats = outboundBusTrip.bus.taken_seats || [];
+    const isAnySeatTaken = seatsToReserve.some(seat => takenSeats.includes(seat));
+    if (isAnySeatTaken) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'One or more of the selected seats are already taken.' });
+    }
+
+    // 2. Handle return trip if applicable
     let returnBusTrip = null;
     if (return_bus_trip_id) {
       returnBusTrip = await BusTrip.findByPk(return_bus_trip_id, {
@@ -73,83 +89,86 @@ const createBooking = async (req, res) => {
         include: [{ association: 'bus' }, { association: 'trip' }],
       });
 
-      if (!returnBusTrip || returnBusTrip.status !== 'scheduled') {
+      if (!returnBusTrip || returnBusTrip.status !== 'scheduled' || !returnBusTrip.bus) {
         await transaction.rollback();
-        return res.status(400).json({ message: 'Return trip not available' });
+        return res.status(400).json({ message: 'Return trip not available or bus details are missing.' });
       }
 
-      if (returnBusTrip.available_seats < seatsNeeded) {
+      const returnTakenSeats = returnBusTrip.bus.taken_seats || [];
+      const isAnyReturnSeatTaken = seatsToReserve.some(seat => returnTakenSeats.includes(seat));
+      if (isAnyReturnSeatTaken) {
         await transaction.rollback();
-        return res.status(400).json({
-          message: `Only ${returnBusTrip.available_seats} seats available on return trip`,
-        });
+        return res.status(400).json({ message: 'One or more of the selected seats on the return trip are already taken.' });
       }
     }
 
-    // 2. Calculate pricing
-    const outboundFare = calculateGroupFare(adults, totalChildren, outboundBusTrip.trip.fare);
-
-    let returnFare = 0;
-    if (returnBusTrip) {
-      returnFare = calculateGroupFare(adults, totalChildren, returnBusTrip.trip.fare);
-    }
-
-    const totalAmount = outboundFare + returnFare;
-
-    // 3. Create booking
+    // 3. Create the booking
     const booking = await Booking.create(
       {
         user_id: userId,
         outbound_bus_trip_id,
         return_bus_trip_id: returnBusTrip ? returnBusTrip.id : null,
-        adult_count: adults,
-        lap_child_count: lapChildren,
-        seated_child_count: seatedChildren,
-        total_amount: totalAmount,
+        adult_count,
+        lap_child_count,
+        seated_child_count,
+        total_amount, // Use the amount sent from the client
         payment_status: 'pending',
-        is_guest: !userId,
-        guest_email: userId ? null : user_email,
+        is_guest,
+        guest_email: is_guest ? guest_email : null,
         emergency_contact_name,
         emergency_contact_phone,
-        total_seats: seatsNeeded,
+        total_seats: totalSeatsNeeded,
       },
       { transaction },
     );
 
-    // 4. Create passengers
+    // 4. Create passengers in bulk
     const passengerRecords = passengers.map(passenger => {
       return {
         booking_id: booking.id,
-        ...passenger,
-        requires_seat: passenger.type !== 'lap-child',
-        is_on_lap: passenger.type === 'lap-child',
+        name: passenger.name,
+        age: passenger.age,
+        type: passenger.type,
+        requires_seat: passenger.requires_seat,
+        is_on_lap: passenger.is_on_lap,
+        is_primary: passenger.is_primary,
+        seat_number: passenger.seat_number || null, // Capture the selected seat
+        next_of_kin_name: passenger.next_of_kin_name,
+        next_of_kin_phone: passenger.next_of_kin_phone,
+        next_of_kin_relationship: passenger.next_of_kin_relationship,
       };
     });
 
     await Passenger.bulkCreate(passengerRecords, { transaction });
 
-    // 5. Update bus trip seat availability
-    await outboundBusTrip.update(
+    // 5. Update bus trip seat availability and taken seats
+    const newOutboundTakenSeats = [...(outboundBusTrip.bus.taken_seats || []), ...seatsToReserve];
+    await outboundBusTrip.bus.update(
       {
-        available_seats: outboundBusTrip.available_seats - seatsNeeded,
+        available_seats: outboundBusTrip.bus.available_seats - totalSeatsNeeded,
+        taken_seats: newOutboundTakenSeats,
       },
-      { transaction },
+      { transaction }
     );
 
     if (returnBusTrip) {
-      await returnBusTrip.update(
+      const newReturnTakenSeats = [...(returnBusTrip.bus.taken_seats || []), ...seatsToReserve];
+      await returnBusTrip.bus.update(
         {
-          available_seats: returnBusTrip.available_seats - seatsNeeded,
+          available_seats: returnBusTrip.bus.available_seats - totalSeatsNeeded,
+          taken_seats: newReturnTakenSeats,
         },
-        { transaction },
+        { transaction }
       );
     }
-
-    // 6. Process payment
+    
+    // 6. Process payment (mock)
+    // Note: In a real-world app, this would be a more complex process
+    // that might involve a payment gateway and webhooks.
     await processPaymentMock(booking, payment_method);
 
     // 7. Send confirmation
-    const email = userId ? req.user.email : user_email;
+    const email = userId ? req.user.email : guest_email;
     if (email) {
       await sendBookingConfirmation(
         email,
