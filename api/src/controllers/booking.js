@@ -1,9 +1,7 @@
 const db = require('../models/index');
 const logger = require('../config/logger');
 const EmailService = require('../email/email.service');
-
 const { Booking, BusTrip, Passenger } = require('../models');
-//const { calculateGroupFare } = require('../utils/priceCalculator');
 
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
@@ -103,7 +101,7 @@ const createBooking = async (req, res) => {
     }
 
     // 3. Create the booking
-    const booking = await Booking.create(
+    const booking = await Booking.createBooking(
       {
         user_id: userId,
         outbound_bus_trip_id,
@@ -187,82 +185,6 @@ const createBooking = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     logger.error('Booking failed', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
-  }
-};
-
-const createInitialBooking = async (req, res) => {
-  const transaction = await db.sequelize.transaction();
-  try {
-    // Get the bus trip IDs from the request body
-    const { outbound_bus_trip_id, return_bus_trip_id } = req.body; // Get the user ID from the authenticated user or set to null for guests
-    const userId = req.user ? req.user.id : null; // 1. Validate bus trip availability
-    const outboundBusTrip = await db.BusTrip.findByPk(outbound_bus_trip_id, {
-      transaction,
-    });
-
-    if (!outboundBusTrip || outboundBusTrip.available_seats <= 0) {
-      await transaction.rollback();
-      return res.status(400).json({ message: 'Outbound trip not available or no seats left.' });
-    } // Check for a return trip if provided
-
-    let returnBusTrip = null;
-    if (return_bus_trip_id) {
-      returnBusTrip = await db.BusTrip.findByPk(return_bus_trip_id, { transaction });
-      if (!returnBusTrip || returnBusTrip.available_seats <= 0) {
-        await transaction.rollback();
-        return res.status(400).json({ message: 'Return trip not available or no seats left.' });
-      }
-    } // 2. Create the provisional booking
-
-    const booking = await db.Booking.create(
-      {
-        user_id: userId,
-        outbound_bus_trip_id,
-        return_bus_trip_id: returnBusTrip ? returnBusTrip.id : null, // Set initial values
-        total_seats: 1, // Temporarily reserve one seat to prevent overbooking on the first click
-        payment_status: 'pending_details', // New status to indicate details are needed
-        status: 'provisional', // New status for initial reservation
-        total_amount: 0, // Will be calculated on the next screen
-        adult_count: 0,
-        lap_child_count: 0,
-        seated_child_count: 0,
-        is_guest: !userId, // Other fields are null by default
-      },
-      { transaction },
-    ); // 3. Deduct one seat from the available count for the reservation
-
-    await db.BusTrip.update(
-      { available_seats: db.sequelize.literal('available_seats - 1') },
-      {
-        where: { id: outboundBusTrip.id },
-        transaction,
-      },
-    );
-
-    if (returnBusTrip) {
-      await db.BusTrip.update(
-        { available_seats: db.sequelize.literal('available_seats - 1') },
-        {
-          where: { id: returnBusTrip.id },
-          transaction,
-        },
-      );
-    }
-
-    await transaction.commit();
-    return res.status(201).json({
-      success: true,
-      message: 'Initial booking created successfully.',
-      bookingId: booking.id,
-      bookingReference: booking.booking_reference,
-    });
-  } catch (error) {
-    await transaction.rollback();
-    logger.error('Initial booking failed', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',

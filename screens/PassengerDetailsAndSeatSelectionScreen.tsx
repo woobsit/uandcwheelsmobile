@@ -273,7 +273,11 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
 
 
   const handleProceedToPayment = () => {
-    // ... (rest of the handleProceedToPayment function remains the same) ...
+     // Add a defensive check for the `currentTrip` object
+  if (!currentTrip) {
+    Alert.alert('Error', 'Trip details are not available. Please try again.');
+    return;
+  }
 
     // Validation logic
     if (totalPassengersRequiringSeats === 0 && lapChildCount === 0) {
