@@ -24,7 +24,7 @@ export interface CreateBookingData {
 const BookingService = {
   createBooking: async (bookingData: CreateBookingPayload): Promise<ApiResponse<Booking>> => {
     try {
-      const response = await api.post<ApiResponse<Booking>>(ENDPOINTS.BOOKINGS, bookingData);
+      const response = await api.post<ApiResponse<Booking>>(ENDPOINTS.BOOK_BUS, bookingData);
       return response.data;
     } catch (error) {
       throw error;
@@ -42,7 +42,7 @@ const BookingService = {
 
   getUserBookings: async (userId: string): Promise<ApiResponse<Booking[]>> => {
     try {
-      const response = await api.get<ApiResponse<Booking[]>>(ENDPOINTS.BOOKINGS, {
+      const response = await api.get<ApiResponse<Booking[]>>(ENDPOINTS.BOOK_BUS, {
         params: { userId },
       });
       return response.data;

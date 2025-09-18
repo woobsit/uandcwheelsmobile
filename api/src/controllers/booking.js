@@ -3,6 +3,8 @@ const logger = require('../config/logger');
 const EmailService = require('../email/email.service');
 const { Booking, BusTrip, Passenger } = require('../models');
 
+// controllers/bookingController.js
+
 const createBooking = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
@@ -10,7 +12,7 @@ const createBooking = async (req, res) => {
       outbound_bus_trip_id,
       return_bus_trip_id,
       passengers,
-      payment_method,
+      payment_method, // This is key
       is_guest,
       guest_email,
       emergency_contact_name,
@@ -23,7 +25,6 @@ const createBooking = async (req, res) => {
 
     const userId = req.user ? req.user.id : null;
 
-    // Validate if the user is a guest and provide a guest email
     if (is_guest && !guest_email) {
       await transaction.rollback();
       return res.status(400).json({ message: 'Guest email is required for guest bookings.' });
@@ -49,14 +50,12 @@ const createBooking = async (req, res) => {
       return res.status(400).json({ message: 'Outbound trip not available or bus details are missing.' });
     }
 
-    // Extract selected seats from the passengers array
     const seatsToReserve = passengers
       .filter(p => p.requires_seat && p.seat_number)
       .map(p => p.seat_number);
 
     const totalSeatsNeeded = adult_count + seated_child_count;
 
-    // A. Validate that the number of selected seats matches the number of seats needed
     if (seatsToReserve.length !== totalSeatsNeeded) {
       await transaction.rollback();
       return res.status(400).json({
@@ -64,14 +63,12 @@ const createBooking = async (req, res) => {
       });
     }
 
-    // B. Check for duplicate seats in the incoming request
     const uniqueSeats = new Set(seatsToReserve);
     if (uniqueSeats.size !== seatsToReserve.length) {
       await transaction.rollback();
       return res.status(400).json({ message: 'Duplicate seats selected in request.' });
     }
 
-    // C. Validate that the selected seats are not already taken
     const takenSeats = outboundBusTrip.bus.taken_seats || [];
     const isAnySeatTaken = seatsToReserve.some(seat => takenSeats.includes(seat));
     if (isAnySeatTaken) {
@@ -109,13 +106,15 @@ const createBooking = async (req, res) => {
         adult_count,
         lap_child_count,
         seated_child_count,
-        total_amount, // Use the amount sent from the client
-        payment_status: 'pending',
+        total_amount,
+        // Set payment status based on the method
+        payment_status: payment_method === 'cash_at_terminal' || payment_method === 'bank_transfer' ? 'pending' : 'paid',
         is_guest,
         guest_email: is_guest ? guest_email : null,
         emergency_contact_name,
         emergency_contact_phone,
         total_seats: totalSeatsNeeded,
+        payment_method,
       },
       { transaction },
     );
@@ -130,7 +129,7 @@ const createBooking = async (req, res) => {
         requires_seat: passenger.requires_seat,
         is_on_lap: passenger.is_on_lap,
         is_primary: passenger.is_primary,
-        seat_number: passenger.seat_number || null, // Capture the selected seat
+        seat_number: passenger.seat_number || null,
         next_of_kin_name: passenger.next_of_kin_name,
         next_of_kin_phone: passenger.next_of_kin_phone,
         next_of_kin_relationship: passenger.next_of_kin_relationship,
@@ -160,14 +159,12 @@ const createBooking = async (req, res) => {
       );
     }
     
-    // 6. Process payment (mock)
-    // Note: In a real-world app, this would be a more complex process
-    // that might involve a payment gateway and webhooks.
-    await processPaymentMock(booking, payment_method);
+    await transaction.commit(); // Commit the transaction before sending emails
 
-    // 7. Send confirmation
+    // 6. Send confirmation email AFTER the transaction is committed
     const email = userId ? req.user.email : guest_email;
     if (email) {
+      // You should now use a new dedicated function for this
       await sendBookingConfirmation(
         email,
         booking,
@@ -177,7 +174,17 @@ const createBooking = async (req, res) => {
       );
     }
 
-    await transaction.commit();
+    // 7. Send an internal notification to the company (optional but recommended)
+    if (process.env.COMPANY_EMAIL) {
+      await sendCompanyNotification(
+        process.env.COMPANY_EMAIL,
+        booking,
+        outboundBusTrip,
+        returnBusTrip,
+        passengerRecords,
+      );
+    }
+
     return res.status(201).json({
       success: true,
       data: booking,
@@ -191,7 +198,6 @@ const createBooking = async (req, res) => {
     });
   }
 };
-
 async function sendBookingConfirmation(email, booking, outboundBusTrip, returnBusTrip, passengers) {
   const tripData = {
     departure: outboundBusTrip.trip.departureLocation.name,

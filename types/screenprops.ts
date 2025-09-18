@@ -46,6 +46,10 @@ export type AuthStackParamList = {
     
   };
 
+    BookingConfirmation: {
+    bookingReference: string;
+    bookingId: number;
+  };
   // ----------------------------------------
 // --- NEW SCREENS FOR BOOKING FLOW ---
   PassengerDetailsAndSeatSelection: {
@@ -54,13 +58,8 @@ export type AuthStackParamList = {
   Payment: {
     bookingPayload: CreateBookingPayload; // The full payload to send to the backend
   };
-  BookingConfirmation: {
-    bookingReference: string;
-    bookingId: number;
-  };
+
   // ------------------------------------
-
-
   Notifications: undefined;
   Settings: undefined;
   UserProfile: undefined;
