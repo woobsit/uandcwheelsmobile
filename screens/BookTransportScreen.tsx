@@ -1,5 +1,3 @@
-// screens/BookTransportScreen.tsx
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
@@ -20,7 +18,6 @@ import TopNavBar from '../components/molecules/TopNavBar';
 import { BookTransportScreenProps } from '../types/screenprops';
 import { useNavigation } from '@react-navigation/native';
 
-
 interface UniqueTripRoute {
   departureLocationName: string;
   departureLocationState: string;
@@ -32,18 +29,16 @@ interface UniqueTripRoute {
 }
 
 export default function BookTransportScreen() {
-  
   const navigation = useNavigation<BookTransportScreenProps['navigation']>();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isPaginating, setIsPaginating] = useState(false); // New state for lazy loading
+  const [isPaginating, setIsPaginating] = useState(false);
   const [tripRoutes, setTripRoutes] = useState<UniqueTripRoute[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(true);
 
-  // Set the limit here to a small number for testing
   const limit = 10;
 
   const handleSelectRoute = (route: UniqueTripRoute) => {
@@ -81,7 +76,6 @@ export default function BookTransportScreen() {
 
       setHasNext(response.data.hasNext);
       setPage(response.data.page);
-      
     } catch (err) {
       setError('Failed to load available trip routes. Please try again.');
       console.error('Error fetching trip routes:', err);
@@ -98,7 +92,6 @@ export default function BookTransportScreen() {
   });
 
   const handleLoadMore = () => {
-    // Only load more if we are not already fetching and there's a next page
     if (!isLoading && !isPaginating && hasNext) {
       fetchTripRoutes(page + 1);
     }
@@ -117,16 +110,32 @@ export default function BookTransportScreen() {
 
   useEffect(() => {
     fetchTripRoutes(1, true);
-  }, []); // Initial fetch on component mount
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <TopNavBar title={'Book Transport'} />
       <View style={styles.contentWrapper}>
+        <View style={styles.searchCard}>
+          <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={'Search by city or state...'}
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            placeholderTextColor="#999"
+          />
+        </View>
+
         <ScrollView
           contentContainerStyle={styles.scrollViewContent}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+              titleColor="#fff"
+            />
           }
           onScroll={({ nativeEvent }) => {
             const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
@@ -135,25 +144,16 @@ export default function BookTransportScreen() {
               handleLoadMore();
             }
           }}
-          scrollEventThrottle={400}>
-          <View style={styles.searchContainer}>
-            <Feather name="search" size={20} color="#999" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={'Search by departure/arrival city or state...'}
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-              placeholderTextColor="#999"
-            />
-          </View>
+          scrollEventThrottle={400}
+        >
           {isLoading && tripRoutes.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
+              <ActivityIndicator size="large" color="#fff" />
               <Text style={styles.loadingText}>Loading available trip routes...</Text>
             </View>
           ) : error ? (
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
+              <MaterialIcons name="error-outline" size={60} color="#ff4444" />
               <Text style={styles.emptyText}>{error}</Text>
               <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
                 <Text style={styles.retryButtonText}>Try Again</Text>
@@ -166,7 +166,7 @@ export default function BookTransportScreen() {
               </Text>
               {filteredRoutes.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                  <MaterialIcons name="route" size={60} color="#ddd" />
+                  <MaterialIcons name="route" size={60} color="#fff" />
                   <Text style={styles.emptyText}>No trip routes found.</Text>
                   <Text style={styles.emptySubtext}>
                     Try adjusting your search criteria or refresh.
@@ -181,22 +181,28 @@ export default function BookTransportScreen() {
                     <View style={styles.routeHeader}>
                       <View style={styles.routeTextContainer}>
                         <Text style={styles.routeLocationText}>
-                          {route.departureLocationName} ({route.departureLocationState})
+                          {route.departureLocationName}
                         </Text>
                         <MaterialIcons
                           name="arrow-forward"
-                          size={20}
-                          color="#333"
+                          size={24}
+                          color="#0A2540"
                           style={styles.arrowIcon}
                         />
                         <Text style={styles.routeLocationText}>
-                          {route.arrivalLocationName} ({route.arrivalLocationState})
+                          {route.arrivalLocationName}
                         </Text>
                       </View>
-                      <Text style={styles.routePriceRange}>
-                        ₦{route.minFare?.toLocaleString()}
-                        {route.minFare !== route.maxFare ? ` - ₦${route.maxFare?.toLocaleString()}` : ''}
-                      </Text>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.routePriceRange}>
+                          ₦{route.minFare?.toLocaleString()}
+                        </Text>
+                        {route.minFare !== route.maxFare && (
+                          <Text style={styles.routePriceRangeSub}>
+                            - ₦{route.maxFare?.toLocaleString()}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                     <View style={styles.routeDetails}>
                       <View style={styles.detailItem}>
@@ -216,7 +222,7 @@ export default function BookTransportScreen() {
               )}
               {isPaginating && hasNext && (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+                  <ActivityIndicator size="small" color="#fff" style={{ marginTop: 20 }} />
                 </View>
               )}
             </>
@@ -227,71 +233,59 @@ export default function BookTransportScreen() {
   );
 }
 
-// ... (Styles are the same)
-// --- Styles ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0A2540',
   },
   contentWrapper: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   scrollViewContent: {
-    paddingTop: 16,
-    paddingBottom: 16,
     flexGrow: 1,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  searchContainer: {
+  searchCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     marginBottom: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.41,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 15,
   },
   searchInput: {
     flex: 1,
     height: 50,
     fontSize: 16,
+    color: '#0A2540',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 16,
-    color: '#444',
+    color: '#fff',
   },
   routeCard: {
     backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.41,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   routeHeader: {
     flexDirection: 'row',
@@ -306,21 +300,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 10,
     flexWrap: 'wrap',
   },
   routeLocationText: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0A2540',
   },
   arrowIcon: {
-    marginHorizontal: 8,
+    marginHorizontal: 10,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
   },
   routePriceRange: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#007AFF',
+  },
+  routePriceRangeSub: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 2,
   },
   routeDetails: {
     marginBottom: 12,
@@ -338,9 +339,14 @@ const styles = StyleSheet.create({
   },
   viewTripsButton: {
     backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   viewTripsButtonText: {
     color: 'white',
@@ -355,7 +361,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 20,
-    color: '#666',
+    color: '#fff',
+    textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,
@@ -366,26 +373,27 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#666',
+    color: '#fff',
     marginTop: 20,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: '#ccc',
     marginTop: 8,
     textAlign: 'center',
   },
   retryButton: {
     marginTop: 20,
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: '#FF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
     borderRadius: 8,
+    elevation: 2,
   },
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: 16,
   },
-  // Removed unnecessary loadMoreButton styles as infinite scrolling is no longer needed
 });

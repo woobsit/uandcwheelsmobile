@@ -1,5 +1,3 @@
-// screens/PassengerDetailsAndSeatSelectionScreen.tsx
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
@@ -11,6 +9,7 @@ import {
   Alert,
   Switch,
   ActivityIndicator,
+  Platform 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,7 +20,6 @@ import { PassengerPayload } from '../types/passenger';
 import { CreateBookingPayload, PaymentMethod } from '../types/booking';
 import { BusTrip } from '../types/bustrip';
 
-// Update the import to use the new service function
 import BusTripService from '../requests/busTripService';
 import { formatCurrency } from '../utils/formatCurrency';
 
@@ -30,12 +28,10 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   const route = useRoute<PassengerDetailsAndSeatSelectionScreenProps['route']>();
 
   const { busTripId: partialBusTrip } = route.params;
-
+console.log(route.params);
   const [busTripDetails, setBusTripDetails] = useState<BusTrip | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  console.log(JSON.stringify(route.params));
 
   useEffect(() => {
     async function fetchBusTripDetails() {
@@ -47,7 +43,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
           !fullTripDetails ||
           !fullTripDetails.bus?.capacity ||
           !fullTripDetails.bus?.seat_arrangement ||
-          !Array.isArray(fullTripDetails.bus?.taken_seats) // Check if taken_seats is an array
+          !Array.isArray(fullTripDetails.bus?.taken_seats)
         ) {
           setError('Incomplete bus configuration received. Please select another trip.');
         } else {
@@ -69,10 +65,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
     }
   }, [partialBusTrip]);
 
-  const currentTrip = useMemo(
-    () => busTripDetails,
-    [busTripDetails],
-  );
+  const currentTrip = useMemo(() => busTripDetails, [busTripDetails]);
 
   const [adultCount, setAdultCount] = useState(1);
   const [seatedChildCount, setSeatedChildCount] = useState(0);
@@ -86,18 +79,15 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
 
   const totalPassengersRequiringSeats = adultCount + seatedChildCount;
   const totalPassengers = totalPassengersRequiringSeats + lapChildCount;
-const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats : 0;
+  const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats : 0;
 
   const busCapacity = busTripDetails?.bus?.capacity || 0;
-  const takenSeats = busTripDetails?.bus?.taken_seats || []; // Now this will be populated
+  const takenSeats = busTripDetails?.bus?.taken_seats || [];
   const seatArrangement = busTripDetails?.bus?.seat_arrangement;
 
   useEffect(() => {
-    // This effect handles passenger list and seat count
     const newPassengers: PassengerPayload[] = [];
-    // ... (rest of the useEffect logic remains the same) ...
-    
-    // Primary passenger (always one adult)
+
     const existingPrimary = passengers.find(p => p.is_primary);
     newPassengers.push(
       existingPrimary && existingPrimary.type === 'adult'
@@ -115,7 +105,6 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
           },
     );
 
-    // Add/remove other adults
     for (let i = 0; i < adultCount - 1; i++) {
       newPassengers.push(
         passengers[i + 1] && passengers[i + 1].type === 'adult' && !passengers[i + 1].is_primary
@@ -134,7 +123,6 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
       );
     }
 
-    // Add/remove seated children
     for (let i = 0; i < seatedChildCount; i++) {
       const currentPassengerIndex = adultCount + i;
       newPassengers.push(
@@ -155,7 +143,6 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
       );
     }
 
-    // Add/remove lap children
     for (let i = 0; i < lapChildCount; i++) {
       const currentPassengerIndex = adultCount + seatedChildCount + i;
       newPassengers.push(
@@ -211,8 +198,7 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
         Alert.alert('Loading...', 'Please wait for trip details to load.');
         return;
       }
-      
-      // Use the 'takenSeats' variable which is now populated by the API response
+
       if (takenSeats.includes(seatNumber)) {
         Alert.alert('Seat Taken', `Seat ${seatNumber} is already taken.`);
         return;
@@ -234,11 +220,10 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
         }
       });
     },
-    [totalPassengersRequiringSeats, busTripDetails, takenSeats], // Add takenSeats to dependency array
+    [totalPassengersRequiringSeats, busTripDetails, takenSeats],
   );
-  
+
   const seatGrid = useMemo(() => {
-    // Logic for generating seat grid
     const grid: string[][] = [];
     if (!busTripDetails?.bus?.capacity || !busTripDetails?.bus?.seat_arrangement) {
       return grid;
@@ -271,35 +256,29 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
     return grid;
   }, [busTripDetails]);
 
-
   const handleProceedToPayment = () => {
-     // Add a defensive check for the `currentTrip` object
-  if (!currentTrip) {
-    Alert.alert('Error', 'Trip details are not available. Please try again.');
-    return;
-  }
+    if (!currentTrip) {
+      Alert.alert('Error', 'Trip details are not available. Please try again.');
+      return;
+    }
 
-    // Validation logic
     if (totalPassengersRequiringSeats === 0 && lapChildCount === 0) {
       Alert.alert('No Passengers', 'Please add at least one passenger.');
       return;
     }
 
-    // Check for empty passenger names
     const emptyNamePassenger = passengers.find(p => !p.name);
     if (emptyNamePassenger) {
       Alert.alert('Missing Details', 'Please enter a name for all passengers.');
       return;
     }
 
-    // Check for zero or invalid age
     const invalidAgePassenger = passengers.find(p => !p.age || p.age <= 0);
     if (invalidAgePassenger) {
       Alert.alert('Invalid Age', 'Please enter a valid age for all passengers.');
       return;
     }
 
-    // Validation for emergency contact
     if (!emergencyContactName || !emergencyContactPhone) {
       Alert.alert('Emergency Contact Required', 'Please provide a name and phone number for the emergency contact.');
       return;
@@ -337,30 +316,28 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
       emergency_contact_phone: emergencyContactPhone,
       passengers: passengersWithSeats,
     };
-
+console.log(bookingPayload);
     navigation.navigate('Payment', { bookingPayload });
   };
-
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#fff" />
         <Text style={styles.loadingText}>Loading trip details...</Text>
       </View>
     );
   }
 
-  // Handle errors
   if (error || !busTripDetails) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <TopNavBar title="Passenger & Seat Selection" />
         <View style={styles.errorContainer}>
-          <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
+          <MaterialIcons name="error-outline" size={60} color="#FF4444" />
           <Text style={styles.errorText}>{error || 'Failed to load trip details.'}</Text>
-          <TouchableOpacity style={styles.proceedButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.proceedButtonText}>Go Back</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.retryButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -371,105 +348,119 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <TopNavBar title="Passenger & Seat Selection" />
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Trip Summary (now uses busTripDetails) */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>
-            Trip: {busTripDetails.departure_location} to {busTripDetails.arrival_location}
+        {/* Trip Summary */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Trip Details</Text>
+          <Text style={styles.cardInfo}>
+            <Text style={styles.cardInfoLabel}>Route:</Text>{' '}
+            {busTripDetails.departure_location} to {busTripDetails.arrival_location}
           </Text>
-          <Text style={styles.summaryDetails}>
-            Date: {new Date(busTripDetails.departure_time).toLocaleDateString()}
+          <Text style={styles.cardInfo}>
+            <Text style={styles.cardInfoLabel}>Date:</Text>{' '}
+            {new Date(busTripDetails.departure_time).toLocaleDateString()}
           </Text>
-          <Text style={styles.summaryDetails}>
-            Bus: {busTripDetails.bus?.plate_number} ({busTripDetails.bus?.brand})
+          <Text style={styles.cardInfo}>
+            <Text style={styles.cardInfoLabel}>Bus:</Text>{' '}
+            {busTripDetails.bus?.plate_number} ({busTripDetails.bus?.brand})
           </Text>
-          <Text style={styles.summaryDetails}>
-            Fare per seat: {formatCurrency(busTripDetails.fare)}
+          <Text style={styles.cardInfo}>
+            <Text style={styles.cardInfoLabel}>Fare per seat:</Text>{' '}
+            {formatCurrency(busTripDetails.fare)}
           </Text>
-          <Text style={styles.summaryTotal}>Total Fare: {formatCurrency(totalFare)}</Text>
         </View>
 
-        {/* ... (The rest of your JSX remains largely the same, but now references `busTripDetails` for `takenSeats`, `seatArrangement`, `busCapacity`, etc.) ... */}
+        {/* Passenger Count */}
         <Text style={styles.sectionTitle}>Number of Passengers</Text>
-        <View style={styles.passengerCountContainer}>
-          <Text style={styles.passengerCountLabel}>Adults (18+)</Text>
-          <View style={styles.countStepper}>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => setAdultCount(Math.max(1, adultCount - 1))}
-            >
-              <Text style={styles.stepperButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.stepperValue}>{adultCount}</Text>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => setAdultCount(adultCount + 1)}
-            >
-              <Text style={styles.stepperButtonText}>+</Text>
-            </TouchableOpacity>
+        <View style={styles.card}>
+          <View style={styles.passengerCountContainer}>
+            <Text style={styles.passengerCountLabel}>Adults (18+)</Text>
+            <View style={styles.countStepper}>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setAdultCount(Math.max(1, adultCount - 1))}
+              >
+                <Text style={styles.stepperButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.stepperValue}>{adultCount}</Text>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setAdultCount(adultCount + 1)}
+              >
+                <Text style={styles.stepperButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-        <View style={styles.passengerCountContainer}>
-          <Text style={styles.passengerCountLabel}>Seated Children (2-17)</Text>
-          <View style={styles.countStepper}>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => setSeatedChildCount(Math.max(0, seatedChildCount - 1))}
-            >
-              <Text style={styles.stepperButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.stepperValue}>{seatedChildCount}</Text>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => setSeatedChildCount(seatedChildCount + 1)}
-            >
-              <Text style={styles.stepperButtonText}>+</Text>
-            </TouchableOpacity>
+          <View style={styles.passengerCountContainer}>
+            <Text style={styles.passengerCountLabel}>Seated Children (2-17)</Text>
+            <View style={styles.countStepper}>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setSeatedChildCount(Math.max(0, seatedChildCount - 1))}
+              >
+                <Text style={styles.stepperButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.stepperValue}>{seatedChildCount}</Text>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setSeatedChildCount(seatedChildCount + 1)}
+              >
+                <Text style={styles.stepperButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-        <View style={styles.passengerCountContainer}>
-          <Text style={styles.passengerCountLabel}>Lap Children (0-2)</Text>
-          <View style={styles.countStepper}>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => setLapChildCount(Math.max(0, lapChildCount - 1))}
-            >
-              <Text style={styles.stepperButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.stepperValue}>{lapChildCount}</Text>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => setLapChildCount(lapChildCount + 1)}
-            >
-              <Text style={styles.stepperButtonText}>+</Text>
-            </TouchableOpacity>
+          <View style={styles.passengerCountContainer}>
+            <Text style={styles.passengerCountLabel}>Lap Children (0-2)</Text>
+            <View style={styles.countStepper}>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setLapChildCount(Math.max(0, lapChildCount - 1))}
+              >
+                <Text style={styles.stepperButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.stepperValue}>{lapChildCount}</Text>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setLapChildCount(lapChildCount + 1)}
+              >
+                <Text style={styles.stepperButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
         {/* Guest Booking Toggle */}
-        <View style={styles.guestToggleContainer}>
-          <Text style={styles.sectionTitle}>Booking as Guest?</Text>
-          <Switch value={isGuest} onValueChange={setIsGuest} />
+        <Text style={styles.sectionTitle}>Booking Options</Text>
+        <View style={[styles.card, styles.guestToggleContainer]}>
+          <Text style={styles.cardTitle}>Book as Guest?</Text>
+          <Switch
+            value={isGuest}
+            onValueChange={setIsGuest}
+            trackColor={{ false: '#767577', true: '#FFC107' }}
+            thumbColor={isGuest ? '#FFC107' : '#f4f3f4'}
+          />
         </View>
         {isGuest && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Guest Email</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter guest email"
-              value={guestEmail}
-              onChangeText={setGuestEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+          <View style={styles.card}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Guest Email</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter guest email"
+                value={guestEmail}
+                onChangeText={setGuestEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
           </View>
         )}
 
         {/* Passenger Details Forms */}
         <Text style={styles.sectionTitle}>Passenger Details ({totalPassengers} total)</Text>
         {passengers.map((passenger, index) => (
-          <View key={index} style={styles.passengerCard}>
-            <Text style={styles.passengerCardTitle}>
-              {index === 0 ? 'Primary Passenger' : `Passenger ${index + 1}`} ({passenger.type})
+          <View key={index} style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {index === 0 ? 'Primary Passenger' : `Passenger ${index + 1}`}
             </Text>
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Name</Text>
@@ -490,134 +481,107 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
                 keyboardType="numeric"
               />
             </View>
-            <Text style={styles.passengerCardSubtitle}>Next of Kin Details:</Text>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Next of Kin Name"
-                value={passenger.next_of_kin_name}
-                onChangeText={text => handlePassengerChange(index, 'next_of_kin_name', text)}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Phone</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Next of Kin Phone"
-                value={passenger.next_of_kin_phone}
-                onChangeText={text => handlePassengerChange(index, 'next_of_kin_phone', text)}
-                keyboardType="phone-pad"
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Relationship</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g., Mother, Brother"
-                value={passenger.next_of_kin_relationship}
-                onChangeText={text =>
-                  handlePassengerChange(index, 'next_of_kin_relationship', text)
-                }
-              />
-            </View>
           </View>
         ))}
-        {/* Emergency Contact outside passenger loop as a general requirement */}
-        {!isGuest && (
-          <>
-            <Text style={styles.sectionTitle}>Emergency Contact (Required)</Text>
-            <View style={styles.passengerCard}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Name</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Emergency contact name"
-                  value={emergencyContactName}
-                  onChangeText={setEmergencyContactName}
-                />
-              </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Emergency contact phone number"
-                  value={emergencyContactPhone}
-                  onChangeText={setEmergencyContactPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            </View>
-          </>
-        )}
+
+        {/* Emergency Contact */}
+        <Text style={styles.sectionTitle}>Emergency Contact (Required)</Text>
+        <View style={styles.card}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Name</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Emergency contact name"
+              value={emergencyContactName}
+              onChangeText={setEmergencyContactName}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Phone Number</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Emergency contact phone number"
+              value={emergencyContactPhone}
+              onChangeText={setEmergencyContactPhone}
+              keyboardType="phone-pad"
+            />
+          </View>
+        </View>
 
         {/* Seat Selection */}
         <Text style={styles.sectionTitle}>
           Select Your Seats ({selectedSeats.length} of {totalPassengersRequiringSeats} selected)
         </Text>
-        {totalPassengersRequiringSeats === 0 && (
-          <Text style={styles.infoText}> No seats needed for current passenger selection.</Text>
-        )}
-        {totalPassengersRequiringSeats > 0 && (
-          <View style={styles.seatMapContainer}>
-            {seatGrid.length === 0 ? (
-              <Text style={styles.errorText}>No seat arrangement found for this bus.</Text>
-            ) : (
-              seatGrid.map((row, rowIndex) => (
-                <View key={rowIndex} style={styles.seatRow}>
-                  {row.map((seatNumber, colIndex) => {
-                    const isAisle = seatNumber === 'AISLE';
-                    // Use the fetched data
-                    const isTaken = takenSeats.includes(seatNumber) && !selectedSeats.includes(seatNumber);
-                    const isSelected = selectedSeats.includes(seatNumber);
-
-                    return (
-                      <TouchableOpacity
-                        key={`${rowIndex}-${colIndex}`}
-                        style={[
-                          styles.seat,
-                          isAisle && styles.aisleSeat,
-                          isTaken && styles.seatTaken,
-                          isSelected && styles.seatSelected,
-                          (!seatNumber || isAisle || isTaken) && styles.seatDisabled,
-                        ]}
-                        onPress={() => !isAisle && !isTaken && toggleSeatSelection(seatNumber)}
-                        disabled={isAisle || isTaken}
-                      >
-                        <Text style={[styles.seatText, isAisle && styles.aisleText]}>
-                          {isAisle ? '' : seatNumber.replace('S', '')}
-                        </Text>
-                        {isTaken && !isAisle && !isSelected && (
-                          <MaterialIcons
-                            name="event-seat"
-                            size={24}
-                            color="#6c757d"
-                            style={styles.seatIcon}
-                          />
-                        )}
-                        {isSelected && (
-                          <MaterialIcons
-                            name="check-circle"
-                            size={20}
-                            color="#fff"
-                            style={styles.seatIcon}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
+        <View style={styles.card}>
+          {totalPassengersRequiringSeats === 0 ? (
+            <Text style={styles.infoText}>No seats needed for current passenger selection.</Text>
+          ) : seatGrid.length === 0 ? (
+            <Text style={styles.errorText}>No seat arrangement found for this bus.</Text>
+          ) : (
+            <>
+              <View style={styles.seatLegendContainer}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.seatLegend, styles.seatAvailable]} />
+                  <Text style={styles.legendText}>Available</Text>
                 </View>
-              ))
-            )}
-          </View>
-        )}
+                <View style={styles.legendItem}>
+                  <View style={[styles.seatLegend, styles.seatTaken]} />
+                  <Text style={styles.legendText}>Taken</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.seatLegend, styles.seatSelected]} />
+                  <Text style={styles.legendText}>Selected</Text>
+                </View>
+              </View>
+              <View style={styles.seatMapContainer}>
+                {seatGrid.map((row, rowIndex) => (
+                  <View key={rowIndex} style={styles.seatRow}>
+                    {row.map((seatNumber, colIndex) => {
+                      const isAisle = seatNumber === 'AISLE';
+                      const isTaken = takenSeats.includes(seatNumber);
+                      const isSelected = selectedSeats.includes(seatNumber);
 
-        {/* Total Summary at Bottom */}
+                      return (
+                        <TouchableOpacity
+                          key={`${rowIndex}-${colIndex}`}
+                          style={[
+                            styles.seat,
+                            isAisle && styles.aisleSeat,
+                            isTaken && styles.seatTaken,
+                            isSelected && styles.seatSelected,
+                          ]}
+                          onPress={() => !isAisle && !isTaken && toggleSeatSelection(seatNumber)}
+                          disabled={isAisle || isTaken}
+                        >
+                          <Text style={[styles.seatText, isAisle && styles.aisleText]}>
+                            {isAisle ? '' : seatNumber.replace('S', '')}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Total Summary and Proceed Button */}
         <View style={styles.bottomSummaryCard}>
-          <Text style={styles.bottomSummaryText}>Total Seats Selected: {selectedSeats.length}</Text>
-          <Text style={styles.bottomSummaryText}>Total Passengers: {totalPassengers}</Text>
-          <Text style={styles.bottomSummaryTotal}>Amount Due: {formatCurrency(totalFare)}</Text>
-          <TouchableOpacity style={styles.proceedButton} onPress={handleProceedToPayment}>
+          <Text style={styles.bottomSummaryText}>
+            Total Seats Selected: <Text style={styles.boldText}>{selectedSeats.length}</Text>
+          </Text>
+          <Text style={styles.bottomSummaryText}>
+            Total Passengers: <Text style={styles.boldText}>{totalPassengers}</Text>
+          </Text>
+          <Text style={styles.bottomSummaryTotal}>
+            Amount Due: <Text style={styles.boldText}>{formatCurrency(totalFare)}</Text>
+          </Text>
+          <TouchableOpacity
+            style={styles.proceedButton}
+            onPress={handleProceedToPayment}
+            disabled={selectedSeats.length !== totalPassengersRequiringSeats}
+          >
             <Text style={styles.proceedButtonText}>Proceed to Payment</Text>
           </TouchableOpacity>
         </View>
@@ -627,176 +591,151 @@ const totalFare = currentTrip ? currentTrip.fare * totalPassengersRequiringSeats
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f0f2f5' },
-  container: { padding: 16, paddingBottom: 100 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200 },
-  loadingText: { marginTop: 10, fontSize: 16, color: '#555' },
+  safeArea: { flex: 1, backgroundColor: '#0A2540' },
+  container: { paddingHorizontal: 20, paddingBottom: 100 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A2540' },
+  loadingText: { marginTop: 10, fontSize: 16, color: '#fff' },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
     minHeight: 200,
+    backgroundColor: '#0A2540',
   },
-  errorText: { fontSize: 16, color: '#ff6b6b', textAlign: 'center', marginTop: 10 },
-  summaryCard: {
+  errorText: { fontSize: 16, color: '#FF4444', textAlign: 'center', marginTop: 10 },
+  card: {
     backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 15,
+    padding: 20,
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  summaryTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 5 },
-  summaryDetails: { fontSize: 15, color: '#555', marginBottom: 3 },
-  summaryTotal: {
-    fontSize: 17,
+  cardTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 10,
+    color: '#0A2540',
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  sectionTitle: { fontSize: 17, fontWeight: '600', color: '#333', marginTop: 20, marginBottom: 15 },
+  cardInfo: { fontSize: 15, color: '#444', marginBottom: 5 },
+  cardInfoLabel: { fontWeight: 'bold' },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', marginTop: 20, marginBottom: 15 },
   passengerCountContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
-    elevation: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   passengerCountLabel: { fontSize: 16, color: '#555' },
   countStepper: { flexDirection: 'row', alignItems: 'center' },
   stepperButton: {
-    backgroundColor: '#e0e0e0',
-    borderRadius: 5,
-    width: 30,
-    height: 30,
+    backgroundColor: '#0A2540',
+    borderRadius: 8,
+    width: 35,
+    height: 35,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  stepperButtonText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  stepperValue: { fontSize: 16, marginHorizontal: 15, fontWeight: 'bold', color: '#333' },
+  stepperButtonText: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
+  stepperValue: { fontSize: 18, marginHorizontal: 15, fontWeight: 'bold', color: '#0A2540' },
   guestToggleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
-    elevation: 1,
   },
   inputGroup: { marginBottom: 15 },
-  inputLabel: { fontSize: 14, color: '#555', marginBottom: 5, fontWeight: '500' },
+  inputLabel: { fontSize: 14, color: '#555', marginBottom: 5, fontWeight: 'bold' },
   textInput: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  passengerCard: {
-    backgroundColor: 'white',
     borderRadius: 10,
     padding: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 3,
-  },
-  passengerCardTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 10,
-  },
-  passengerCardSubtitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 10,
-    marginTop: 10,
+    backgroundColor: '#f9f9f9',
+    color: '#0A2540',
   },
   seatMapContainer: {
-    backgroundColor: 'white',
+    padding: 10,
+    backgroundColor: '#f9f9f9',
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 3,
-    alignItems: 'center', // Center the seat grid
+    alignItems: 'center',
   },
+  seatLegendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 20,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  seatLegend: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  seatAvailable: { backgroundColor: '#e0e0e0' },
+  legendText: { fontSize: 14, color: '#555' },
   seatRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 5, // Spacing between rows
+    marginBottom: 5,
   },
-  seat: {
-    width: 40,
-    height: 40,
-    borderRadius: 5,
-    margin: 3, // Spacing between seats
+ seat: {
+    width: 45,
+    height: 45,
+    borderRadius: 8,
+    margin: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0', // Default available seat color
+    backgroundColor: '#e0e0e0',
     position: 'relative',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   aisleSeat: {
     backgroundColor: 'transparent',
-    borderColor: 'transparent',
-    borderWidth: 0,
-    width: 20, // Narrower for aisle
+    width: 20,
+    margin: 4,
+    ...Platform.select({
+      ios: { shadowOpacity: 0 },
+      android: { elevation: 0 },
+    }),
   },
-  seatTaken: {
-    backgroundColor: '#ffadad', // Red for taken seats
+  seatTaken: { 
+    backgroundColor: '#FF4444' 
   },
-  seatSelected: {
-    backgroundColor: '#007AFF', // Blue for selected seats
+  seatSelected: { 
+    backgroundColor: '#007AFF' 
   },
-  seatDisabled: {
-    opacity: 0.6, // Dim disabled seats
+  seatText: { 
+    color: '#0A2540', 
+    fontWeight: 'bold', 
+    fontSize: 16 
   },
-  seatText: {
-    color: '#333',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  aisleText: {
-    color: '#888',
-    fontSize: 10,
-    position: 'absolute', // To prevent text from affecting seat layout
-    bottom: -5,
-  },
-  seatIcon: {
-    position: 'absolute',
-    opacity: 0.7, // Slightly transparent
+  aisleText: { 
+    color: '#888', 
+    fontSize: 10 
   },
   infoText: {
     fontSize: 15,
@@ -804,27 +743,44 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 20,
-    paddingHorizontal: 20,
   },
   bottomSummaryCard: {
     backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  bottomSummaryText: { fontSize: 16, color: '#444', marginBottom: 5 },
+  bottomSummaryTotal: { fontSize: 18, fontWeight: 'bold', color: '#0A2540', marginTop: 10 },
+  boldText: { fontWeight: 'bold', color: '#0A2540' },
+  proceedButton: {
+    backgroundColor: '#FFC107',
+    padding: 18,
     borderRadius: 10,
-    padding: 15,
+    alignItems: 'center',
     marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  bottomSummaryText: { fontSize: 16, color: '#555', marginBottom: 5 },
-  bottomSummaryTotal: { fontSize: 18, fontWeight: 'bold', color: '#007AFF', marginTop: 10 },
-  proceedButton: {
-    backgroundColor: '#28a745', // Green for proceed
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
+  proceedButtonText: { color: '#0A2540', fontWeight: 'bold', fontSize: 17 },
+  retryButton: {
     marginTop: 20,
+    backgroundColor: '#FF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
   },
-  proceedButtonText: { color: 'white', fontWeight: 'bold', fontSize: 17 },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });

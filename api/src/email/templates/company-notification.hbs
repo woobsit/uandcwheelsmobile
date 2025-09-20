@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Booking Alert</title>
+</head>
+<body>
+    <h1>New Booking Alert - #{{booking.booking_reference}}</h1>
+    <p>A new booking has been placed on {{companyName}}.</p>
+
+    <h2>Booking Summary</h2>
+    <ul>
+        <li><strong>Booking ID:</strong> {{booking.id}}</li>
+        <li><strong>Booking Reference:</strong> {{booking.booking_reference}}</li>
+        <li><strong>Status:</strong> {{booking.payment_status}}</li>
+        <li><strong>Total Amount:</strong> {{formatCurrency booking.total_amount}}</li>
+        <li><strong>Payment Method:</strong> {{booking.payment_method}}</li>
+    </ul>
+
+    <h2>Trip Details</h2>
+    <h3>Outbound Trip</h3>
+    <ul>
+        <li><strong>Route:</strong> {{outboundTrip.trip.departureLocation.name}} to {{outboundTrip.trip.arrivalLocation.name}}</li>
+        <li><strong>Date:</strong> {{formatDate outboundTrip.departure_time}}</li>
+        <li><strong>Time:</strong> {{formatTime outboundTrip.departure_time}}</li>
+        <li><strong>Bus Plate:</strong> {{outboundTrip.bus.plate_number}}</li>
+        <li><strong>Seats Reserved:</strong> {{join seatNumbers}}</li>
+    </ul>
+
+    {{#if returnTrip}}
+    <h3>Return Trip</h3>
+    <ul>
+        <li><strong>Route:</strong> {{returnTrip.trip.departureLocation.name}} to {{returnTrip.trip.arrivalLocation.name}}</li>
+        <li><strong>Date:</strong> {{formatDate returnTrip.departure_time}}</li>
+        <li><strong>Time:</strong> {{formatTime returnTrip.departure_time}}</li>
+        <li><strong>Bus Plate:</strong> {{returnTrip.bus.plate_number}}</li>
+        <li><strong>Seats Reserved:</strong> {{join seatNumbers}}</li>
+    </ul>
+    {{/if}}
+
+    <h2>Passenger Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Seat</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each passengers}}
+            <tr>
+                <td>{{this.name}}</td>
+                <td>{{this.type}}</td>
+                <td>{{this.seat_number}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <p>Please log in to the admin dashboard for full details and to manage the booking.</p>
+    
+    <p>Thank you,<br>{{companyName}} Team</p>
+</body>
+</html>

@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  RefreshControl, // Add this import
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { DashboardScreenProps } from '../types/screenprops';
-import TopNavBar from '../components/molecules/TopNavBar';
+import TopNavBar from '../components/molecules/TopNavBar'; // Correct import
 import useRefreshControl from '../hooks/useRefreshControl';
 
 export default function DashboardScreen() {
@@ -36,6 +36,9 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Top Navigation Bar Component */}
+      <TopNavBar title="Dashboard" />
+
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={styles.container}
@@ -45,85 +48,92 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#007AFF"
+            tintColor="#fff" // Changed to white for better contrast
             title="Refreshing..."
-            titleColor="#007AFF"
-            colors={['#007AFF']}
-            progressBackgroundColor="#ffffff"
+            titleColor="#fff"
+            colors={['#fff']}
+            progressBackgroundColor="#0A2540"
           />
         }
       >
-        {/* Top Navigation Bar */}
-        <TopNavBar title="Dashboard" />
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('UserProfile')}>
-            <Image
-              source={{ uri: 'https://i.imgur.com/mCHMpLT.png' }}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
-        </View>
+        {/* The rest of the content scrolls below the TopNavBar */}
+        <View style={styles.contentWrapper}>
+            
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Welcome Back</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('UserProfile')}>
+              <Image
+                source={{ uri: 'https://i.imgur.com/mCHMpLT.png' }}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
+          </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('BookTransport')}
-          >
-            <Text style={styles.actionText}>Book Transport</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('TrackPackage')}
-          >
-            <Text style={styles.actionText}>Use Dispatch</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recent Shipments */}
-        <Text style={styles.sectionTitle}>Recent Trips</Text>
-        {/* {recentShipments.map(shipment => (
-          <TouchableOpacity
-            key={shipment.id}
-            style={styles.shipmentCard}
-            onPress={() => navigation.navigate('ShipmentDetails', { id: shipment.id })}
-          >
-            <View>
-              <Text style={styles.shipmentId}>#{shipment.id}</Text>
-              <Text style={styles.shipmentRoute}>{shipment.route}</Text>
-            </View>
-            <View style={styles.shipmentRight}>
-              <Text
-                style={[
-                  styles.shipmentStatus,
-                  shipment.status === 'Delivered' ? styles.statusDelivered : styles.statusInTransit,
-                ]}
+          {/* Quick Actions Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Quick Actions</Text>
+            <View style={styles.quickActions}>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => navigation.navigate('BookTransport')}
               >
-                {shipment.status}
-              </Text>
-              <Text style={styles.shipmentDate}>{shipment.date}</Text>
-            </View>
-          </TouchableOpacity>
-        ))} */}
+                <Text style={styles.actionText}>Book Transport</Text>
+              </TouchableOpacity>
 
-        {/* Statistics Card */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Monthly Summary</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Shipments</Text>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => navigation.navigate('TrackPackage')}
+              >
+                <Text style={styles.actionText}>Use Dispatch</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>₦85,000</Text>
-              <Text style={styles.statLabel}>Spent</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>11</Text>
-              <Text style={styles.statLabel}>Delivered</Text>
+          </View>
+
+          {/* Recent Trips Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Recent Trips</Text>
+            {recentShipments.map(shipment => (
+              <TouchableOpacity
+                key={shipment.id}
+                style={styles.shipmentCard}
+                // onPress={() => navigation.navigate('ShipmentDetails', { id: shipment.id })}
+              >
+                <View>
+                  <Text style={styles.shipmentId}>#{shipment.id}</Text>
+                  <Text style={styles.shipmentRoute}>{shipment.route}</Text>
+                </View>
+                <View style={styles.shipmentRight}>
+                  <Text
+                    style={[
+                      styles.shipmentStatus,
+                      shipment.status === 'Delivered' ? styles.statusDelivered : styles.statusInTransit,
+                    ]}
+                  >
+                    {shipment.status}
+                  </Text>
+                  <Text style={styles.shipmentDate}>{shipment.date}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Statistics Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Monthly Summary</Text>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>12</Text>
+                <Text style={styles.statLabel}>Shipments</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>₦85,000</Text>
+                <Text style={styles.statLabel}>Spent</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>11</Text>
+                <Text style={styles.statLabel}>Delivered</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -135,57 +145,77 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0A2540',
   },
   container: {
     flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0A2540',
+  },
+  contentWrapper: {
+    paddingHorizontal: 20,
+    paddingVertical: 30,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 30,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#0A2540',
   },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
-    gap: 16,
+    gap: 15,
   },
   actionCard: {
     flex: 1,
     backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
+    padding: 18,
+    borderRadius: 10,
     alignItems: 'center',
     elevation: 2,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   actionText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#444',
+    fontSize: 16,
   },
   shipmentCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: '#F7F9FC',
+    padding: 18,
+    borderRadius: 10,
     marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -195,10 +225,11 @@ const styles = StyleSheet.create({
   shipmentId: {
     fontWeight: 'bold',
     color: '#333',
+    fontSize: 16,
   },
   shipmentRoute: {
     color: '#666',
-    marginTop: 4,
+    marginTop: 5,
   },
   shipmentRight: {
     alignItems: 'flex-end',
@@ -208,26 +239,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   statusDelivered: {
-    color: '#4CAF50',
+    color: '#28a745',
   },
   statusInTransit: {
-    color: '#FF9800',
+    color: '#ffc107',
   },
   shipmentDate: {
     color: '#999',
     fontSize: 12,
     marginTop: 4,
-  },
-  statsCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  statsTitle: {
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#444',
   },
   statsRow: {
     flexDirection: 'row',
@@ -235,11 +255,12 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
   },
   statValue: {
     fontWeight: 'bold',
-    fontSize: 20,
-    color: '#007AFF',
+    fontSize: 24,
+    color: '#0A2540',
   },
   statLabel: {
     color: '#666',

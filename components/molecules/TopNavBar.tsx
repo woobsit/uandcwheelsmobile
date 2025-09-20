@@ -13,9 +13,9 @@ export default function TopNavBar({ title }: { title: string; subtitle?: string 
     <View style={styles.topBar}>
       <TouchableOpacity
         style={styles.iconButton}
-        onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} // Or open menu
+        onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
       >
-        <MaterialIcons name="menu" size={24} color="#333" />
+        <MaterialIcons name="menu" size={24} color="#fff" />
       </TouchableOpacity>
 
       <Text style={styles.screenTitle}>{title}</Text>
@@ -25,7 +25,7 @@ export default function TopNavBar({ title }: { title: string; subtitle?: string 
           style={styles.iconButton}
           onPress={() => navigation.navigate('Notifications')}
         >
-          <MaterialIcons name="notifications" size={24} color="#333" />
+          <MaterialIcons name="notifications" size={24} color="#fff" />
           <View style={styles.notificationBadge}>
             <Text style={styles.badgeText}>3</Text>
           </View>
@@ -35,7 +35,7 @@ export default function TopNavBar({ title }: { title: string; subtitle?: string 
           style={[styles.iconButton, { marginLeft: 15 }]}
           onPress={() => navigation.navigate('Settings')}
         >
-          <MaterialIcons name="settings" size={24} color="#333" />
+          <MaterialIcons name="settings" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
@@ -47,29 +47,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#0A2540', // Deep blue brand color
+    elevation: 4, // Add a shadow for depth on Android
+    shadowColor: '#000', // Add shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   screenTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff', // White text for strong contrast
   },
   iconsRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconButton: {
-    padding: 5,
+    padding: 8,
   },
   notificationBadge: {
     position: 'absolute',
-    right: -5,
-    top: -5,
-    backgroundColor: 'red',
+    right: 0,
+    top: 0,
+    backgroundColor: '#FF4444', // Vibrant red
     borderRadius: 10,
     width: 20,
     height: 20,

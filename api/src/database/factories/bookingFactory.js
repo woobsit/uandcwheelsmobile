@@ -37,7 +37,7 @@ module.exports = {
       guest_email: isGuest ? faker.internet.email() : null,
 
       payment_status: 'paid', // Assume 'paid' for confirmed bookings
-      payment_method: faker.helpers.arrayElement(['credit_card', 'bank_transfer', 'cash', null]),
+      payment_method: faker.helpers.arrayElement(['cash', 'bank_transfer', 'credit_card']),
       notes: faker.lorem.sentence(),
       emergency_contact_name: faker.person.fullName(),
       emergency_contact_phone: `0${faker.string.numeric({ length: 10 })}`,

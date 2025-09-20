@@ -149,8 +149,17 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
     }
   };
 
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
   return (
-    <SafeAreaView style={GlobalStyles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -173,7 +182,7 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
             />
           }
         >
-          <View style={styles.form}>
+          <View style={styles.card}>
             <View style={styles.logoContainer}>
               <Image
                 source={require('../../assets/logo.png')}
@@ -186,12 +195,13 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 
             {/* Full Name Input */}
             <View style={styles.inputWrapper}>
-              <Feather name="user" size={20} color="#999" style={styles.icon} />
+              <Feather name="user" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
                 style={styles.inputField}
                 placeholder="Full Name"
+                placeholderTextColor="#888"
                 value={formData.name}
-                onChangeText={text => setFormData({ ...formData, name: text })}
+                onChangeText={text => handleInputChange('name', text)}
               />
             </View>
             <View style={styles.errorTextContainer}>
@@ -200,14 +210,15 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 
             {/* Email Input */}
             <View style={styles.inputWrapper}>
-              <Feather name="mail" size={20} color="#999" style={styles.icon} />
+              <Feather name="mail" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
                 style={styles.inputField}
                 placeholder="Email"
+                placeholderTextColor="#888"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={formData.email}
-                onChangeText={text => setFormData({ ...formData, email: text })}
+                onChangeText={text => handleInputChange('email', text)}
               />
             </View>
             <View style={styles.errorTextContainer}>
@@ -216,14 +227,15 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 
             {/* Password Input */}
             <View style={styles.inputWrapper}>
-              <Feather name="lock" size={20} color="#999" style={styles.icon} />
+              <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
                 style={styles.inputField}
                 placeholder="Password"
+                placeholderTextColor="#888"
                 secureTextEntry
                 autoCapitalize="none"
                 value={formData.password}
-                onChangeText={text => setFormData({ ...formData, password: text })}
+                onChangeText={text => handleInputChange('password', text)}
               />
             </View>
             <View style={styles.errorTextContainer}>
@@ -232,14 +244,15 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 
             {/* Confirm Password Input */}
             <View style={styles.inputWrapper}>
-              <Feather name="lock" size={20} color="#999" style={styles.icon} />
+              <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
                 style={styles.inputField}
                 placeholder="Confirm Password"
+                placeholderTextColor="#888"
                 secureTextEntry
                 autoCapitalize="none"
                 value={formData.confirmPassword}
-                onChangeText={text => setFormData({ ...formData, confirmPassword: text })}
+                onChangeText={text => handleInputChange('confirmPassword', text)}
               />
             </View>
             <View style={styles.errorTextContainer}>
@@ -248,23 +261,21 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
               ) : null}
             </View>
 
-            <View>
-              <TouchableOpacity
-                style={[styles.button, (isLoading || refreshing) && styles.disabledButton]}
-                onPress={handleSubmit}
-                disabled={isLoading || refreshing}
-              >
-                {isLoading || refreshing ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Register</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.button, (isLoading || refreshing) && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={isLoading || refreshing}
+            >
+              {isLoading || refreshing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Register</Text>
+              )}
+            </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.loginPrompt}>Already have an account? </Text>
+            <Text style={styles.loginPrompt}>Already have an account?</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Login')}
               disabled={isLoading || refreshing}
@@ -279,57 +290,70 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0A2540', // Deep blue background
+  },
   container: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingTop: 40,
+    justifyContent: 'center', // Center content vertically
+    paddingVertical: 40,
   },
-  form: {
-    padding: 20,
+  card: {
+    backgroundColor: '#FFFFFF', // White card background
+    borderRadius: 15,
+    padding: 30,
+    marginHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 25,
     textAlign: 'center',
+    color: '#0A2540',
+  },
+  logoContainer: {
+    alignItems: 'center',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#F0F2F5', // Light gray background for inputs
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 3,
-    height: 50,
+    paddingHorizontal: 15,
+    height: 55, // Taller inputs
   },
   icon: {
     marginRight: 10,
+    color: '#007AFF',
   },
   inputField: {
     flex: 1,
     fontSize: 16,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
+    color: '#333',
   },
   button: {
     backgroundColor: '#007AFF',
-    padding: 15,
+    padding: 18,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 25,
+    elevation: 3,
   },
   disabledButton: {
-    backgroundColor: '#a0c8ff',
+    backgroundColor: '#95b7ff',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   footer: {
@@ -337,27 +361,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     paddingBottom: 30,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent', // Transparent footer background
   },
   loginPrompt: {
     fontSize: 16,
-    color: '#666',
+    color: '#C0C0C0',
     marginRight: 5,
   },
   loginLink: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   errorTextContainer: {
     height: 24,
+    marginBottom: 10,
   },
   errorText: {
-    color: 'red',
+    color: '#FF6347',
     fontSize: 12,
-    // marginBottom: 10,
-    // marginLeft: 5,
+    marginLeft: 5,
   },
 });

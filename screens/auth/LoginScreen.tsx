@@ -9,7 +9,6 @@ import {
   Platform,
   Image,
   Switch,
-  Alert,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
@@ -19,10 +18,14 @@ import GlobalStyles from '../../assets/styles/globalStyles';
 import Feather from 'react-native-vector-icons/Feather';
 import { AuthService } from '../../requests';
 import { matchEmail } from '../../utils/pregmatch';
-import { showApiErrorAlert, saveTokens, loadRememberedEmail } from '../../utils/apiHelpers';
+import { saveTokens, loadRememberedEmail } from '../../utils/apiHelpers';
 import useRefreshControl from '../../hooks/useRefreshControl';
+import { useNavigation } from '@react-navigation/native';
+import { LoginScreenProps } from '../../types/screenprops';
+import CustomAlertModal from '../../components/organisms/CustomAlertModal'; // Import your custom modal
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen() {
+  const navigation = useNavigation<LoginScreenProps['navigation']>();
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -30,25 +33,32 @@ export default function LoginScreen({ navigation }: any) {
     email: '',
     password: '',
   });
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false, // Added rememberMe to form data
+    rememberMe: false,
   });
+
+  // New state variables for the custom alert modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalProps, setModalProps] = useState({
+    title: '',
+    message: '',
+    icon: 'info',
+  });
+  
+  // New state to handle the post-alert navigation, if needed
+  const [alertNavigation, setAlertNavigation] = useState<(() => void) | null>(null);
 
   // Create refresh control logic
   const { refreshing, onRefresh } = useRefreshControl({
     refreshAction: async () => {
       resetForm();
-      //Alert.alert('Form Reset', 'The form has been reset');
-
-      // Scroll to top after refresh
       if (scrollViewRef.current) {
         scrollViewRef.current.scrollTo({ y: 0, animated: true });
       }
     },
-    //onRefreshStart: () => console.log('Refresh started'),
-    //onRefreshEnd: () => console.log('Refresh completed'),
   });
 
   // Function to reset the form
@@ -58,11 +68,26 @@ export default function LoginScreen({ navigation }: any) {
       password: '',
       rememberMe: false,
     });
-
     setErrors({
       email: '',
       password: '',
     });
+  };
+
+  // Function to show the custom alert
+  const showAlert = (title: string, message: string, icon: 'success' | 'error' | 'info' = 'info', navAction: (() => void) | null = null) => {
+    setModalProps({ title, message, icon });
+    setIsModalVisible(true);
+    setAlertNavigation(() => navAction);
+  };
+  
+  // Function to hide the custom alert and execute a navigation action
+  const handleModalPress = () => {
+    setIsModalVisible(false);
+    if (alertNavigation) {
+      alertNavigation();
+    }
+    setAlertNavigation(null);
   };
 
   // Load saved credentials
@@ -81,7 +106,6 @@ export default function LoginScreen({ navigation }: any) {
         console.log('Error loading credentials', error);
       }
     };
-
     loadCredentials();
   }, []);
 
@@ -92,7 +116,6 @@ export default function LoginScreen({ navigation }: any) {
       password: '',
     };
 
-    // Validate email
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
       valid = false;
@@ -101,12 +124,11 @@ export default function LoginScreen({ navigation }: any) {
       valid = false;
     }
 
-    // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
       valid = false;
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Password is incorrect';
       valid = false;
     }
 
@@ -122,14 +144,14 @@ export default function LoginScreen({ navigation }: any) {
       const response = await AuthService.login({
         email: formData.email,
         password: formData.password,
-        remember_token: formData.rememberMe, // Send rememberMe as remember_token
+        remember_token: formData.rememberMe,
       });
 
       if (!response.data.data.accessToken || !response.data.data.refreshToken) {
-        throw new Error('Tokens not found in response');
+        showAlert('Error', 'Tokens not found in response', 'error');
+        return;
       }
 
-      //Save tokens to secure storage
       await saveTokens(
         response.data.data.accessToken,
         response.data.data.refreshToken,
@@ -138,29 +160,23 @@ export default function LoginScreen({ navigation }: any) {
       );
 
       if (response.status === 200) {
-        // Redirect to main app
         navigation.navigate('Dashboard');
       } else if (response.status === 401) {
-        setErrors(prev => ({
-          ...prev,
-          password: 'Invalid email or password',
-        }));
+        showAlert('Error', 'Invalid email or password', 'error');
       } else {
-        Alert.alert('Email Not Verified', 'Please verify your email before logging in', [
-          {
-            text: 'Resend Verification',
-            onPress: () => {
-              AuthService.resendVerification(formData.email)
-                .then(() => Alert.alert('Email Sent', 'A new verification email has been sent'))
-                .catch(err => showApiErrorAlert(err, 'Failed to resend verification'));
-            },
-          },
-          { text: 'OK' },
-        ]);
+        showAlert(
+          'Email Not Verified', 
+          'Please verify your email before logging in.', 
+          'error',
+          () => {
+            AuthService.resendVerification(formData.email)
+              .then(() => showAlert('Email Sent', 'A new verification email has been sent.', 'success'))
+              .catch(err => showAlert('Error', err.message || 'Failed to resend verification.', 'error'));
+          }
+        );
       }
     } catch (error: any) {
-      // Handle specific error cases
-      showApiErrorAlert(error, 'Login failed');
+      showAlert('Error', error.message || 'Login failed.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -172,8 +188,6 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-
-    // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -182,7 +196,7 @@ export default function LoginScreen({ navigation }: any) {
   const toggleRememberMe = () => {
     handleInputChange('rememberMe', !formData.rememberMe);
   };
-
+  
   return (
     <SafeAreaView edges={['bottom']} style={GlobalStyles.safeArea}>
       <KeyboardAvoidingView
@@ -217,7 +231,6 @@ export default function LoginScreen({ navigation }: any) {
 
             <Text style={styles.title}>Welcome Back</Text>
 
-            {/* Email Input */}
             <View style={styles.inputWrapper}>
               <Feather name="mail" size={20} color="#999" style={styles.icon} />
               <TextInput
@@ -233,7 +246,6 @@ export default function LoginScreen({ navigation }: any) {
               {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
             </View>
 
-            {/* Password Input */}
             <View style={styles.inputWrapper}>
               <Feather name="lock" size={20} color="#999" style={styles.icon} />
               <TextInput
@@ -244,11 +256,10 @@ export default function LoginScreen({ navigation }: any) {
                 onChangeText={text => handleInputChange('password', text)}
               />
             </View>
-
             <View style={styles.errorTextContainer}>
               {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
             </View>
-            {/* Remember Me and Forgot Password Row */}
+
             <View style={styles.rememberRow}>
               <TouchableOpacity onPress={toggleRememberMe} style={styles.rememberMeContainer}>
                 <Switch
@@ -257,10 +268,8 @@ export default function LoginScreen({ navigation }: any) {
                   trackColor={{ false: '#767577', true: '#81b0ff' }}
                   thumbColor={formData.rememberMe ? '#007AFF' : '#f4f3f4'}
                 />
-
                 <Text style={styles.rememberText}>Remember me</Text>
               </TouchableOpacity>
-
               <TouchableOpacity onPress={handleForgotPassword}>
                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
@@ -277,9 +286,16 @@ export default function LoginScreen({ navigation }: any) {
                 <Text style={styles.buttonText}>Login</Text>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.guestButton, isLoading && styles.disabledButton]}
+              onPress={() => navigation.navigate('BookTransport')}
+              disabled={isLoading}
+            >
+              <Text style={styles.guestButtonText}>Continue as Guest</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Register Link */}
           <View style={styles.footer}>
             <Text style={styles.registerPrompt}>Don't have an account?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -288,6 +304,15 @@ export default function LoginScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {/* Custom Alert Modal */}
+      <CustomAlertModal
+        isVisible={isModalVisible}
+        title={modalProps.title}
+        message={modalProps.message}
+        onPress={handleModalPress}
+        icon={modalProps.icon as 'success' | 'error' | 'info'}
+      />
     </SafeAreaView>
   );
 }
@@ -295,68 +320,73 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0A2540',
     justifyContent: 'space-between',
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingTop: 40,
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 30,
+    marginHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 30,
+    marginBottom: 25,
     textAlign: 'center',
-    color: '#363636',
+    color: '#0A2540',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: '#F0F2F5',
     borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 15,
     marginBottom: 5,
-    height: 50,
+    height: 55,
   },
   icon: {
     marginRight: 10,
+    color: '#007AFF',
   },
   inputField: {
     flex: 1,
     fontSize: 16,
+    color: '#333',
   },
   button: {
     backgroundColor: '#007AFF',
-    padding: 15,
+    padding: 18,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 25,
+    elevation: 3,
   },
   disabledButton: {
-    backgroundColor: '#a0c8ff',
+    backgroundColor: '#95b7ff',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   rememberRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-    marginTop: -10,
   },
   rememberMeContainer: {
     flexDirection: 'row',
@@ -365,7 +395,7 @@ const styles = StyleSheet.create({
   rememberText: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#333',
+    color: '#666',
   },
   forgotPasswordText: {
     fontSize: 14,
@@ -376,27 +406,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     paddingBottom: 30,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   registerPrompt: {
     fontSize: 16,
-    color: '#666',
+    color: '#C0C0C0',
     marginRight: 5,
   },
   registerLink: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   errorText: {
-    color: 'red',
+    color: '#FF6347',
     fontSize: 12,
     marginBottom: 10,
     marginLeft: 5,
   },
   errorTextContainer: {
-    height: 24,
+    height: 27,
+  },
+  guestButton: {
+    backgroundColor: 'transparent',
+    padding: 18,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 15,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+  },
+  guestButtonText: {
+    color: '#007AFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

@@ -15,17 +15,14 @@ import useRefreshControl from '../hooks/useRefreshControl';
 import { formatDate } from '../utils/dateHelpers';
 import BusTripService from '../requests/busTripService';
 import TopNavBar from '../components/molecules/TopNavBar';
-import { AvailableDate } from '../types/bustrip'; 
+import { AvailableDate } from '../types/bustrip';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList, TripDatesScreenRouteProps, } from '../types/screenprops';
-
+import { AuthStackParamList, TripDatesScreenRouteProps } from '../types/screenprops';
 
 export default function TripDatesScreen() {
-
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const route = useRoute<TripDatesScreenRouteProps>();
-  
 
   const {
     departureLocationName,
@@ -33,7 +30,7 @@ export default function TripDatesScreen() {
     arrivalLocationName,
     arrivalLocationState,
   } = route.params;
-
+console.log(route.params);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginating, setIsPaginating] = useState(false);
   const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
@@ -41,7 +38,6 @@ export default function TripDatesScreen() {
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(true);
 
-  // Set a reasonable limit for this screen
   const limit = 10;
 
   const formatPrice = (price: number) => {
@@ -80,7 +76,6 @@ export default function TripDatesScreen() {
 
       setHasNext(response.data.hasNext);
       setPage(response.data.page);
-      
     } catch (err) {
       setError('Failed to load available dates. Please try again.');
       console.error('Error fetching available dates:', err);
@@ -116,123 +111,130 @@ export default function TripDatesScreen() {
     fetchAvailableDates(1, true);
   }, [departureLocationName, departureLocationState, arrivalLocationName, arrivalLocationState]);
 
-  const screenTitle = `${departureLocationName} to ${arrivalLocationName}`;
+  const screenTitle = `Dates from ${departureLocationName}`;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <TopNavBar title={screenTitle} />
-      <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />
-        }
-        onScroll={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 50;
-          if (isCloseToBottom) {
-            handleLoadMore();
+      <View style={styles.contentWrapper}>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+              titleColor="#fff"
+            />
           }
-        }}
-        scrollEventThrottle={400}>
-        {isLoading && availableDates.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading available dates...</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="error-outline" size={60} color="#ff6b6b" />
-            <Text style={styles.emptyText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => fetchAvailableDates(1, true)}>
-              <Text style={styles.retryButtonText}>Try Again</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <Text style={styles.sectionTitle}>
-              Select Departure Date ({availableDates.length})
-            </Text>
-            {availableDates.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <MaterialIcons name="calendar-today" size={60} color="#ddd" />
-                <Text style={styles.emptyText}>No available dates for this route.</Text>
-                <Text style={styles.emptySubtext}>
-                  Please try another route or check back later.
-                </Text>
-              </View>
-            ) : (
-              availableDates.map((date, index) => (
-                <TouchableOpacity
-                  key={`${date.departureDate}-${index}`}
-                  style={styles.dateCard}
-                  onPress={() => handleSelectDate(date)}>
-                  <View style={styles.dateInfo}>
-                    <MaterialIcons name="event" size={24} color="#007AFF" />
-                    <View style={styles.dateTextContainer}>
-                      <Text style={styles.dateDisplay}>
-                        {formatDate(date.departureDate, 'EEE, MMM d, yyyy')}
-                      </Text>
-                      <Text style={styles.dateBusCount}>
-                        {date.availableBusesCount} bus options
-                      </Text>
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 50;
+            if (isCloseToBottom) {
+              handleLoadMore();
+            }
+          }}
+          scrollEventThrottle={400}
+        >
+          {isLoading && availableDates.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>Loading available dates...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="error-outline" size={60} color="#FF4444" />
+              <Text style={styles.emptyText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => fetchAvailableDates(1, true)}>
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.sectionTitle}>
+                Select Departure Date ({availableDates.length})
+              </Text>
+              {availableDates.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <MaterialIcons name="calendar-today" size={60} color="#fff" />
+                  <Text style={styles.emptyText}>No available dates for this route.</Text>
+                  <Text style={styles.emptySubtext}>
+                    Please try another route or check back later.
+                  </Text>
+                </View>
+              ) : (
+                availableDates.map((date, index) => (
+                  <TouchableOpacity
+                    key={`${date.departureDate}-${index}`}
+                    style={styles.dateCard}
+                    onPress={() => handleSelectDate(date)}>
+                    <View style={styles.dateInfo}>
+                      <MaterialIcons name="event" size={24} color="#0A2540" />
+                      <View style={styles.dateTextContainer}>
+                        <Text style={styles.dateDisplay}>
+                          {formatDate(date.departureDate, 'EEE, MMM d, yyyy')}
+                        </Text>
+                        <Text style={styles.dateBusCount}>
+                          {date.availableBusesCount} bus options
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                  <View style={styles.dateAction}>
-                    <Text style={styles.datePriceRange}>
-                      ₦{formatPrice(date.minFare)}
-                      {date.minFare !== date.maxFare ? ` - ₦${formatPrice(date.maxFare)}` : ''}
-                    </Text>
-                    <MaterialIcons name="navigate-next" size={24} color="#007AFF" />
-                  </View>
-                </TouchableOpacity>
-              ))
-            )}
-            {isPaginating && hasNext && (
-              <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 10 }} />
-            )}
-          </>
-        )}
-      </ScrollView>
+                    <View style={styles.dateAction}>
+                      <Text style={styles.datePriceRange}>
+                        ₦{formatPrice(date.minFare)}
+                        {date.minFare !== date.maxFare ? ` - ₦${formatPrice(date.maxFare)}` : ''}
+                      </Text>
+                      <MaterialIcons name="navigate-next" size={24} color="#0A2540" />
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+              {isPaginating && hasNext && (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#fff" style={{ marginTop: 20 }} />
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // ... (Your styles remain unchanged)
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0A2540',
   },
-  container: {
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  scrollViewContent: {
     flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 16,
-    color: '#444',
+    color: '#fff',
   },
   dateCard: {
     backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 16,
+    borderRadius: 15,
+    padding: 20,
     marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.41,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   dateInfo: {
     flexDirection: 'row',
@@ -240,27 +242,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dateTextContainer: {
-    marginLeft: 10,
+    marginLeft: 15,
   },
   dateDisplay: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0A2540',
   },
   dateBusCount: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    marginTop: 4,
   },
   dateAction: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   datePriceRange: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#007AFF',
-    fontWeight: '500',
-    marginRight: 8,
+    fontWeight: 'bold',
+    marginRight: 10,
   },
   loadingContainer: {
     flex: 1,
@@ -270,7 +272,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 20,
-    color: '#666',
+    color: '#fff',
+    textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,
@@ -281,25 +284,27 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#666',
+    color: '#fff',
     marginTop: 20,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: '#ccc',
     marginTop: 8,
     textAlign: 'center',
   },
   retryButton: {
     marginTop: 20,
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: '#FF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
     borderRadius: 8,
+    elevation: 2,
   },
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });

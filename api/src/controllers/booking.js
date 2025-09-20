@@ -162,35 +162,39 @@ const createBooking = async (req, res) => {
     await transaction.commit(); // Commit the transaction before sending emails
 
     // 6. Send confirmation email AFTER the transaction is committed
-    const email = userId ? req.user.email : guest_email;
-    if (email) {
-      // You should now use a new dedicated function for this
-      await sendBookingConfirmation(
-        email,
-        booking,
-        outboundBusTrip,
-        returnBusTrip,
-        passengerRecords,
-      );
-    }
+    // const email = userId ? req.user.email : guest_email;
+    // if (email) {
+    //   // You should now use a new dedicated function for this
+    //   await EmailService.sendBookingConfirmation(
+    //     email,
+    //     booking,
+    //     outboundBusTrip,
+    //     returnBusTrip,
+    //     passengerRecords,
+    //   );
+    // }
+
+   // await new Promise(resolve => setTimeout(resolve, 60000)); // 60 secs delay
 
     // 7. Send an internal notification to the company (optional but recommended)
-    if (process.env.COMPANY_EMAIL) {
-      await sendCompanyNotification(
-        process.env.COMPANY_EMAIL,
-        booking,
-        outboundBusTrip,
-        returnBusTrip,
-        passengerRecords,
-      );
-    }
+    // if (process.env.BOOKING_EMAIL) {
+    //   await EmailService.sendCompanyNotification(
+    //     process.env.BOOKING_EMAIL,
+    //     booking,
+    //     outboundBusTrip,
+    //     returnBusTrip,
+    //     passengerRecords,
+    //   );
+    // }
 
     return res.status(201).json({
       success: true,
       data: booking,
     });
   } catch (error) {
-    await transaction.rollback();
+   if (transaction && !transaction.finished) {
+        await transaction.rollback();
+    }
     logger.error('Booking failed', error);
     return res.status(500).json({
       success: false,
@@ -198,90 +202,7 @@ const createBooking = async (req, res) => {
     });
   }
 };
-async function sendBookingConfirmation(email, booking, outboundBusTrip, returnBusTrip, passengers) {
-  const tripData = {
-    departure: outboundBusTrip.trip.departureLocation.name,
-    arrival: outboundBusTrip.trip.arrivalLocation.name,
-    departure_time: outboundBusTrip.departure_time,
-    bus: outboundBusTrip.bus,
-  };
 
-  const returnData = returnBusTrip
-    ? {
-        departure: returnBusTrip.trip.departureLocation.name,
-        arrival: returnBusTrip.trip.arrivalLocation.name,
-        departure_time: returnBusTrip.departure_time,
-        bus: returnBusTrip.bus,
-      }
-    : null;
-
-  await EmailService.sendBookingConfirmation(email, 'Guest', {
-    reference: booking.booking_reference,
-    total_amount: booking.total_amount,
-    outbound: tripData,
-    return: returnData,
-    passengers: passengers.map(p => ({
-      name: p.name,
-      type: p.type,
-      seat: p.seat_number,
-    })),
-  });
-}
-
-// Helper function to send booking confirmation
-async function sendBookingConfirmation(email, booking, busTrip, returnBusTrip, passengers) {
-  const tripData = {
-    departure_location: busTrip.trip.departureLocation.name,
-    arrival_location: busTrip.trip.arrivalLocation.name,
-    departure_time: busTrip.departure_time,
-    bus: {
-      brand: busTrip.Bus.brand,
-      plate_number: busTrip.Bus.plate_number,
-    },
-  };
-
-  const returnData = returnBusTrip
-    ? {
-        departure_location: returnBusTrip.trip.departureLocation.name,
-        arrival_location: returnBusTrip.trip.arrivalLocation.name,
-        departure_time: returnBusTrip.departure_time,
-        bus: {
-          brand: returnBusTrip.Bus.brand,
-          plate_number: returnBusTrip.Bus.plate_number,
-        },
-      }
-    : null;
-
-  await EmailService.sendBookingConfirmation(
-    email,
-    'Guest', // Or fetch user name if registered
-    {
-      reference: booking.id,
-      total_amount: booking.total_amount,
-      trip: tripData,
-      return_trip: returnData,
-      passengers: passengers.map(p => ({
-        name: p.name,
-        type: p.type,
-        seat: p.seat_assignment,
-        fare: p.fare_paid,
-      })),
-    },
-  );
-}
-
-// async function processPaymentMock(booking, method) {
-//   return new Promise(resolve =>
-//     setTimeout(() => {
-//       booking.update({
-//         payment_status: 'paid',
-//         payment_method: method,
-//         transaction_reference: `TX-${Date.now()}`,
-//       });
-//       resolve(true);
-//     }, 1000),
-//   );
-// }
 
 const getUserBookings = async (req, res) => {
   try {
@@ -328,22 +249,5 @@ const getUserBookings = async (req, res) => {
     });
   }
 };
-
-// async function processRealPayment(booking: any, method: string, user: User) {
-//   const paymentResult = await PaymentGateway.charge({
-//     amount: booking.total_amount,
-//     currency: 'USD',
-//     customer: user.email,
-//     payment_method: method
-//   });
-
-//   await booking.update({
-//     payment_status: paymentResult.success ? 'paid' : 'failed',
-//     payment_method: method,
-//     transaction_reference: paymentResult.reference
-//   });
-
-//   return paymentResult.success;
-// }
 
 module.exports = { createBooking, getUserBookings };

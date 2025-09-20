@@ -1,4 +1,3 @@
-<!-- src/services/templates/booking-confirmation.hbs -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,16 +13,16 @@
     <div class="container">
         <h1 class="header">Booking Confirmation</h1>
         
-        <p>Dear {{name}},</p>
+        <p>Dear {{customerName}},</p>
         <p>Thank you for booking with {{companyName}}. Here are your trip details:</p>
         
         <div class="ticket">
             <h3>Trip Information</h3>
-            <p><strong>Booking Reference:</strong> {{booking.reference}}</p>
-            <p><strong>Departure:</strong> {{trip.departure_location}} at {{formatTime trip.departure_time}}</p>
-            <p><strong>Arrival:</strong> {{trip.arrival_location}} (Estimated: {{formatTime trip.estimated_arrival}})</p>
-            <p><strong>Bus:</strong> {{bus.brand}} ({{bus.plate_number}})</p>
-            <p><strong>Seats:</strong> {{join booking.seats}}</p>
+            <p><strong>Booking Reference:</strong> {{booking.booking_reference}}</p>
+            <p><strong>Departure:</strong> {{outboundTrip.trip.departureLocation.name}} at {{formatTime outboundTrip.departure_time}}</p>
+            <p><strong>Arrival:</strong> {{outboundTrip.trip.arrivalLocation.name}} (Estimated: {{formatTime outboundTrip.trip.estimated_arrival}})</p>
+            <p><strong>Bus:</strong> {{outboundTrip.bus.brand}} ({{outboundTrip.bus.plate_number}})</p>
+            <p><strong>Seats:</strong> {{join seatNumbers}}</p>
             <p><strong>Total Paid:</strong> {{formatCurrency booking.total_amount}}</p>
         </div>
 

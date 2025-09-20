@@ -88,7 +88,7 @@ module.exports = {
               seated_child_count: seatedChildCount,
               lap_child_count: lapChildCount,
               booking_reference: generateBookingRef(),
-              payment_method: faker.helpers.arrayElement(['credit_card', 'bank_transfer']),
+              payment_method: faker.helpers.arrayElement(['cash', 'bank_transfer', 'credit_card']),
               emergency_contact_phone: `0${faker.string.numeric({ length: 10 })}`,
             }),
             { transaction }

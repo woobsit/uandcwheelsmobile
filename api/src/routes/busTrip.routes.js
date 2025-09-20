@@ -23,14 +23,18 @@ const {
 
 const router = Router();
 
-router.post('/create-scheduled', createBusTripValidator, validateRequest, createBusTrip);
 router.get('/all', getAllAvailableBusTripsValidator, validateRequest, getAllAvailableBusTrips);
+
 router.get(
   '/available-dates',
   getAvailableDatesForRouteValidator,
   validateRequest,
   getAvailableDatesForRoute,
 );
+
+router.post('/create-scheduled', createBusTripValidator, validateRequest, createBusTrip);
+
+
 router.get(
   '/available-buses',
   getAvailableBusesForRouteValidator,
