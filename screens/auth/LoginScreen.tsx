@@ -25,6 +25,7 @@ import { LoginScreenProps } from '../../types/screenprops';
 import CustomAlertModal from '../../components/organisms/CustomAlertModal'; // Import your custom modal
 
 export default function LoginScreen() {
+
   const navigation = useNavigation<LoginScreenProps['navigation']>();
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -135,51 +136,55 @@ export default function LoginScreen() {
     setErrors(newErrors);
     return valid;
   };
-
   const handleLogin = async () => {
     if (!validateForm()) return;
-    try {
-      setIsLoading(true);
+ try {
+  setIsLoading(true);
 
-      const response = await AuthService.login({
-        email: formData.email,
-        password: formData.password,
-        remember_token: formData.rememberMe,
-      });
+  const response = await AuthService.login({
+    email: formData.email,
+    password: formData.password,
+  });
 
-      if (!response.data.data.accessToken || !response.data.data.refreshToken) {
-        showAlert('Error', 'Tokens not found in response', 'error');
-        return;
-      }
+  const { status, data, message } = response.data;
 
-      await saveTokens(
-        response.data.data.accessToken,
-        response.data.data.refreshToken,
-        formData.rememberMe,
-        formData.email,
-      );
-
-      if (response.status === 200) {
-        navigation.navigate('Dashboard');
-      } else if (response.status === 401) {
-        showAlert('Error', 'Invalid email or password', 'error');
-      } else {
-        showAlert(
-          'Email Not Verified', 
-          'Please verify your email before logging in.', 
-          'error',
-          () => {
-            AuthService.resendVerification(formData.email)
-              .then(() => showAlert('Email Sent', 'A new verification email has been sent.', 'success'))
-              .catch(err => showAlert('Error', err.message || 'Failed to resend verification.', 'error'));
-          }
-        );
-      }
-    } catch (error: any) {
-      showAlert('Error', error.message || 'Login failed.', 'error');
-    } finally {
-      setIsLoading(false);
+  // Handle a successful login (HTTP status 200)
+  if (status === 200) {
+    if (!data.accessToken || !data.refreshToken) {
+      showAlert('Error', 'Tokens not found in response', 'error');
+      return;
     }
+    await saveTokens(data.accessToken, data.refreshToken, formData.rememberMe, formData.email);
+    navigation.navigate('Dashboard');
+  } 
+  
+  // Handle specific error codes
+  else if (status === 401) {
+    showAlert('Error', message, 'error');
+  } 
+  else if (status === 403) {
+    showAlert('Error', message, 'error');
+  } 
+  
+  // Handle the email not verified case
+  else {
+    showAlert(
+      'Email Not Verified', 
+      'Please verify your email before logging in.', 
+      'error',
+      () => {
+        AuthService.resendVerification(formData.email)
+          .then(() => showAlert('Email Sent', 'A new verification email has been sent.', 'success'))
+          .catch(err => showAlert('Error', err.message || 'Failed to resend verification.', 'error'));
+      }
+    );
+  }
+} catch (error) {
+  // It's a good practice to handle network or other unhandled errors here.
+  showAlert('Error', 'An unexpected error occurred. Please try again later.', 'error');
+} finally {
+  setIsLoading(false);
+}
   };
 
   const handleForgotPassword = () => {

@@ -1,5 +1,5 @@
 // src/screens/auth/ResetPasswordScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView, // <-- ADDED
+  RefreshControl, // <-- ADDED
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
@@ -17,6 +19,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList, EmailResetScreenRouteProp } from '../../types/screenprops';
 import CustomAlertModal from '../../components/organisms/CustomAlertModal';
+import useRefreshControl from '../../hooks/useRefreshControl'; // <-- ADDED
 
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -27,7 +30,7 @@ export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [validationError, setValidationError] = useState(''); // State to hold form validation errors
+  const [validationError, setValidationError] = useState('');
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalProps, setModalProps] = useState({
@@ -35,12 +38,28 @@ export default function ResetPasswordScreen() {
     message: '',
     icon: 'info',
   });
-  
+
+  // Scroll view and refresh state
+  const scrollViewRef = useRef<ScrollView>(null); // <-- ADDED
+  const { refreshing, onRefresh } = useRefreshControl({ // <-- ADDED
+    refreshAction: () => {
+      resetForm();
+    },
+  });
+
+  // Function to reset the form inputs and errors
+  const resetForm = () => { // <-- ADDED
+    setCode('');
+    setPassword('');
+    setConfirmPassword('');
+    setValidationError('');
+  };
+
   const showAlert = (title: string, message: string, icon: 'success' | 'error' | 'info' = 'info') => {
     setModalProps({ title, message, icon });
     setIsModalVisible(true);
   };
-  
+
   const handleModalPress = () => {
     setIsModalVisible(false);
     if (modalProps.icon === 'success') {
@@ -49,15 +68,12 @@ export default function ResetPasswordScreen() {
   };
 
   const handleSubmit = async () => {
-    setValidationError(''); // Clear previous validation errors
-
-    // 1. Validate the reset code
+    setValidationError('');
     if (!code || code.length !== 6) {
       setValidationError('Please enter a valid 6-digit code.');
       return;
     }
 
-    // 2. Validate the new password
     if (!password) {
       setValidationError('New password is required.');
       return;
@@ -67,7 +83,6 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    // 3. Validate that the passwords match
     if (password !== confirmPassword) {
       setValidationError('Passwords do not match.');
       return;
@@ -91,89 +106,106 @@ export default function ResetPasswordScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <View style={styles.card}>
-          <Text style={styles.title}>Reset Password</Text>
-          <Text style={styles.subtitle}>Enter the code sent to your email to reset your password.</Text>
-
-          <View style={styles.emailDisplayContainer}>
-            <Feather name="mail" size={16} color="#007AFF" />
-            <Text style={styles.emailText}>{email}</Text>
-          </View>
-
-          <View style={styles.inputWrapper}>
-            <Feather name="key" size={20} color="#007AFF" style={styles.icon} />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Reset code"
-              placeholderTextColor="#888"
-              value={code}
-              onChangeText={(text) => {
-                setCode(text);
-                setValidationError('');
-              }}
-              keyboardType="number-pad"
-              maxLength={6}
-              editable={!isLoading}
+        <ScrollView // <-- ADDED
+          ref={scrollViewRef} // <-- ADDED
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl // <-- ADDED
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#007AFF"
+              title="Refreshing..."
+              titleColor="#007AFF"
+              colors={['#007AFF']}
+              progressBackgroundColor="#ffffff"
             />
-          </View>
+          }
+        >
+          <View style={styles.card}>
+            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.subtitle}>Enter the code sent to your email to reset your password.</Text>
 
-          <View style={styles.inputWrapper}>
-            <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
-            <TextInput
-              style={styles.inputField}
-              placeholder="New password"
-              placeholderTextColor="#888"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setValidationError('');
-              }}
-              secureTextEntry
-              editable={!isLoading}
-            />
-          </View>
+            <View style={styles.emailDisplayContainer}>
+              <Feather name="mail" size={16} color="#007AFF" />
+              <Text style={styles.emailText}>{email}</Text>
+            </View>
 
-          <View style={styles.inputWrapper}>
-            <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Confirm password"
-              placeholderTextColor="#888"
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                setValidationError('');
-              }}
-              secureTextEntry
-              editable={!isLoading}
-            />
-          </View>
-          
-          {/* Display validation error here */}
-          <View style={styles.errorTextContainer}>
-            {validationError ? <Text style={styles.errorText}>{validationError}</Text> : null}
-          </View>
+            <View style={styles.inputWrapper}>
+              <Feather name="key" size={20} color="#007AFF" style={styles.icon} />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Reset code"
+                placeholderTextColor="#888"
+                value={code}
+                onChangeText={(text) => {
+                  setCode(text);
+                  setValidationError('');
+                }}
+                keyboardType="number-pad"
+                maxLength={6}
+                editable={!isLoading}
+              />
+            </View>
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.disabledButton]}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Reset Password</Text>
-            )}
-          </TouchableOpacity>
+            <View style={styles.inputWrapper}>
+              <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
+              <TextInput
+                style={styles.inputField}
+                placeholder="New password"
+                placeholderTextColor="#888"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setValidationError('');
+                }}
+                secureTextEntry
+                editable={!isLoading}
+              />
+            </View>
 
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            disabled={isLoading}
-          >
-            <Text style={styles.backText}>Back to Forgot Password</Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.inputWrapper}>
+              <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Confirm password"
+                placeholderTextColor="#888"
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  setValidationError('');
+                }}
+                secureTextEntry
+                editable={!isLoading}
+              />
+            </View>
+
+            <View style={styles.errorTextContainer}>
+              {validationError ? <Text style={styles.errorText}>{validationError}</Text> : null}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Reset Password</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              disabled={isLoading}
+            >
+              <Text style={styles.backText}>Back to Forgot Password</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <CustomAlertModal
@@ -194,8 +226,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -279,7 +315,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorTextContainer: {
-    height: 30, // Reserve space to prevent layout shifting
+    height: 30,
     marginBottom: 10,
   },
   errorText: {

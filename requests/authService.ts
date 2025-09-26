@@ -10,7 +10,7 @@ export const AuthService = {
     return await api.post('/auth/register', data);
   },
 
-  login: async (data: { email: string; password: string; remember_token: boolean }) => {
+  login: async (data: { email: string; password: string; }) => {
     
     return await api.post('/auth/login', data);
   },

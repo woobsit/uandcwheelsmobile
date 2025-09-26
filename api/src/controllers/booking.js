@@ -162,30 +162,30 @@ const createBooking = async (req, res) => {
     await transaction.commit(); // Commit the transaction before sending emails
 
     // 6. Send confirmation email AFTER the transaction is committed
-    // const email = userId ? req.user.email : guest_email;
-    // if (email) {
-    //   // You should now use a new dedicated function for this
-    //   await EmailService.sendBookingConfirmation(
-    //     email,
-    //     booking,
-    //     outboundBusTrip,
-    //     returnBusTrip,
-    //     passengerRecords,
-    //   );
-    // }
+    //  const email = userId ? req.user.email : guest_email;
+    //  if (email) {
+    //     //You should now use a new dedicated function for this
+    //    await EmailService.sendBookingConfirmation(
+    //      email,
+    //      booking,
+    //      outboundBusTrip,
+    //      returnBusTrip,
+    //      passengerRecords,
+    //    );
+    //  }
 
    // await new Promise(resolve => setTimeout(resolve, 60000)); // 60 secs delay
 
     // 7. Send an internal notification to the company (optional but recommended)
-    // if (process.env.BOOKING_EMAIL) {
-    //   await EmailService.sendCompanyNotification(
-    //     process.env.BOOKING_EMAIL,
-    //     booking,
-    //     outboundBusTrip,
-    //     returnBusTrip,
-    //     passengerRecords,
-    //   );
-    // }
+     if (process.env.BOOKING_EMAIL) {
+       await EmailService.sendCompanyNotification(
+         process.env.BOOKING_EMAIL,
+         booking,
+         outboundBusTrip,
+         returnBusTrip,
+         passengerRecords,
+       );
+     }
 
     return res.status(201).json({
       success: true,

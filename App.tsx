@@ -18,6 +18,9 @@ import PassengerDetailsAndSeatSelectionScreen from './screens/PassengerDetailsAn
 import PaymentScreen from './screens/PaymentScreen';
 import BookingConfirmationScreen from './screens/BookingConfirmationScreen';
 
+// Import your custom AuthProvider
+import { AuthProvider } from './hooks/useAuth';
+
 // Create navigators
 //const Stack = createStackNavigator<RootStackParamList>();
 const Stack = createNativeStackNavigator();
@@ -65,6 +68,7 @@ function DashboardDrawer() {
 
 export default function App() {
   return (
+    <AuthProvider>
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
@@ -92,5 +96,6 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
+    </AuthProvider>
   );
 }

@@ -1,4 +1,4 @@
-const { body, query } = require('express-validator');
+const { body } = require('express-validator');
 
 const registerValidators = [
   // Name validation
@@ -123,7 +123,7 @@ const resetPasswordValidators = [
     .trim()
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 8 })
+    .isLength({ min: 6 })
     .withMessage('Password must be at least 8 characters'),
 ];
 

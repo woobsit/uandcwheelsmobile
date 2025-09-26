@@ -24,7 +24,6 @@ export interface AuthResponse {
 export interface LoginCredentials {
   email: string;
   password: string;
-  remember_token: boolean;
 }
 
 export interface RegisterData {

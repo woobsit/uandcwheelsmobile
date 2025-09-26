@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Image,
   ActivityIndicator,
+  ScrollView,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,10 +18,10 @@ import Feather from 'react-native-vector-icons/Feather';
 import useRefreshControl from '../../hooks/useRefreshControl';
 import { matchEmail } from '../../utils/pregmatch';
 import { AuthService } from '../../requests';
-import { showApiErrorAlert } from '../../utils/apiHelpers';
 import { RegisterScreenProps } from '../../types/screenprops';
+import CustomAlertModal from '../../components/organisms/CustomAlertModal'; // <-- ADDED
 
-export default function RegisterScreen({ navigation } : RegisterScreenProps) {
+export default function RegisterScreen({ navigation }: RegisterScreenProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,6 +38,15 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // New state variables for the custom alert modal
+  const [isModalVisible, setIsModalVisible] = useState(false); // <-- ADDED
+  const [modalProps, setModalProps] = useState({ // <-- ADDED
+    title: '',
+    message: '',
+    icon: 'info',
+  });
+  const [alertNavigation, setAlertNavigation] = useState<(() => void) | null>(null); // <-- ADDED
 
   // Function to reset the form
   const resetForm = () => {
@@ -59,16 +68,27 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
   const { refreshing, onRefresh } = useRefreshControl({
     refreshAction: async () => {
       resetForm();
-      //Alert.alert('Form Reset', 'The form has been reset');
-
-      // Scroll to top after refresh
       if (scrollViewRef.current) {
         scrollViewRef.current.scrollTo({ y: 0, animated: true });
       }
     },
-    //onRefreshStart: () => console.log('Refresh started'),
-    //onRefreshEnd: () => console.log('Refresh completed'),
   });
+
+  // Function to show the custom alert
+  const showAlert = (title: string, message: string, icon: 'success' | 'error' | 'info' = 'info', navAction: (() => void) | null = null) => { // <-- ADDED
+    setModalProps({ title, message, icon });
+    setIsModalVisible(true);
+    setAlertNavigation(() => navAction);
+  };
+  
+  // Function to hide the custom alert and execute a navigation action
+  const handleModalPress = () => { // <-- ADDED
+    setIsModalVisible(false);
+    if (alertNavigation) {
+      alertNavigation();
+    }
+    setAlertNavigation(null);
+  };
 
   const validateForm = () => {
     let valid = true;
@@ -79,7 +99,6 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
       confirmPassword: '',
     };
 
-    // Validate full name
     if (!formData.name.trim()) {
       newErrors.name = 'Full name is required';
       valid = false;
@@ -88,7 +107,6 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
       valid = false;
     }
 
-    // Validate email
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
       valid = false;
@@ -97,7 +115,6 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
       valid = false;
     }
 
-    // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
       valid = false;
@@ -106,7 +123,6 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
       valid = false;
     }
 
-    // Validate confirm password
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
       valid = false;
@@ -119,40 +135,50 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
     return valid;
   };
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     if (!validateForm()) return;
     try {
-      setIsLoading(true);
+        setIsLoading(true);
 
-      // Call registration service
-      const response = await AuthService.register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-      });
+        const response = await AuthService.register({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+        });
 
-      if (response.status === 201) {
-        navigation.navigate('EmailVerification', { email: formData.email });
-      }
+        // Deconstruct the response data to get the message and status
+        const { status, message } = response.data;
 
-      if (response.status === 409) {
-        setErrors(prev => ({
-          ...prev,
-          email: 'Email is already registered',
-        }));
-      }
+        // Use the API response message as the single source of truth
+        if (status === 201) {
+            showAlert(
+                'Success',
+                message, // <-- Use the API message directly
+                'success',
+                () => navigation.navigate('EmailVerification', { email: formData.email })
+            );
+        } else if (status === 409) {
+            setErrors(prev => ({
+                ...prev,
+                email: message, // <-- Use the API message directly for the email error
+            }));
+            showAlert('Error', message, 'error'); // <-- Use the API message for the alert
+        } else {
+            // This is a generic handler for any other unexpected status codes
+            showAlert('Error', message || 'An unexpected error occurred.', 'error');
+        }
     } catch (error: any) {
-      showApiErrorAlert(error, 'Failed to create account');
+        // This handles network errors or unhandled exceptions.
+        // It's a good practice to still use the error object for these cases.
+        showAlert('Error', error.message || 'Failed to create account. Please check your network and try again.', 'error');
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-
-    // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -193,7 +219,7 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 
             <Text style={styles.title}>Create Account</Text>
 
-            {/* Full Name Input */}
+            {/* Form Inputs */}
             <View style={styles.inputWrapper}>
               <Feather name="user" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
@@ -202,13 +228,13 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
                 placeholderTextColor="#888"
                 value={formData.name}
                 onChangeText={text => handleInputChange('name', text)}
+                editable={!isLoading}
               />
             </View>
             <View style={styles.errorTextContainer}>
               {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
             </View>
 
-            {/* Email Input */}
             <View style={styles.inputWrapper}>
               <Feather name="mail" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
@@ -219,13 +245,13 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
                 autoCapitalize="none"
                 value={formData.email}
                 onChangeText={text => handleInputChange('email', text)}
+                editable={!isLoading}
               />
             </View>
             <View style={styles.errorTextContainer}>
               {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
             </View>
 
-            {/* Password Input */}
             <View style={styles.inputWrapper}>
               <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
@@ -236,13 +262,13 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
                 autoCapitalize="none"
                 value={formData.password}
                 onChangeText={text => handleInputChange('password', text)}
+                editable={!isLoading}
               />
             </View>
             <View style={styles.errorTextContainer}>
               {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
             </View>
 
-            {/* Confirm Password Input */}
             <View style={styles.inputWrapper}>
               <Feather name="lock" size={20} color="#007AFF" style={styles.icon} />
               <TextInput
@@ -253,6 +279,7 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
                 autoCapitalize="none"
                 value={formData.confirmPassword}
                 onChangeText={text => handleInputChange('confirmPassword', text)}
+                editable={!isLoading}
               />
             </View>
             <View style={styles.errorTextContainer}>
@@ -285,6 +312,15 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {/* Custom Alert Modal */}
+      <CustomAlertModal // <-- ADDED
+        isVisible={isModalVisible}
+        title={modalProps.title}
+        message={modalProps.message}
+        onPress={handleModalPress}
+        icon={modalProps.icon as 'success' | 'error' | 'info'}
+      />
     </SafeAreaView>
   );
 }
@@ -292,18 +328,18 @@ export default function RegisterScreen({ navigation } : RegisterScreenProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0A2540', // Deep blue background
+    backgroundColor: '#0A2540',
   },
   container: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center', // Center content vertically
+    justifyContent: 'center',
     paddingVertical: 40,
   },
   card: {
-    backgroundColor: '#FFFFFF', // White card background
+    backgroundColor: '#FFFFFF',
     borderRadius: 15,
     padding: 30,
     marginHorizontal: 20,
@@ -326,10 +362,10 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F2F5', // Light gray background for inputs
+    backgroundColor: '#F0F2F5',
     borderRadius: 8,
     paddingHorizontal: 15,
-    height: 55, // Taller inputs
+    height: 55,
   },
   icon: {
     marginRight: 10,
@@ -361,7 +397,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     paddingBottom: 30,
-    backgroundColor: 'transparent', // Transparent footer background
+    backgroundColor: 'transparent',
   },
   loginPrompt: {
     fontSize: 16,

@@ -1,5 +1,4 @@
-// src/screens/auth/ForgotPasswordScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +8,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView, // <-- ADDED
+  RefreshControl, // <-- ADDED
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
@@ -17,7 +18,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/screenprops';
 import { matchEmail } from '../../utils/pregmatch';
-import CustomAlertModal from '../../components/organisms/CustomAlertModal'; // Import your custom modal
+import CustomAlertModal from '../../components/organisms/CustomAlertModal';
+import useRefreshControl from '../../hooks/useRefreshControl'; // <-- ADDED
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -32,9 +34,26 @@ export default function ForgotPasswordScreen() {
     message: '',
     icon: 'info',
   });
-  
+
   // New state to handle the post-alert navigation
-const [alertNavigation, setAlertNavigation] = useState<(() => void) | null>(null);
+  const [alertNavigation, setAlertNavigation] = useState<(() => void) | null>(null);
+  
+  // Create a ref for the ScrollView
+  const scrollViewRef = useRef<ScrollView>(null); // <-- ADDED
+
+  // Function to reset the form
+  const resetForm = () => { // <-- ADDED
+    setEmail('');
+    setError('');
+  };
+
+  // Create refresh control logic
+  const { refreshing, onRefresh } = useRefreshControl({ // <-- ADDED
+    refreshAction: () => {
+      resetForm();
+    },
+  });
+
   const validateForm = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -47,13 +66,14 @@ const [alertNavigation, setAlertNavigation] = useState<(() => void) | null>(null
     setError('');
     return true;
   };
-  
+
   // Function to show the custom alert
-const showAlert = (title: string, message: string, icon: 'success' | 'error' | 'info' = 'info', navAction: (() => void) | null = null) => {
-  setModalProps({ title, message, icon });
-  setIsModalVisible(true);
-  setAlertNavigation(() => navAction);
-};
+  const showAlert = (title: string, message: string, icon: 'success' | 'error' | 'info' = 'info', navAction: (() => void) | null = null) => {
+    setModalProps({ title, message, icon });
+    setIsModalVisible(true);
+    setAlertNavigation(() => navAction);
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
@@ -61,31 +81,33 @@ const showAlert = (title: string, message: string, icon: 'success' | 'error' | '
 
     try {
       setIsLoading(true);
-      await AuthService.forgotPassword(email);
+    const response = await AuthService.forgotPassword(email);
+    const { status, message } = response.data;
 
-      // Use your custom alert for success messages
-      showAlert(
+        if (status === 200) {
+           showAlert(
         'Code Sent',
-        'A password reset code has been sent to your email.',
+        message,
         'success',
         () => navigation.navigate('ResetPassword', { email })
       );
 
+        }
+     
     } catch (error: any) {
-      // Use your custom alert for error messages
       showAlert('Error', error.message || 'Failed to send reset code', 'error');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Function to hide the custom alert and execute navigation
   const handleModalPress = () => {
     setIsModalVisible(false);
     if (alertNavigation) {
       alertNavigation();
     }
-    setAlertNavigation(null); // Clear the stored action
+    setAlertNavigation(null);
   };
 
   return (
@@ -94,51 +116,69 @@ const showAlert = (title: string, message: string, icon: 'success' | 'error' | '
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <View style={styles.card}>
-          <Text style={styles.title}>Forgot Password?</Text>
-          <Text style={styles.subtitle}>Enter your email to receive a reset code.</Text>
-
-          <View style={styles.inputWrapper}>
-            <Feather name="mail" size={20} color="#007AFF" style={styles.icon} />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Email address"
-              placeholderTextColor="#888"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                setError('');
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              editable={!isLoading}
+        <ScrollView // <-- ADDED
+          ref={scrollViewRef} // <-- ADDED
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl // <-- ADDED
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#007AFF"
+              title="Refreshing..."
+              titleColor="#007AFF"
+              colors={['#007AFF']}
+              progressBackgroundColor="#ffffff"
             />
+          }
+        >
+          <View style={styles.card}>
+            <Text style={styles.title}>Forgot Password?</Text>
+            <Text style={styles.subtitle}>Enter your email to receive a reset code.</Text>
+            
+            <View style={styles.inputWrapper}>
+              <Feather name="mail" size={20} color="#007AFF" style={styles.icon} />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Email address"
+                placeholderTextColor="#888"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setError('');
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!isLoading}
+              />
+            </View>
+
+            <View style={styles.errorTextContainer}>
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Send Reset Code</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              disabled={isLoading}
+            >
+              <Text style={styles.backText}>Back to Login</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.errorTextContainer}>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.disabledButton]}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Send Reset Code</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            disabled={isLoading}
-          >
-            <Text style={styles.backText}>Back to Login</Text>
-          </TouchableOpacity>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Render the CustomAlertModal here */}
@@ -160,8 +200,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   card: {
     backgroundColor: '#FFFFFF',

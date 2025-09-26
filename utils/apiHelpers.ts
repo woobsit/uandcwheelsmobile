@@ -30,7 +30,7 @@ export const getAuthToken = async (): Promise<string | null> => {
   try {
     return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
   } catch (error) {
-    console.error('Failed to get auth token', error);
+    console.error('Failed to get stored auth token', error);
     return null;
   }
 };
@@ -40,7 +40,7 @@ export const getRefreshToken = async (): Promise<string | null> => {
   try {
     return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
   } catch (error) {
-    console.error('Failed to get refresh token', error);
+    console.error('Failed to get stored refresh token', error);
     return null;
   }
 };

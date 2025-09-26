@@ -18,9 +18,10 @@ const register = async (req, res) => {
 
     const existingUser = await db.User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(409).json({
+      return res.json({
+        status:409,
         success: false,
-        message: 'Email already registered',
+        message: 'This email is already registered.',
       });
     }
 
@@ -29,12 +30,11 @@ const register = async (req, res) => {
     // Change to 15 minutes (15 * 60 * 1000)
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
 
-    const user = await db.User.create({
+    await db.User.create({
       name,
       email: email.toLowerCase(),
       password,
       email_verified_at: null,
-      //verification_token: verificationToken,
       verification_code: verificationCode,
       verification_token_expires: verificationExpires,
     });
@@ -42,18 +42,19 @@ const register = async (req, res) => {
     await EmailService.sendVerificationEmail(
       email,
       name,
-      //verificationToken,
       verificationCode,
       verificationExpires,
     );
 
-    return res.status(201).json({
+    return res.json({
+      status:201,
       success: true,
       message: 'Registration successful. Please check your email to verify your account.',
     });
   } catch (error) {
     logger.error('Registration failed', error);
-    return res.status(500).json({
+    return res.json({
+      status:500,
       success: false,
       message: 'Internal server error during registration',
     });
@@ -62,32 +63,34 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password, remember_token = false } = req.body;
+    const { email, password} = req.body;
     const user = await db.User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(401).json({
+      return res.json({
+        status: 401,
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid email or password',
       });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
+      return res.json({
+        status: 401,
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid email or password',
       });
     }
 
     if (!user.email_verified_at) {
-      return res.status(403).json({
+      return res.json({
+        status: 403,
         success: false,
         message: 'Email not verified. Please check your inbox.',
       });
     }
 
-    const tokenExpiration = remember_token ? '30d' : '1d';
     // Generate tokens
     const payload = { id: user.id, email: user.email };
     const accessToken = generateToken(payload, 'access');
@@ -102,7 +105,8 @@ const login = async (req, res) => {
 
     const { password: _, ...userData } = user.get({ plain: true });
 
-    return res.status(200).json({
+    return res.json({
+      status: 200,
       success: true,
       message: 'Login successful',
       data: {
@@ -116,7 +120,8 @@ const login = async (req, res) => {
       email: req.body.email,
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    return res.status(500).json({
+    return res.json({
+      status: 500,
       success: false,
       message: 'Internal server error during login',
     });
@@ -185,7 +190,8 @@ const verifyEmail = async (req, res) => {
     const numericCode = parseInt(code, 10); // Convert to number
 
     if (!email || !code) {
-      return res.status(400).json({
+      return res.json({
+        status: 400,
         success: false,
         message: 'Email and verification code are required',
       });
@@ -200,7 +206,8 @@ const verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({
+      return res.json({
+        status:404,
         success: false,
         message: 'Invalid email or verification code',
       });
@@ -212,18 +219,16 @@ const verifyEmail = async (req, res) => {
       verification_token_expires: null,
     });
 
-    return res.status(200).json({
+    return res.json({
+      status:200,
       success: true,
       message: 'Email verified successfully.',
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
+
     });
   } catch (error) {
     logger.error('Email verification failed', error);
-    return res.status(500).json({
+    return res.json({
+      status:500,
       success: false,
       message: 'Internal server error during email verification',
     });
@@ -239,14 +244,16 @@ const resendVerification = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(200).json({
+      return res.json({
+        status:200,
         success: true,
         message: 'If the email is registered, a new verification will be sent',
       });
     }
 
     if (user.email_verified_at) {
-      return res.status(400).json({
+      return res.json({
+        status:400,
         success: false,
         message: 'Email is already verified',
       });
@@ -270,13 +277,15 @@ const resendVerification = async (req, res) => {
       verificationExpires,
     );
 
-    return res.status(200).json({
+    return res.json({
+      status:200,
       success: true,
       message: 'New verification email sent',
     });
   } catch (error) {
     logger.error('Resend verification failed', error);
-    return res.status(500).json({
+    return res.json({
+      status:500,
       success: false,
       message: 'Failed to resend verification',
     });
@@ -290,7 +299,8 @@ const forgotPassword = async (req, res) => {
 
     if (!user) {
       // Security: Don't reveal if email exists
-      return res.status(200).json({
+      return res.json({
+        status:200,
         success: true,
         message: 'Password reset link sent to your email',
       });
@@ -310,57 +320,26 @@ const forgotPassword = async (req, res) => {
 
     await EmailService.sendPasswordResetEmail(user.email, user.name, code, expiresAt);
 
-    return res.status(200).json({
+    return res.json({
+      status:200,
       success: true,
-      message: 'Password reset code sent to your email',
+      message: 'A password reset code has been sent to your email.',
     });
   } catch (error) {
     logger.error('Forgot password failed', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    return res.status(500).json({
+    return res.json({
+      status:500,
       success: false,
       message: 'Failed to process password reset request',
     });
   }
 };
 
-// const verifyResetCode = async (req, res) => {
-//   try {
-//     const { email, code } = req.body;
-
-//     const tokenRecord = await PasswordResetToken.findOne({
-//       where: {
-//         email,
-//         code,
-//         expires_at: { [Op.gt]: new Date() }
-//       }
-//     });
-
-//     if (!tokenRecord) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Invalid or expired reset code',
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       message: 'Reset code verified successfully',
-//     });
-//   } catch (error) {
-//     logger.error('Reset code verification failed', error);
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Failed to verify reset code',
-//     });
-//   }
-// };
-
 const resetPassword = async (req, res) => {
   try {
     const { email, code, password } = req.body;
-
     // Find token record
     const tokenRecord = await PasswordResetToken.findOne({
       where: {
@@ -371,7 +350,8 @@ const resetPassword = async (req, res) => {
     });
 
     if (!tokenRecord) {
-      return res.status(400).json({
+      return res.json({
+        status:400,
         success: false,
         message: 'Invalid or expired reset code',
       });
@@ -383,23 +363,24 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({
+      return res.json({
+         status:400,
         success: false,
         message: 'User not found',
       });
-      return;
+      
     }
 
     // Update password
-    const hashedPassword = await bcrypt.hash(password, 12);
-    await user.update({ password: hashedPassword });
+    await user.update({ password: password });
 
     // Delete the used token
     await PasswordResetToken.destroy({
       where: { email },
     });
 
-    return res.status(200).json({
+    return res.json({
+       status:200,
       success: true,
       message: 'Password updated successfully',
     });
@@ -407,7 +388,8 @@ const resetPassword = async (req, res) => {
     logger.error('Password reset failed', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    return res.status(500).json({
+    return res.json({
+      status:500,
       success: false,
       message: 'Failed to reset password',
     });
