@@ -20,9 +20,6 @@ const { settingRouter } = require('./routes/setting.routes');
 const app = express();
 const server = createServer(app);
 
-// Add body parsers early, before routes that might need them
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use(globalRateLimiter);
 app.use(securityMiddlewares);
