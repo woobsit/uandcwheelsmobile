@@ -292,13 +292,13 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[styles.guestButton, isLoading && styles.disabledButton]}
               onPress={() => navigation.navigate('BookTransport')}
               disabled={isLoading}
             >
               <Text style={styles.guestButtonText}>Continue as Guest</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           <View style={styles.footer}>

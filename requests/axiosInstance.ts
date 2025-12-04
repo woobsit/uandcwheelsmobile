@@ -1,14 +1,16 @@
 import axios from 'axios';
 import { attachAuthToken, refreshAuthToken, clearTokens } from '../utils/apiHelpers';
+import { setupCookieJar } from '../utils/cookie-api-setup'; // <--- IMPORT HERE
 
 const api = axios.create({
-  baseURL: 'http://192.168.0.113:5000/api/v1',
+  baseURL: 'http://192.168.0.139:5000/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+setupCookieJar(api);
 // Request interceptor
 api.interceptors.request.use(attachAuthToken);
 

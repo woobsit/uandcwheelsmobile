@@ -122,8 +122,7 @@ export default function VerificationScreen() {
                 );
 
             }else {
-                // Handle non-success response data
-                const message = response.data.message || 'Verification failed. Please check your code.';
+               
                 showAlert('Verification Failed', message, 'error');
             }
         } catch (error: any) {

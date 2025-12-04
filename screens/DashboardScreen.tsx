@@ -90,7 +90,7 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {/* Recent Trips Card */}
+          {/* Recent Trips Card 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Recent Trips</Text>
             {recentShipments.map(shipment => (
@@ -118,7 +118,7 @@ export default function DashboardScreen() {
             ))}
           </View>
 
-          {/* Statistics Card */}
+          {/* Statistics Card 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Monthly Summary</Text>
             <View style={styles.statsRow}>
@@ -135,7 +135,7 @@ export default function DashboardScreen() {
                 <Text style={styles.statLabel}>Delivered</Text>
               </View>
             </View>
-          </View>
+          </View>*/}
         </View>
       </ScrollView>
     </SafeAreaView>

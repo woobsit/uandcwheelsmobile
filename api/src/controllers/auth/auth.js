@@ -19,7 +19,7 @@ const register = async (req, res) => {
     const existingUser = await db.User.findOne({ where: { email } });
     if (existingUser) {
       return res.json({
-        status:409,
+        status: 409,
         success: false,
         message: 'This email is already registered.',
       });
@@ -39,22 +39,17 @@ const register = async (req, res) => {
       verification_token_expires: verificationExpires,
     });
 
-    await EmailService.sendVerificationEmail(
-      email,
-      name,
-      verificationCode,
-      verificationExpires,
-    );
+    await EmailService.sendVerificationEmail(email, name, verificationCode, verificationExpires);
 
     return res.json({
-      status:201,
+      status: 201,
       success: true,
       message: 'Registration successful. Please check your email to verify your account.',
     });
   } catch (error) {
     logger.error('Registration failed', error);
     return res.json({
-      status:500,
+      status: 500,
       success: false,
       message: 'Internal server error during registration',
     });
@@ -63,7 +58,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password} = req.body;
+    const { email, password } = req.body;
     const user = await db.User.findOne({ where: { email } });
 
     if (!user) {
@@ -97,13 +92,22 @@ const login = async (req, res) => {
     const refreshToken = generateToken(payload, 'refresh');
 
     // Store refresh token in DB
-    await db.RefreshToken.create({
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    });
+    // await db.RefreshToken.create({
+    //   token: refreshToken,
+    //   userId: user.id,
+    //   expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    // });
 
     const { password: _, ...userData } = user.get({ plain: true });
+    // Calculate expiration time in milliseconds (7 days)
+    const maxAge = 7 * 24 * 60 * 60 * 1000;
+    // 2. Set the Refresh Token as an HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // Crucial: Prevents client-side JS access
+      secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+      sameSite: 'strict', // Recommended for security
+      maxAge: maxAge, // Expiration time
+    });
 
     return res.json({
       status: 200,
@@ -111,7 +115,7 @@ const login = async (req, res) => {
       message: 'Login successful',
       data: {
         accessToken,
-        refreshToken, // Send to client
+        //refreshToken, // Send to client
         user: userData,
       },
     });
@@ -207,7 +211,7 @@ const verifyEmail = async (req, res) => {
 
     if (!user) {
       return res.json({
-        status:404,
+        status: 404,
         success: false,
         message: 'Invalid email or verification code',
       });
@@ -220,15 +224,14 @@ const verifyEmail = async (req, res) => {
     });
 
     return res.json({
-      status:200,
+      status: 200,
       success: true,
       message: 'Email verified successfully.',
-
     });
   } catch (error) {
     logger.error('Email verification failed', error);
     return res.json({
-      status:500,
+      status: 500,
       success: false,
       message: 'Internal server error during email verification',
     });
@@ -245,7 +248,7 @@ const resendVerification = async (req, res) => {
 
     if (!user) {
       return res.json({
-        status:200,
+        status: 200,
         success: true,
         message: 'If the email is registered, a new verification will be sent',
       });
@@ -253,7 +256,7 @@ const resendVerification = async (req, res) => {
 
     if (user.email_verified_at) {
       return res.json({
-        status:400,
+        status: 400,
         success: false,
         message: 'Email is already verified',
       });
@@ -278,14 +281,14 @@ const resendVerification = async (req, res) => {
     );
 
     return res.json({
-      status:200,
+      status: 200,
       success: true,
       message: 'New verification email sent',
     });
   } catch (error) {
     logger.error('Resend verification failed', error);
     return res.json({
-      status:500,
+      status: 500,
       success: false,
       message: 'Failed to resend verification',
     });
@@ -300,7 +303,7 @@ const forgotPassword = async (req, res) => {
     if (!user) {
       // Security: Don't reveal if email exists
       return res.json({
-        status:200,
+        status: 200,
         success: true,
         message: 'Password reset link sent to your email',
       });
@@ -321,7 +324,7 @@ const forgotPassword = async (req, res) => {
     await EmailService.sendPasswordResetEmail(user.email, user.name, code, expiresAt);
 
     return res.json({
-      status:200,
+      status: 200,
       success: true,
       message: 'A password reset code has been sent to your email.',
     });
@@ -330,7 +333,7 @@ const forgotPassword = async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
     return res.json({
-      status:500,
+      status: 500,
       success: false,
       message: 'Failed to process password reset request',
     });
@@ -351,7 +354,7 @@ const resetPassword = async (req, res) => {
 
     if (!tokenRecord) {
       return res.json({
-        status:400,
+        status: 400,
         success: false,
         message: 'Invalid or expired reset code',
       });
@@ -364,11 +367,10 @@ const resetPassword = async (req, res) => {
 
     if (!user) {
       return res.json({
-         status:400,
+        status: 400,
         success: false,
         message: 'User not found',
       });
-      
     }
 
     // Update password
@@ -380,7 +382,7 @@ const resetPassword = async (req, res) => {
     });
 
     return res.json({
-       status:200,
+      status: 200,
       success: true,
       message: 'Password updated successfully',
     });
@@ -389,7 +391,7 @@ const resetPassword = async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
     return res.json({
-      status:500,
+      status: 500,
       success: false,
       message: 'Failed to reset password',
     });
@@ -405,28 +407,31 @@ const logout = async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       await transaction.rollback();
-      return res.status(401).json({ error: 'Invalid authorization header' });
+      return res.json({ status: 401, error: 'Invalid authorization header' });
     }
 
     const accessToken = authHeader.split(' ')[1];
     if (!accessToken) {
       await transaction.rollback();
-      return res.status(401).json({ error: 'Malformed token' });
+      return res.json({ status: 401, error: 'Malformed token' });
     }
 
     // 2. Validate user payload
     if (!req.user || !req.user.id || !req.user.exp) {
       await transaction.rollback();
-      return res.status(401).json({ error: 'Invalid user session' });
+      return res.json({ status: 401, error: 'Invalid user session' });
     }
 
     const expiresAt = new Date(req.user.exp * 1000);
 
     // 3. Get refresh token from request
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
+
+    console.log(refreshToken);
     if (!refreshToken) {
+      console.log(req.user);
       await transaction.rollback();
-      return res.status(400).json({ error: 'Refresh token required' });
+      return res.json({ status: 400, error: 'Refresh token required' });
     }
 
     // 4. Perform all revocations in transaction
@@ -455,8 +460,16 @@ const logout = async (req, res) => {
     // 5. Commit transaction
     await transaction.commit();
 
+    res.cookie('refreshToken', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 0,
+    });
+
     // 6. Client-side cleanup instructions
-    return res.status(200).set('Clear-Site-Data', '"cookies", "storage"').json({
+    return res.set('Clear-Site-Data', '"cookies", "storage"').json({
+      status: 200,
       success: true,
       message: 'Logged out successfully',
     });
@@ -468,7 +481,8 @@ const logout = async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
 
-    return res.status(500).json({
+    return res.json({
+      status: 500,
       error: 'Logout failed',
     });
   }

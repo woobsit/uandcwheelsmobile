@@ -50,10 +50,17 @@ const jwtStrategy = new Strategy(options, async (req, payload, done) => {
       });
     }
 
-    // 3. Attach user to request
-    req.user = user;
+const userWithClaims = {
+  ...user,    // Includes id, name, email, etc.
+  ...payload, // Includes id and email from token (no change here)
+  exp: payload.exp, // Explicitly grab 'exp' from the token payload
+  iat: payload.iat  // Explicitly grab 'iat' from the token payload
+};
 
-    return done(null, user);
+    // 3. Attach user to request
+    req.user = userWithClaims;
+
+    return done(null, userWithClaims);
   } catch (error) {
     // Handle specific JWT errors
     if (error.name === 'TokenExpiredError') {

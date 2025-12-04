@@ -1,6 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 const securityMiddlewares = [
   cors({
@@ -10,8 +11,9 @@ const securityMiddlewares = [
     credentials: true,
   }),
   helmet(),
-  express.json(),
-  express.urlencoded({ extended: true }),
+  express().use(express.json()),
+  express().use(express.urlencoded({ extended: true })),
+  express().use(cookieParser())
 ];
 
 module.exports = { securityMiddlewares };

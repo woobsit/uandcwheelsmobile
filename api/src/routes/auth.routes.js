@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const passport = require('../middlewares/auth/passport'); // Import Passport
 const {
   registerValidators,
   loginValidators,
@@ -48,7 +49,7 @@ router.post(
   resetPassword,
 );
 
-router.post('/logout', logout);
+router.post('/logout', passport.authenticate('jwt', { session: false }), logout);
 
 const authRouter = router;
 module.exports = { authRouter };
