@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Image, ActivityIndicator } from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
+import { AuthService } from '../../requests';
+import CustomAlertModal from '../../components/organisms/CustomAlertModal'; // <-- ADDED
 
 export default function CustomDrawerContent({ navigation }: any) {
   const [deliveryExpanded, setDeliveryExpanded] = useState(false);
   const [transportExpanded, setTransportExpanded] = useState(false);
   const rotateAnim = useState(new Animated.Value(0))[0];
+  const [isLoading, setIsLoading] = useState(false);
+
+// New state variables for the custom alert modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalProps, setModalProps] = useState({
+    title: '',
+    message: '',
+    icon: 'info',
+  });
+  
+  // New state to handle the post-alert navigation, if needed
+  const [alertNavigation, setAlertNavigation] = useState<(() => void) | null>(null);
+
 
   const toggleDelivery = () => {
     Animated.timing(rotateAnim, {
@@ -18,6 +33,22 @@ export default function CustomDrawerContent({ navigation }: any) {
     }).start();
     setDeliveryExpanded(!deliveryExpanded);
   };
+
+  // Function to show the custom alert
+  const showAlert = (title: string, message: string, icon: 'success' | 'error' | 'info' = 'info', navAction: (() => void) | null = null) => {
+    setModalProps({ title, message, icon });
+    setIsModalVisible(true);
+    setAlertNavigation(() => navAction);
+  };
+  
+    const handleModalPress = () => {
+    setIsModalVisible(false);
+    if (alertNavigation) {
+      alertNavigation();
+    }
+    setAlertNavigation(null);
+  };
+
 
   const toggleTransport = () => {
     Animated.timing(rotateAnim, {
@@ -33,6 +64,44 @@ export default function CustomDrawerContent({ navigation }: any) {
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
   });
+
+  const handleLogout = async () => {
+   
+ try {
+  setIsLoading(true);
+
+  const response = await AuthService.logout();
+
+  const { status, message } = response.data;
+
+  // Handle a successful login (HTTP status 200)
+  if (status === 200) {
+    navigation.navigate('Login');
+  } 
+  
+  // Handle specific error codes
+  else if (status === 401) {
+    showAlert('Error', message, 'error');
+  } 
+  else if (status === 401) {
+    showAlert('Error', message, 'error');
+  } 
+  
+  // other cases
+  else {
+    showAlert(
+      'Error', 
+      'Please verify your email before logging in.', 
+      'error',
+    );
+  }
+} catch (error) {
+  // It's a good practice to handle network or other unhandled errors here.
+  showAlert('Error', 'An unexpected error occurred. Please try again later.', 'error');
+} finally {
+  setIsLoading(false);
+}
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -158,18 +227,21 @@ export default function CustomDrawerContent({ navigation }: any) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={() => {
-            navigation.dispatch(DrawerActions.closeDrawer());
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Welcome' }],
-            });
-          }}
+          onPress={handleLogout}
         >
-          <MaterialIcons name="logout" size={20} color="#fff" />
-          <Text style={styles.logoutText}>Log Out</Text>
+          {isLoading ? (
+                         <ActivityIndicator color="#fff" />
+                       ) : ( <><MaterialIcons name="logout" size={20} color="#fff" />
+          <Text style={styles.logoutText}>Log Out</Text></>)}
         </TouchableOpacity>
       </View>
+      <CustomAlertModal
+        isVisible={isModalVisible}
+        title={modalProps.title}
+        message={modalProps.message}
+        onPress={handleModalPress}
+        icon={modalProps.icon as 'success' | 'error' | 'info'}
+      />
     </View>
   );
 }

@@ -19,8 +19,8 @@ export const AuthService = {
     return await api.post('/auth/logout');
   },
 
-  refreshToken: async (refreshToken: string) => {
-    return await api.post('/auth/refresh-token', { refreshToken });
+  refreshToken: async () => {
+    return await api.post('/auth/refresh-token');
   },
 
   verifyEmail: async (code: string, email: string) => {

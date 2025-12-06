@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, cookie } = require('express-validator');
 
 const registerValidators = [
   // Name validation
@@ -137,6 +137,22 @@ const resendVerificationValidators = [
     .normalizeEmail(),
 ];
 
+const refreshTokenValidators = [
+  // 1. Check if the 'refreshToken' cookie exists
+  cookie('refreshToken')
+    .notEmpty()
+    .withMessage('Refresh Token is required in cookies'),
+
+  // 2. Add an optional length check (assuming your JWTs have a minimum expected length)
+  // Note: JWTs are typically long, so a simple length check is sometimes sufficient, 
+  // but the server-side JWT verification (jwt.verify) is what validates the signature.
+  // This step primarily ensures the field isn't empty.
+  cookie('refreshToken')
+    .isString()
+    .withMessage('Refresh Token must be a string')
+    
+];
+
 module.exports = {
   registerValidators,
   loginValidators,
@@ -145,4 +161,5 @@ module.exports = {
   resetPasswordValidators,
   verifyEmailValidators,
   resendVerificationValidators,
+  refreshTokenValidators
 };

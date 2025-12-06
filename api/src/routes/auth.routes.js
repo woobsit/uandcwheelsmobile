@@ -8,6 +8,7 @@ const {
   //verifyResetCodeValidators,
   resetPasswordValidators,
   resendVerificationValidators,
+  refreshTokenValidators
 } = require('../middlewares/validators/auth.validators');
 const { validateRequest } = require('../middlewares/validate-request');
 const {
@@ -19,6 +20,7 @@ const {
   //verifyResetCode,
   resetPassword,
   logout,
+  refreshToken,
 } = require('../controllers/auth/auth');
 const { authLimiter } = require('./../middlewares/rateLimiter');
 
@@ -47,6 +49,13 @@ router.post(
   resetPasswordValidators,
   validateRequest,
   resetPassword,
+);
+
+router.post(
+  '/refresh-token',
+  refreshTokenValidators,
+  validateRequest,
+  refreshToken,
 );
 
 router.post('/logout', passport.authenticate('jwt', { session: false }), logout);

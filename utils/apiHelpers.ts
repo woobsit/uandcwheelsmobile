@@ -2,7 +2,9 @@
 import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { ApiResponse } from '../types/api';
-import axios from 'axios';
+//import axios from 'axios';
+import AuthService from '../requests/authService';
+
 
 // Secure storage keys
 const ACCESS_TOKEN_KEY = 'auth_access_token';
@@ -64,24 +66,24 @@ export const attachAuthToken = async (config: any) => {
   return config;
 };
 
-// Refresh auth token
-export const refreshAuthToken = async () => {
-  try {
-    const refreshToken = await getRefreshToken();
-    if (!refreshToken) throw new Error('No refresh token available');
+ //Refresh auth token
+ export const refreshAuthToken = async () => {
+   try {
+     const refreshToken = await getRefreshToken();
+     if (!refreshToken) throw new Error('No refresh token available');
 
-    const response = await axios.post('/auth/refresh-token', {
-      refreshToken,
-    });
-
-    const { accessToken, refreshToken: newRefreshToken } = response.data;
-    await saveTokens(accessToken, newRefreshToken || refreshToken);
-    return accessToken;
-  } catch (error) {
-    await clearTokens();
-    throw error;
-  }
-};
+     const response = await AuthService.refreshToken();
+    if(response.status === 200){
+    const { accessToken } = response.data;
+     await saveTokens(accessToken);
+     return accessToken;
+    }
+     
+   } catch (error) {
+     await clearTokens();
+     throw error;
+   }
+ };
 
 // Save remembered email
 export const saveRememberedEmail = async (email: string) => {
@@ -114,14 +116,14 @@ export const removeRememberedEmail = async () => {
 // Update your saveTokens function to handle rememberMe
 export const saveTokens = async (
   accessToken: string,
-  refreshToken: string,
+  //refreshToken: string,
   rememberMe?: boolean,
   email?: string,
 ) => {
   try {
     // Save tokens
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+    //await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
 
     // Handle email remembering
     if (rememberMe && email) {

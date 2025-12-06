@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../../models/index');
 const EmailService = require('../../email/email.service');
 const PasswordResetToken = require('../../models/passwordResetToken.model');
-const { generateToken } = require('../../middlewares/auth/verify');
+const { generateToken, verifyToken } = require('../../middlewares/auth/verify');
 const logger = require('../../config/logger');
 const { Op } = require('sequelize');
 //const dbInstance = require('../../config/config');
@@ -92,11 +92,11 @@ const login = async (req, res) => {
     const refreshToken = generateToken(payload, 'refresh');
 
     // Store refresh token in DB
-    // await db.RefreshToken.create({
-    //   token: refreshToken,
-    //   userId: user.id,
-    //   expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    // });
+     await db.RefreshToken.create({
+       token: refreshToken,
+       userId: user.id,
+       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+     });
 
     const { password: _, ...userData } = user.get({ plain: true });
     // Calculate expiration time in milliseconds (7 days)
@@ -134,15 +134,15 @@ const login = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken; // Read the token name you set in res.cookie
 
     if (!refreshToken) {
-      return res.status(400).json({
+      return res.json({
+        status:400,
         success: false,
         message: 'Refresh token required',
       });
     }
-
     // Verify token
     const decoded = verifyToken(refreshToken, 'refresh');
 
@@ -157,7 +157,8 @@ const refreshToken = async (req, res) => {
     });
 
     if (!tokenRecord) {
-      return res.status(401).json({
+      return res.json({
+        status: 401,
         success: false,
         message: 'Invalid or expired refresh token',
       });
@@ -167,21 +168,23 @@ const refreshToken = async (req, res) => {
     const payload = { id: decoded.id, email: decoded.email };
     const newAccessToken = generateToken(payload, 'access');
 
-    return res.status(200).json({
-      success: true,
+    return res.json({
+      success: 200,
       data: {
         accessToken: newAccessToken,
       },
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
+      return res.json({
+        status:401,
         success: false,
         message: 'Invalid or expired refresh token',
       });
     }
     logger.error('Refresh token error', { error: error.message });
-    return res.status(500).json({
+    return res.json({
+      status:500,
       success: false,
       message: 'Internal server error',
     });
@@ -407,19 +410,19 @@ const logout = async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       await transaction.rollback();
-      return res.json({ status: 401, error: 'Invalid authorization header' });
+      return res.json({ status: 401, message: 'Invalid authorization header' });
     }
 
     const accessToken = authHeader.split(' ')[1];
     if (!accessToken) {
       await transaction.rollback();
-      return res.json({ status: 401, error: 'Malformed token' });
+      return res.json({ status: 401, message: 'Malformed token' });
     }
 
     // 2. Validate user payload
     if (!req.user || !req.user.id || !req.user.exp) {
       await transaction.rollback();
-      return res.json({ status: 401, error: 'Invalid user session' });
+      return res.json({ status: 401, message: 'Invalid user session' });
     }
 
     const expiresAt = new Date(req.user.exp * 1000);
@@ -427,11 +430,10 @@ const logout = async (req, res) => {
     // 3. Get refresh token from request
     const refreshToken = req.cookies.refreshToken;
 
-    console.log(refreshToken);
     if (!refreshToken) {
-      console.log(req.user);
+    
       await transaction.rollback();
-      return res.json({ status: 400, error: 'Refresh token required' });
+      return res.json({ status: 400, message: 'Refresh token required' });
     }
 
     // 4. Perform all revocations in transaction
@@ -470,7 +472,6 @@ const logout = async (req, res) => {
     // 6. Client-side cleanup instructions
     return res.set('Clear-Site-Data', '"cookies", "storage"').json({
       status: 200,
-      success: true,
       message: 'Logged out successfully',
     });
   } catch (error) {
@@ -483,7 +484,7 @@ const logout = async (req, res) => {
 
     return res.json({
       status: 500,
-      error: 'Logout failed',
+      message: 'Logout failed',
     });
   }
 };
