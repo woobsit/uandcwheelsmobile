@@ -150,11 +150,11 @@ export default function LoginScreen() {
 
   // Handle a successful login (HTTP status 200)
   if (status === 200) {
-    if (!data.accessToken || !data.refreshToken) {
+    if (!data.accessToken) {
       showAlert('Error', 'Tokens not found in response', 'error');
       return;
     }
-    await saveTokens(data.accessToken, data.refreshToken, formData.rememberMe, formData.email);
+    await saveTokens(data.accessToken, formData.rememberMe, formData.email);
     navigation.navigate('Dashboard');
   } 
   

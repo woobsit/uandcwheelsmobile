@@ -38,14 +38,14 @@ export const getAuthToken = async (): Promise<string | null> => {
 };
 
 // Get refresh token from secure storage
-export const getRefreshToken = async (): Promise<string | null> => {
-  try {
-    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-  } catch (error) {
-    console.error('Failed to get stored refresh token', error);
-    return null;
-  }
-};
+// export const getRefreshToken = async (): Promise<string | null> => {
+//   try {
+//     return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+//   } catch (error) {
+//     console.error('Failed to get stored refresh token', error);
+//     return null;
+//   }
+// };
 
 // Clear tokens from secure storage
 export const clearTokens = async (): Promise<void> => {
@@ -69,15 +69,20 @@ export const attachAuthToken = async (config: any) => {
  //Refresh auth token
  export const refreshAuthToken = async () => {
    try {
-     const refreshToken = await getRefreshToken();
-     if (!refreshToken) throw new Error('No refresh token available');
+     //const refreshToken = await getRefreshToken();
+     //if (!refreshToken) throw new Error('No refresh token available');
 
      const response = await AuthService.refreshToken();
-    if(response.status === 200){
-    const { accessToken } = response.data;
+
+     if (response.status !== 200) {
+            throw new Error(`Refresh failed with status: ${response.status}`);
+        }
+
+    const { accessToken } = response.data.data;
      await saveTokens(accessToken);
+     console.log('Refresh Token Success: New Token Received:', accessToken.substring(0, 10) + '...');
      return accessToken;
-    }
+    
      
    } catch (error) {
      await clearTokens();

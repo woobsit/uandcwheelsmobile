@@ -73,7 +73,6 @@ export default function CustomDrawerContent({ navigation }: any) {
   const response = await AuthService.logout();
 
   const { status, message } = response.data;
-
   // Handle a successful login (HTTP status 200)
   if (status === 200) {
     navigation.navigate('Login');
