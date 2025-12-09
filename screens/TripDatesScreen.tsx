@@ -30,7 +30,7 @@ export default function TripDatesScreen() {
     arrivalLocationName,
     arrivalLocationState,
   } = route.params;
-console.log(route.params);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginating, setIsPaginating] = useState(false);
   const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);

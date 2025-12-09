@@ -47,7 +47,7 @@ export default function PaymentScreen() {
       };
 
       const response = await BookingService.createBooking(finalBookingPayload);
-console.log("Response", response);
+
       if (response.success && response.data) {
         Alert.alert(
           'Booking Confirmed!',

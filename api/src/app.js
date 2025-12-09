@@ -16,6 +16,7 @@ const { tripRouter } = require('./routes/trip.routes');
 const { busTripRouter } = require('./routes/busTrip.routes');
 const { locationRouter } = require('./routes/location.routes');
 const { settingRouter } = require('./routes/setting.routes');
+const { requireAuth } = require('./middlewares/auth/authMiddleware'); // 💡 NEW
 
 const app = express();
 const server = createServer(app);
@@ -30,6 +31,7 @@ app.use(morganMiddleware);
 // It's good practice to place the routes after all general middlewares
 
 app.use('/api/v1/auth', authRouter);
+app.use(requireAuth);
 app.use('/api/v1/setting', settingRouter); // Add this line
 app.use('/api/v1/user', userRouter); // Add this line
 app.use('/api/v1/bus', busRouter);

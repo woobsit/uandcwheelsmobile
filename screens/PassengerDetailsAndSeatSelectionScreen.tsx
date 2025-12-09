@@ -28,7 +28,6 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   const route = useRoute<PassengerDetailsAndSeatSelectionScreenProps['route']>();
 
   const { busTripId: partialBusTrip } = route.params;
-console.log(route.params);
   const [busTripDetails, setBusTripDetails] = useState<BusTrip | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -316,7 +315,6 @@ console.log(route.params);
       emergency_contact_phone: emergencyContactPhone,
       passengers: passengersWithSeats,
     };
-console.log(bookingPayload);
     navigation.navigate('Payment', { bookingPayload });
   };
 

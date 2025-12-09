@@ -31,7 +31,7 @@ export default function TripBusesScreen() {
     arrivalLocationState,
     departureDate,
   } = route.params;
-console.log(route.params);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginating, setIsPaginating] = useState(false);
   const [availableBuses, setAvailableBuses] = useState<AvailableBus[]>([]);

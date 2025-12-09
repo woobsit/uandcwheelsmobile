@@ -69,9 +69,7 @@ export const attachAuthToken = async (config: any) => {
  //Refresh auth token
  export const refreshAuthToken = async () => {
    try {
-     //const refreshToken = await getRefreshToken();
-     //if (!refreshToken) throw new Error('No refresh token available');
-
+     
      const response = await AuthService.refreshToken();
 
      if (response.status !== 200) {
@@ -79,7 +77,7 @@ export const attachAuthToken = async (config: any) => {
         }
 
     const { accessToken } = response.data.data;
-     await saveTokens(accessToken);
+     await saveRefreshTokens(accessToken);
      console.log('Refresh Token Success: New Token Received:', accessToken.substring(0, 10) + '...');
      return accessToken;
     
@@ -128,7 +126,6 @@ export const saveTokens = async (
   try {
     // Save tokens
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    //await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
 
     // Handle email remembering
     if (rememberMe && email) {
@@ -136,6 +133,20 @@ export const saveTokens = async (
     } else {
       await removeRememberedEmail();
     }
+  } catch (error) {
+    console.log('Error saving tokens', error);
+    throw error;
+  }
+};
+
+// Update your saveRefreshTokens function 
+export const saveRefreshTokens = async (
+  newAccessToken: string,
+) => {
+  try {
+    // Save saveRefreshTokens
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccessToken);
+    
   } catch (error) {
     console.log('Error saving tokens', error);
     throw error;
