@@ -1,6 +1,5 @@
 // middlewares/auth/jwt.strategy.js
 const { Strategy, ExtractJwt } = require('passport-jwt');
-const { verifyToken } = require('./verify');
 const db = require('../../models/index');
 const { Op } = require('sequelize');
 
