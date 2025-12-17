@@ -329,7 +329,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
 
   if (error || !busTripDetails) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <TopNavBar title="Passenger & Seat Selection" />
         <View style={styles.errorContainer}>
           <MaterialIcons name="error-outline" size={60} color="#FF4444" />
@@ -343,7 +343,7 @@ export default function PassengerDetailsAndSeatSelectionScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <TopNavBar title="Passenger & Seat Selection" />
       <ScrollView contentContainerStyle={styles.container}>
         {/* Trip Summary */}

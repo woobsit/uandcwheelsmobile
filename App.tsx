@@ -37,6 +37,7 @@ function DashboardDrawer() {
         drawerType: 'slide', // or 'back', 'front'
         overlayColor: 'rgba(0,0,0,0.5)',
       }}
+      backBehavior="history"
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       {/* Add other logistics screens here */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
@@ -103,7 +104,9 @@ export default function CustomDrawerContent({ navigation }: any) {
   };
 
   return (
+    
     <View style={styles.outerContainer}>
+      
       <View style={styles.drawerHeader}>
         {/* Close Button on the header itself */}
         <TouchableOpacity
@@ -146,7 +149,7 @@ export default function CustomDrawerContent({ navigation }: any) {
             <DrawerItem
               label="Book Transport"
               icon={({ color, size }) => <MaterialIcons name="add-circle-outline" size={size} color={color} />}
-              onPress={() => navigation.navigate('NewDelivery')}
+              onPress={() => navigation.navigate('BookTransport')}
               style={styles.subItem}
               labelStyle={styles.subItemLabel}
             />
@@ -160,11 +163,11 @@ export default function CustomDrawerContent({ navigation }: any) {
           </View>
         )}
 
-        {/* Delivery Section - Expandable */}
+        {/* Dispatch Section - Expandable */}
         <TouchableOpacity style={[styles.sectionHeader, styles.drawerItem]} onPress={toggleDelivery}>
           <View style={styles.labelContainer}>
             <MaterialIcons name="motorcycle" size={24} color="#0A2540" style={styles.icon} />
-            <Text style={styles.label}>Delivery</Text>
+            <Text style={styles.label}>Dispatch</Text>
           </View>
           <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
             <MaterialIcons name="expand-more" size={24} color="#0A2540" />
@@ -221,7 +224,7 @@ export default function CustomDrawerContent({ navigation }: any) {
           labelStyle={styles.drawerLabel}
         />
       </DrawerContentScrollView>
-
+<SafeAreaView edges={['bottom']}>
       {/* Footer with Logout */}
       <View style={styles.footer}>
         <TouchableOpacity
@@ -234,6 +237,7 @@ export default function CustomDrawerContent({ navigation }: any) {
           <Text style={styles.logoutText}>Log Out</Text></>)}
         </TouchableOpacity>
       </View>
+      </SafeAreaView>
       <CustomAlertModal
         isVisible={isModalVisible}
         title={modalProps.title}
@@ -242,6 +246,7 @@ export default function CustomDrawerContent({ navigation }: any) {
         icon={modalProps.icon as 'success' | 'error' | 'info'}
       />
     </View>
+    
   );
 }
 

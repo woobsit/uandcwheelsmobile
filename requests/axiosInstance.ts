@@ -2,7 +2,7 @@ import axios from 'axios';
 import { attachAuthToken, refreshAuthToken, clearTokens } from '../utils/apiHelpers';
 
 const api = axios.create({
-  baseURL: 'http://192.168.0.119:5000/api/v1',
+  baseURL: 'http://192.168.0.131:5000/api/v1',
   withCredentials: true,
   timeout: 10000,
   headers: {

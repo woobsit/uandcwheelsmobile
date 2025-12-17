@@ -35,7 +35,7 @@ export default function DashboardScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* Top Navigation Bar Component */}
       <TopNavBar title="Dashboard" />
 

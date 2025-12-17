@@ -185,7 +185,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['bottom', 'top']} style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
