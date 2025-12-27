@@ -31,14 +31,14 @@ app.use(morganMiddleware);
 // It's good practice to place the routes after all general middlewares
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/bus-trip', busTripRouter);
+app.use('/api/v1/booking', bookingRouter);
 app.use(requireAuth);
 app.use('/api/v1/setting', settingRouter); // Add this line
 app.use('/api/v1/user', userRouter); // Add this line
 app.use('/api/v1/bus', busRouter);
 app.use('/api/v1/driver', driverRouter);
 app.use('/api/v1/trip', tripRouter);
-app.use('/api/v1/bus-trip', busTripRouter);
-app.use('/api/v1/booking', bookingRouter);
 app.use('/api/v1/location', locationRouter);
 
 // Global error catcher for unhandled rejections

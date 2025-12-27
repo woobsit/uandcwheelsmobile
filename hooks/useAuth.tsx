@@ -1,81 +1,45 @@
-// src/hooks/useAuth.ts
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getAuthToken, saveTokens, clearTokens } from '../utils/apiHelpers';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { getAuthToken, clearTokens } from '../utils/apiHelpers';
+const AuthContext = createContext<any>(null);
 
-// Define the shape of the user object
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  // Add other user properties here as needed
-}
-
-// Define the shape of the AuthContext value
-interface AuthContextType {
-  user: User | null;
-  isLoggedIn: boolean;
-  isLoading: boolean;
-  login: (userData: User) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-// Create the context with a default value
-const AuthContext = createContext<AuthContextType | null>(null);
-
-// Custom hook to use the auth context
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-// AuthProvider component to wrap the application
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const token = await getAuthToken();
-        if (token) {
-          // In a real app, you would decode the token or fetch user info here
-          setUser({ id: 'dummy_id', name: 'Dummy User', email: 'dummy@example.com' });
-        }
-      } catch (error) {
-        console.error('Failed to load user from storage', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadUser();
+    initializeAuth();
   }, []);
 
-  const login = async (userData: User) => {
-    // This function will be called by your login screen
-    // after a successful login API call.
-    setUser(userData);
+  const initializeAuth = async () => {
+    try {
+      const token = await getAuthToken();
+      if (token) {
+        setIsLoggedIn(true);
+      }
+    } catch (error) {
+      console.error("Auth initialization failed", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = async () => {
+  // 🚀 NEW: Function to be called by LoginScreen
+  const loginUser = async (token: string, rememberMe: boolean, email: string) => {
+    await saveTokens(token, rememberMe, email); // Save to disk
+    setIsLoggedIn(true); // Update state to trigger UI switch
+  };
+
+  const logoutUser = async () => {
     await clearTokens();
-    setUser(null);
+    setIsLoggedIn(false);
   };
 
-  const value = {
-    user,
-    isLoggedIn: !!user,
-    isLoading,
-    login,
-    logout,
-  };
+  return (
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, loginUser, logoutUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+export const useAuth = () => useContext(AuthContext);

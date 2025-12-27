@@ -23,10 +23,13 @@ import useRefreshControl from '../../hooks/useRefreshControl';
 import { useNavigation } from '@react-navigation/native';
 import { LoginScreenProps } from '../../types/screenprops';
 import CustomAlertModal from '../../components/organisms/CustomAlertModal'; // Import your custom modal
+import { useAuth } from '../../hooks/useAuth';
+
 
 export default function LoginScreen() {
 
   const navigation = useNavigation<LoginScreenProps['navigation']>();
+  const { loginUser } = useAuth(); 
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -136,6 +139,7 @@ export default function LoginScreen() {
     setErrors(newErrors);
     return valid;
   };
+
   const handleLogin = async () => {
     if (!validateForm()) return;
  try {
@@ -154,20 +158,14 @@ export default function LoginScreen() {
       showAlert('Error', 'Tokens not found in response', 'error');
       return;
     }
-    await saveTokens(data.accessToken, formData.rememberMe, formData.email);
-    navigation.navigate('Dashboard');
+    await loginUser(data.accessToken, formData.rememberMe, formData.email);
+    //navigation.navigate('Dashboard');
   } 
   
   // Handle specific error codes
-  else if (status === 401) {
+  else if (status === 401 || status === 403) {
     showAlert('Error', message, 'error');
-  } 
-  else if (status === 403) {
-    showAlert('Error', message, 'error');
-  } 
-  
-  // Handle the email not verified case
-  else {
+  } else {
     showAlert(
       'Email Not Verified', 
       'Please verify your email before logging in.', 

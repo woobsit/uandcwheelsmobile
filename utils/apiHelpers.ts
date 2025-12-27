@@ -60,7 +60,7 @@ export const clearTokens = async (): Promise<void> => {
 // Add to axios request config
 export const attachAuthToken = async (config: any) => {
   const token = await getAuthToken();
-  if (token && config.headers) {
+    if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

@@ -1,4 +1,4 @@
-//export const API_BASE_URL = '192.168.0.120:5000/api/v1';
+export const API_BASE_URL = 'http://192.168.0.131:5000/api';
 //export const TIMEOUT = 30000; // 30 seconds
 
 export const ENDPOINTS = {

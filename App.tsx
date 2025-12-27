@@ -1,102 +1,113 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack'; // Use native stack
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+
+// Screens
 import WelcomeScreen from './screens/WelcomeScreen';
 import RegisterScreen from './screens/auth/RegisterScreen';
 import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
 import LoginScreen from './screens/auth/LoginScreen';
 import ForgotPasswordScreen from './screens/auth/ForgetPasswordScreen';
 import DashboardScreen from './screens/DashboardScreen';
-import EmailVerificationScreen from './screens/auth/EmailVerificationScreen'; // You'll create this
-import CustomDrawerContent from './components/molecules/CustomDrawerContent'; // You'll create this
+import EmailVerificationScreen from './screens/auth/EmailVerificationScreen';
+import CustomDrawerContent from './components/molecules/CustomDrawerContent';
 import BookTransportScreen from './screens/BookTransportScreen';
-import TripDatesScreen from './screens/TripDatesScreen'; // NEW
-import TripBusesScreen from './screens/TripBusesScreen'; // NEW
+import TripDatesScreen from './screens/TripDatesScreen';
+import TripBusesScreen from './screens/TripBusesScreen';
 import PassengerDetailsAndSeatSelectionScreen from './screens/PassengerDetailsAndSeatSelectionScreen';
 import PaymentScreen from './screens/PaymentScreen';
 import BookingConfirmationScreen from './screens/BookingConfirmationScreen';
 
-// Import your custom AuthProvider
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 
-// Create navigators
-//const Stack = createStackNavigator<RootStackParamList>();
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-// Logistics Drawer Navigator (for authenticated users)
+/**
+ * 1. SIDEBAR NAVIGATOR
+ * This ONLY wraps the Dashboard. 
+ * Because BookTransport is NOT in here, it won't have a sidebar.
+ */
 function DashboardDrawer() {
   return (
     <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
       screenOptions={{
-        headerShown: false, // We'll use our custom header in screens
+        headerShown: false,
         drawerPosition: 'left',
-        drawerType: 'slide', // or 'back', 'front'
-        overlayColor: 'rgba(0,0,0,0.5)',
       }}
-      backBehavior="history"
     >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-      {/* Add other logistics screens here */}
-      <Drawer.Screen name="BookTransport" component={BookTransportScreen} />
-      <Drawer.Screen name="TripDates" component={TripDatesScreen} />
-       <Drawer.Screen name="TripBuses" component={TripBusesScreen} />
+      <Drawer.Screen name="DashboardHome" component={DashboardScreen} />
 
-      {/* ... your existing screens */}
-      <Drawer.Screen
-        name="PassengerDetailsAndSeatSelection"
-        component={PassengerDetailsAndSeatSelectionScreen}
-        options={{ headerShown: false }}
-      />
-      <Drawer.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
-      <Drawer.Screen
-        name="BookingConfirmation"
-        component={BookingConfirmationScreen}
-        options={{ headerShown: false }}
-      />
-
-      {/* If you have a BookingConfirmation screen, add it here too: */}
-      {/* <AuthStack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} /> */}
-      {/* --------------------------- */}
-      {/* <Drawer.Screen name="Drivers" component={DriversScreen} /> */}
-      {/* ... other logistics screens */}
     </Drawer.Navigator>
+  );
+}
+
+/**
+ * 2. ROOT NAVIGATOR
+ */
+function RootNavigator() {
+  const { isLoggedIn, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A2540' }}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      {/* 🚀 Remove initialRouteName here */}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        
+        {!isLoggedIn ? (
+          /* --- SECTION A: GUEST/AUTH --- */
+          <Stack.Group>
+            {/* The first screen here (Welcome) becomes the default for Guests */}
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+            <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
+          </Stack.Group>
+        ) : (
+          /* --- SECTION B: LOGGED IN --- */
+          <Stack.Group>
+            {/* The first screen here (Dashboard) becomes the default for Logged-In users */}
+            <Stack.Screen name="Dashboard" component={DashboardDrawer} />
+            
+          </Stack.Group>
+        )}
+
+        {/* --- SECTION C: GLOBAL SCREENS --- */}
+        <Stack.Screen name="BookTransport" component={BookTransportScreen} />
+        <Stack.Screen name="TripDates" component={TripDatesScreen} />
+        <Stack.Screen name="TripBuses" component={TripBusesScreen} />
+        <Stack.Screen 
+          name="PassengerDetailsAndSeatSelection" 
+          component={PassengerDetailsAndSeatSelectionScreen} 
+        />
+        <Stack.Screen name="Payment" component={PaymentScreen} />
+        <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} />
+        
+
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
 export default function App() {
   return (
     <AuthProvider>
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
-          {/* Auth Screens */}
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-
-          <Stack.Screen
-            name="EmailVerification"
-            component={EmailVerificationScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-          {/* Main App (after authentication) */}
-          {/* <Stack.Screen name="Home" component={LogisticsDrawer} /> */}
-
-          {/* You can keep this as alternative if needed */}
-          <Stack.Screen
-            name="Dashboard"
-            component={DashboardDrawer}
-            options={{ gestureEnabled: false }} // Disable swipe back to auth
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+      <SafeAreaProvider>
+        <RootNavigator />
+      </SafeAreaProvider>
     </AuthProvider>
   );
 }

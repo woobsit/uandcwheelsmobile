@@ -5,38 +5,61 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/screenprops';
+import { useAuth } from '../../hooks/useAuth'; // 🚀 Import your auth hook
 
 export default function TopNavBar({ title }: { title: string; subtitle?: string }) {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { isLoggedIn } = useAuth(); // 🚀 Get the login status
+
+const handleLeftIconPress = () => {
+    if (isLoggedIn) {
+      // If logged in, open the sidebar
+      navigation.dispatch(DrawerActions.toggleDrawer());
+    } else {
+      navigation.goBack();
+    }
+  };
 
   return (
     <View style={styles.topBar}>
       <TouchableOpacity
         style={styles.iconButton}
-        onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+        onPress={handleLeftIconPress}
       >
-        <MaterialIcons name="menu" size={24} color="#fff" />
+        <MaterialIcons 
+          name={isLoggedIn ? "menu" : "arrow-back"} 
+          size={24} 
+          color="#fff" 
+        />
       </TouchableOpacity>
 
       <Text style={styles.screenTitle}>{title}</Text>
 
       <View style={styles.iconsRight}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => navigation.navigate('Notifications')}
-        >
-          <MaterialIcons name="notifications" size={24} color="#fff" />
-          <View style={styles.notificationBadge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
-        </TouchableOpacity>
+        {/* Only show notifications and settings if logged in */}
+        {isLoggedIn && (
+          <>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <MaterialIcons name="notifications" size={24} color="#fff" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>3</Text>
+              </View>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.iconButton, { marginLeft: 15 }]}
-          onPress={() => navigation.navigate('Settings')}
-        >
-          <MaterialIcons name="settings" size={24} color="#fff" />
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconButton, { marginLeft: 15 }]}
+              onPress={() => navigation.navigate('Settings')}
+            >
+              <MaterialIcons name="settings" size={24} color="#fff" />
+            </TouchableOpacity>
+          </>
+        )}
+        
+        {/* Optional: Spacer for Guests if you want the title centered */}
+        {!isLoggedIn && <View style={{ width: 40 }} />}
       </View>
     </View>
   );

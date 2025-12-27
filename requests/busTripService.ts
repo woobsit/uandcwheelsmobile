@@ -1,6 +1,7 @@
 // services/BusTripService.ts (No major changes needed from your provided code, just ensuring it matches and confirming the types)
 
 import api from './axiosInstance';
+import {publicApi} from './axiosInstance';
 import { ENDPOINTS } from '../constants/api';
 import { ApiResponse, PaginatedResponse } from '../types/api'; // Ensure you have ApiResponse and PaginatedResponse defined
 import { BusTrip, BusTripFilters, GetAvailableDatesForRouteParams, PaginatedAvailableDatesResponse, PaginatedAvailableBusesResponse, GetAvailableBusesForDateParams } from '../types/bustrip';
@@ -20,7 +21,8 @@ const BusTripService = {
   
   getAllAvailableTrips: async (params?: { page: number; limit: number }): Promise<ApiResponse<PaginatedResponse<UniqueTripRoute>>> => {
     try {
-      const response = await api.get<ApiResponse<PaginatedResponse<UniqueTripRoute>>>(
+      
+      const response = await publicApi.get<ApiResponse<PaginatedResponse<UniqueTripRoute>>>(
         ENDPOINTS.ALL_AVAILABLE_TRIPS,
         { params }
       );
@@ -34,7 +36,7 @@ getAvailableDatesForRoute: async (
     params: GetAvailableDatesForRouteParams
   ): Promise<ApiResponse<PaginatedAvailableDatesResponse>> => {
     try {
-      const response = await api.get<ApiResponse<PaginatedAvailableDatesResponse>>(
+      const response = await publicApi.get<ApiResponse<PaginatedAvailableDatesResponse>>(
         ENDPOINTS.AVAILABLE_DATES,
         { params }
       );
@@ -54,7 +56,7 @@ getAvailableDatesForRoute: async (
     params: GetAvailableBusesForDateParams
   ): Promise<ApiResponse<PaginatedAvailableBusesResponse>> => {
     try {
-      const response = await api.get<ApiResponse<PaginatedAvailableBusesResponse>>(
+      const response = await publicApi.get<ApiResponse<PaginatedAvailableBusesResponse>>(
         ENDPOINTS.AVAILABLE_BUSES_FOR_DATE, // This endpoint needs to be defined
         { params }
       );
@@ -70,7 +72,7 @@ getAvailableDatesForRoute: async (
    */
   getBusTripDetails: async (busTripId: number): Promise<ApiResponse<BusTrip>> => {
     try {
-      const response = await api.get<ApiResponse<BusTrip>>(`${ENDPOINTS.BUS_TRIPS}/${busTripId}/details`);
+      const response = await publicApi.get<ApiResponse<BusTrip>>(`${ENDPOINTS.BUS_TRIPS}/${busTripId}/details`);
       return response.data;
     } catch (error) {
       throw error;
@@ -129,7 +131,7 @@ getAvailableDatesForRoute: async (
         filters.date = filters.date.toISOString().split('T')[0];
       }
       
-      const response = await api.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
+      const response = await publicApi.get<ApiResponse<PaginatedResponse<BusTrip>>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS, {
         params: filters,
       });
      // console.log(JSON.stringify(response.data,  null, 2))
@@ -183,7 +185,7 @@ getAvailableDatesForRoute: async (
   // Get a specific Scheduled Bus Trip by ID (for user to view details before booking)
   getBusTripWithDetails: async (busTripId: number): Promise<BusTrip> => {
     try {
-      const response = await api.get<ApiResponse<BusTrip>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS_ID(busTripId));
+      const response = await publicApi.get<ApiResponse<BusTrip>>(ENDPOINTS.USER_SCHEDULED_BUS_TRIPS_ID(busTripId));
       return response.data.data;
     } catch (error) {
       throw error;
